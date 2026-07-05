@@ -1,0 +1,78 @@
+{
+  "domain": "uniled",
+  "name": "UniLED Next",
+  "bluetooth": [
+    {
+      "connectable": true,
+      "local_name": "SP1*"
+    },
+    {
+      "connectable": true,
+      "local_name": "SP3*"
+    },
+    {
+      "connectable": true,
+      "local_name": "SP5*"
+    },
+    {
+      "connectable": true,
+      "local_name": "SP6*"
+    },
+    {
+      "connectable": true,
+      "local_name": "SP7*"
+    },
+    {
+      "connectable": true,
+      "local_name": "SP802E"
+    },
+    {
+      "connectable": true,
+      "local_name": "LED Strip"
+    },
+    {
+      "connectable": true,
+      "local_name": "Light Bar"
+    },
+    {
+      "connectable": true,
+      "local_name": "Wall Light"
+    },
+    {
+      "connectable": true,
+      "local_name": "DynamicBar"
+    },
+    {
+      "connectable": true,
+      "local_name": "Car Lights"
+    },
+    {
+      "connectable": true,
+      "local_name": "SP-MIC"
+    },
+    {
+      "connectable": true,
+      "local_name": "FT001"
+    },
+    {
+      "connectable": true,
+      "local_name": "RG4"
+    },
+    {
+      "connectable": true,
+      "manufacturer_id": 529,
+      "service_uuid": "00010203-0405-0607-0809-0a0b0c0d1910"
+    },
+    {
+      "connectable": true,
+      "local_name": "360PhotoB"
+    }
+  ],
+  "codeowners": [],
+  "config_flow": true,
+  "dependencies": ["bluetooth_adapters"],
+  "integration_type": "hub",
+  "iot_class": "local_polling",
+  "requirements": ["pycryptodome>=3.17"],
+  "version": "0.0.0"
+}

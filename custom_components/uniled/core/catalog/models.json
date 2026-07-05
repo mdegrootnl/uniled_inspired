@@ -1,0 +1,3743 @@
+[
+  {
+    "color_cap": 1,
+    "connect_caps": 1,
+    "family": "banlanx_601",
+    "features": {},
+    "friendly_name": "SP601E",
+    "home_uri": "/sp601e",
+    "legacy_uniled_supported": true,
+    "model_id": 1,
+    "name": "SP601E",
+    "parent_id": null,
+    "spec_functions": 17,
+    "support_level": "limited",
+    "transports": [
+      "ble"
+    ]
+  },
+  {
+    "color_cap": 1,
+    "connect_caps": 1,
+    "family": "banlanx_60x",
+    "features": {},
+    "friendly_name": "SP602E",
+    "home_uri": "/sp601e",
+    "legacy_uniled_supported": true,
+    "model_id": 2,
+    "name": "SP602E",
+    "parent_id": 1,
+    "spec_functions": 16,
+    "support_level": "limited",
+    "transports": [
+      "ble"
+    ]
+  },
+  {
+    "color_cap": 1,
+    "connect_caps": 1,
+    "family": "banlanx_v3",
+    "features": {},
+    "friendly_name": "SP603E",
+    "home_uri": "/sp603e",
+    "legacy_uniled_supported": false,
+    "model_id": 3,
+    "name": "SP603E",
+    "parent_id": null,
+    "spec_functions": 17,
+    "support_level": "limited",
+    "transports": [
+      "ble"
+    ]
+  },
+  {
+    "color_cap": 1,
+    "connect_caps": 1,
+    "family": "banlanx_v2",
+    "features": {},
+    "friendly_name": "SP611E",
+    "home_uri": "/sp611e",
+    "legacy_uniled_supported": true,
+    "model_id": 4,
+    "name": "SP611E",
+    "parent_id": null,
+    "spec_functions": 87,
+    "support_level": "limited",
+    "transports": [
+      "ble"
+    ]
+  },
+  {
+    "color_cap": 1,
+    "connect_caps": 1,
+    "family": "banlanx_60x",
+    "features": {},
+    "friendly_name": "SP608E",
+    "home_uri": "/sp601e",
+    "legacy_uniled_supported": true,
+    "model_id": 5,
+    "name": "SP608E",
+    "parent_id": 1,
+    "spec_functions": 16,
+    "support_level": "limited",
+    "transports": [
+      "ble"
+    ]
+  },
+  {
+    "color_cap": 1,
+    "connect_caps": 5,
+    "family": "placeholder",
+    "features": {},
+    "friendly_name": "TEST",
+    "home_uri": "/test",
+    "legacy_uniled_supported": false,
+    "model_id": 6,
+    "name": "TEST",
+    "parent_id": null,
+    "spec_functions": 0,
+    "support_level": "filtered",
+    "transports": []
+  },
+  {
+    "color_cap": 1,
+    "connect_caps": 1,
+    "family": "banlanx_v3",
+    "features": {},
+    "friendly_name": "SP613E",
+    "home_uri": "/sp603e",
+    "legacy_uniled_supported": true,
+    "model_id": 9,
+    "name": "SP613E",
+    "parent_id": 3,
+    "spec_functions": 87,
+    "support_level": "limited",
+    "transports": [
+      "ble"
+    ]
+  },
+  {
+    "color_cap": 1,
+    "connect_caps": 1,
+    "family": "banlanx_v3",
+    "features": {},
+    "friendly_name": "SP614E",
+    "home_uri": "/sp603e",
+    "legacy_uniled_supported": true,
+    "model_id": 10,
+    "name": "SP614E",
+    "parent_id": 3,
+    "spec_functions": 95,
+    "support_level": "limited",
+    "transports": [
+      "ble"
+    ]
+  },
+  {
+    "color_cap": 1,
+    "connect_caps": 1,
+    "family": "banlanx_v2",
+    "features": {},
+    "friendly_name": "SP616E",
+    "home_uri": "/sp611e",
+    "legacy_uniled_supported": true,
+    "model_id": 11,
+    "name": "SP616E",
+    "parent_id": 4,
+    "spec_functions": 87,
+    "support_level": "limited",
+    "transports": [
+      "ble"
+    ]
+  },
+  {
+    "color_cap": 2,
+    "connect_caps": 1,
+    "family": "banlanx_v2",
+    "features": {},
+    "friendly_name": "SP617E",
+    "home_uri": "/sp611e",
+    "legacy_uniled_supported": true,
+    "model_id": 23,
+    "name": "SP617E",
+    "parent_id": 4,
+    "spec_functions": 95,
+    "support_level": "limited",
+    "transports": [
+      "ble"
+    ]
+  },
+  {
+    "color_cap": 1,
+    "connect_caps": 1,
+    "family": "banlanx_v2",
+    "features": {},
+    "friendly_name": "SP621E",
+    "home_uri": "/sp611e",
+    "legacy_uniled_supported": true,
+    "model_id": 13,
+    "name": "SP621E",
+    "parent_id": 4,
+    "spec_functions": 85,
+    "support_level": "limited",
+    "transports": [
+      "ble"
+    ]
+  },
+  {
+    "color_cap": 1,
+    "connect_caps": 1,
+    "family": "banlanx_v3",
+    "features": {},
+    "friendly_name": "SP623E",
+    "home_uri": "/sp603e",
+    "legacy_uniled_supported": true,
+    "model_id": 14,
+    "name": "SP623E",
+    "parent_id": 9,
+    "spec_functions": 85,
+    "support_level": "limited",
+    "transports": [
+      "ble"
+    ]
+  },
+  {
+    "color_cap": 1,
+    "connect_caps": 1,
+    "family": "banlanx_v3",
+    "features": {},
+    "friendly_name": "SP624E",
+    "home_uri": "/sp603e",
+    "legacy_uniled_supported": true,
+    "model_id": 15,
+    "name": "SP624E",
+    "parent_id": 10,
+    "spec_functions": 93,
+    "support_level": "limited",
+    "transports": [
+      "ble"
+    ]
+  },
+  {
+    "color_cap": 1,
+    "connect_caps": 1,
+    "family": "banlanx_v2",
+    "features": {},
+    "friendly_name": "SP611E",
+    "home_uri": "/sp611e",
+    "legacy_uniled_supported": true,
+    "model_id": 16,
+    "name": "SP611E",
+    "parent_id": 4,
+    "spec_functions": 87,
+    "support_level": "limited",
+    "transports": [
+      "ble"
+    ]
+  },
+  {
+    "color_cap": 1,
+    "connect_caps": 1,
+    "family": "banlanx_v2",
+    "features": {},
+    "friendly_name": "SP611E",
+    "home_uri": "/sp611e",
+    "legacy_uniled_supported": true,
+    "model_id": 17,
+    "name": "SP611E",
+    "parent_id": 4,
+    "spec_functions": 87,
+    "support_level": "limited",
+    "transports": [
+      "ble"
+    ]
+  },
+  {
+    "color_cap": 1,
+    "connect_caps": 1,
+    "family": "banlanx_v2",
+    "features": {},
+    "friendly_name": "SP611E",
+    "home_uri": "/sp611e",
+    "legacy_uniled_supported": true,
+    "model_id": 18,
+    "name": "SP611E",
+    "parent_id": 4,
+    "spec_functions": 87,
+    "support_level": "limited",
+    "transports": [
+      "ble"
+    ]
+  },
+  {
+    "color_cap": 1,
+    "connect_caps": 1,
+    "family": "banlanx_v2",
+    "features": {},
+    "friendly_name": "SP611E",
+    "home_uri": "/sp611e",
+    "legacy_uniled_supported": true,
+    "model_id": 19,
+    "name": "SP611E",
+    "parent_id": 4,
+    "spec_functions": 87,
+    "support_level": "limited",
+    "transports": [
+      "ble"
+    ]
+  },
+  {
+    "color_cap": 1,
+    "connect_caps": 1,
+    "family": "banlanx_v2",
+    "features": {},
+    "friendly_name": "SP611E",
+    "home_uri": "/sp611e",
+    "legacy_uniled_supported": true,
+    "model_id": 20,
+    "name": "SP611E",
+    "parent_id": 4,
+    "spec_functions": 87,
+    "support_level": "limited",
+    "transports": [
+      "ble"
+    ]
+  },
+  {
+    "color_cap": 1,
+    "connect_caps": 1,
+    "family": "banlanx_v2",
+    "features": {},
+    "friendly_name": "SP611E",
+    "home_uri": "/sp611e",
+    "legacy_uniled_supported": true,
+    "model_id": 21,
+    "name": "SP611E",
+    "parent_id": 4,
+    "spec_functions": 87,
+    "support_level": "limited",
+    "transports": [
+      "ble"
+    ]
+  },
+  {
+    "color_cap": 1,
+    "connect_caps": 1,
+    "family": "banlanx_v2",
+    "features": {},
+    "friendly_name": "SP621E",
+    "home_uri": "/sp611e",
+    "legacy_uniled_supported": true,
+    "model_id": 22,
+    "name": "SP621E",
+    "parent_id": 13,
+    "spec_functions": 85,
+    "support_level": "limited",
+    "transports": [
+      "ble"
+    ]
+  },
+  {
+    "color_cap": 1,
+    "connect_caps": 1,
+    "family": "banlanx_v2",
+    "features": {},
+    "friendly_name": "Light Bar",
+    "home_uri": "/light_bar",
+    "legacy_uniled_supported": false,
+    "model_id": 24,
+    "name": "Light Bar",
+    "parent_id": 4,
+    "spec_functions": 87,
+    "support_level": "limited",
+    "transports": [
+      "ble"
+    ]
+  },
+  {
+    "color_cap": 1,
+    "connect_caps": 1,
+    "family": "banlanx_v2",
+    "features": {},
+    "friendly_name": "Wall Light",
+    "home_uri": "/light_bar",
+    "legacy_uniled_supported": false,
+    "model_id": 25,
+    "name": "Wall Light",
+    "parent_id": 24,
+    "spec_functions": 87,
+    "support_level": "limited",
+    "transports": [
+      "ble"
+    ]
+  },
+  {
+    "color_cap": 1,
+    "connect_caps": 1,
+    "family": "banlanx_v2",
+    "features": {},
+    "friendly_name": "Light Bar",
+    "home_uri": "/sp611e",
+    "legacy_uniled_supported": false,
+    "model_id": 26,
+    "name": "Light Bar",
+    "parent_id": 24,
+    "spec_functions": 87,
+    "support_level": "limited",
+    "transports": [
+      "ble"
+    ]
+  },
+  {
+    "color_cap": 1,
+    "connect_caps": 1,
+    "family": "banlanx_v2",
+    "features": {},
+    "friendly_name": "SP620E",
+    "home_uri": "/sp611e",
+    "legacy_uniled_supported": true,
+    "model_id": 27,
+    "name": "SP620E",
+    "parent_id": 4,
+    "spec_functions": 87,
+    "support_level": "limited",
+    "transports": [
+      "ble"
+    ]
+  },
+  {
+    "color_cap": 1,
+    "connect_caps": 1,
+    "family": "banlanx_v2",
+    "features": {},
+    "friendly_name": "LED Strip",
+    "home_uri": "/sp611e",
+    "legacy_uniled_supported": false,
+    "model_id": 28,
+    "name": "LED Strip",
+    "parent_id": 4,
+    "spec_functions": 87,
+    "support_level": "limited",
+    "transports": [
+      "ble"
+    ]
+  },
+  {
+    "color_cap": 1,
+    "connect_caps": 1,
+    "family": "banlanx_v2",
+    "features": {},
+    "friendly_name": "SP611E",
+    "home_uri": "/sp611e",
+    "legacy_uniled_supported": true,
+    "model_id": 29,
+    "name": "SP611E",
+    "parent_id": 4,
+    "spec_functions": 87,
+    "support_level": "limited",
+    "transports": [
+      "ble"
+    ]
+  },
+  {
+    "color_cap": 1,
+    "connect_caps": 2,
+    "family": "banlanx_network",
+    "features": {},
+    "friendly_name": "SP801E",
+    "home_uri": "/sp801e",
+    "legacy_uniled_supported": false,
+    "model_id": 157,
+    "name": "SP801E",
+    "parent_id": null,
+    "spec_functions": 68,
+    "support_level": "recognized",
+    "transports": [
+      "lan"
+    ]
+  },
+  {
+    "color_cap": 1,
+    "connect_caps": 3,
+    "family": "banlanx_network",
+    "features": {
+      "supportGetNetInfo": 9
+    },
+    "friendly_name": "SP802E",
+    "home_uri": "/sp802e",
+    "legacy_uniled_supported": false,
+    "model_id": 158,
+    "name": "SP802E",
+    "parent_id": null,
+    "spec_functions": 70,
+    "support_level": "recognized",
+    "transports": [
+      "ble",
+      "lan"
+    ]
+  },
+  {
+    "color_cap": 4,
+    "connect_caps": 1,
+    "family": "banlanx_6xx",
+    "features": {},
+    "friendly_name": "SP630E",
+    "home_uri": "/sp630e",
+    "legacy_uniled_supported": true,
+    "model_id": 31,
+    "name": "SP630E",
+    "parent_id": null,
+    "spec_functions": 87,
+    "support_level": "limited",
+    "transports": [
+      "ble"
+    ]
+  },
+  {
+    "color_cap": 4,
+    "connect_caps": 1,
+    "family": "banlanx_6xx",
+    "features": {},
+    "friendly_name": "SP631E",
+    "home_uri": "/sp630e",
+    "legacy_uniled_supported": true,
+    "model_id": 32,
+    "name": "SP631E",
+    "parent_id": 31,
+    "spec_functions": 87,
+    "support_level": "limited",
+    "transports": [
+      "ble"
+    ]
+  },
+  {
+    "color_cap": 4,
+    "connect_caps": 1,
+    "family": "banlanx_6xx",
+    "features": {},
+    "friendly_name": "SP632E",
+    "home_uri": "/sp630e",
+    "legacy_uniled_supported": true,
+    "model_id": 33,
+    "name": "SP632E",
+    "parent_id": 31,
+    "spec_functions": 87,
+    "support_level": "limited",
+    "transports": [
+      "ble"
+    ]
+  },
+  {
+    "color_cap": 4,
+    "connect_caps": 1,
+    "family": "banlanx_6xx",
+    "features": {},
+    "friendly_name": "SP633E",
+    "home_uri": "/sp630e",
+    "legacy_uniled_supported": true,
+    "model_id": 34,
+    "name": "SP633E",
+    "parent_id": 31,
+    "spec_functions": 87,
+    "support_level": "limited",
+    "transports": [
+      "ble"
+    ]
+  },
+  {
+    "color_cap": 4,
+    "connect_caps": 1,
+    "family": "banlanx_6xx",
+    "features": {},
+    "friendly_name": "SP634E",
+    "home_uri": "/sp630e",
+    "legacy_uniled_supported": true,
+    "model_id": 35,
+    "name": "SP634E",
+    "parent_id": 31,
+    "spec_functions": 87,
+    "support_level": "limited",
+    "transports": [
+      "ble"
+    ]
+  },
+  {
+    "color_cap": 4,
+    "connect_caps": 1,
+    "family": "banlanx_6xx",
+    "features": {},
+    "friendly_name": "SP635E",
+    "home_uri": "/sp630e",
+    "legacy_uniled_supported": true,
+    "model_id": 36,
+    "name": "SP635E",
+    "parent_id": 31,
+    "spec_functions": 87,
+    "support_level": "limited",
+    "transports": [
+      "ble"
+    ]
+  },
+  {
+    "color_cap": 4,
+    "connect_caps": 1,
+    "family": "banlanx_6xx",
+    "features": {},
+    "friendly_name": "SP636E",
+    "home_uri": "/sp630e",
+    "legacy_uniled_supported": true,
+    "model_id": 37,
+    "name": "SP636E",
+    "parent_id": 31,
+    "spec_functions": 87,
+    "support_level": "limited",
+    "transports": [
+      "ble"
+    ]
+  },
+  {
+    "color_cap": 4,
+    "connect_caps": 1,
+    "family": "banlanx_6xx",
+    "features": {},
+    "friendly_name": "SP637E",
+    "home_uri": "/sp630e",
+    "legacy_uniled_supported": true,
+    "model_id": 38,
+    "name": "SP637E",
+    "parent_id": 31,
+    "spec_functions": 87,
+    "support_level": "limited",
+    "transports": [
+      "ble"
+    ]
+  },
+  {
+    "color_cap": 4,
+    "connect_caps": 1,
+    "family": "banlanx_6xx",
+    "features": {},
+    "friendly_name": "SP638E",
+    "home_uri": "/sp630e",
+    "legacy_uniled_supported": true,
+    "model_id": 39,
+    "name": "SP638E",
+    "parent_id": 31,
+    "spec_functions": 87,
+    "support_level": "limited",
+    "transports": [
+      "ble"
+    ]
+  },
+  {
+    "color_cap": 4,
+    "connect_caps": 1,
+    "family": "banlanx_6xx",
+    "features": {},
+    "friendly_name": "SP639E",
+    "home_uri": "/sp630e",
+    "legacy_uniled_supported": true,
+    "model_id": 40,
+    "name": "SP639E",
+    "parent_id": 31,
+    "spec_functions": 87,
+    "support_level": "limited",
+    "transports": [
+      "ble"
+    ]
+  },
+  {
+    "color_cap": 4,
+    "connect_caps": 1,
+    "family": "banlanx_6xx",
+    "features": {},
+    "friendly_name": "SP63AE",
+    "home_uri": "/sp630e",
+    "legacy_uniled_supported": true,
+    "model_id": 41,
+    "name": "SP63AE",
+    "parent_id": 31,
+    "spec_functions": 87,
+    "support_level": "limited",
+    "transports": [
+      "ble"
+    ]
+  },
+  {
+    "color_cap": 4,
+    "connect_caps": 1,
+    "family": "banlanx_6xx",
+    "features": {},
+    "friendly_name": "SP63BE",
+    "home_uri": "/sp630e",
+    "legacy_uniled_supported": true,
+    "model_id": 42,
+    "name": "SP63BE",
+    "parent_id": 31,
+    "spec_functions": 87,
+    "support_level": "limited",
+    "transports": [
+      "ble"
+    ]
+  },
+  {
+    "color_cap": 4,
+    "connect_caps": 1,
+    "family": "banlanx_6xx",
+    "features": {},
+    "friendly_name": "SP63CE",
+    "home_uri": "/sp630e",
+    "legacy_uniled_supported": true,
+    "model_id": 43,
+    "name": "SP63CE",
+    "parent_id": 31,
+    "spec_functions": 87,
+    "support_level": "limited",
+    "transports": [
+      "ble"
+    ]
+  },
+  {
+    "color_cap": 4,
+    "connect_caps": 1,
+    "family": "banlanx_6xx",
+    "features": {},
+    "friendly_name": "SP641E",
+    "home_uri": "/sp630e",
+    "legacy_uniled_supported": true,
+    "model_id": 44,
+    "name": "SP641E",
+    "parent_id": 31,
+    "spec_functions": 87,
+    "support_level": "limited",
+    "transports": [
+      "ble"
+    ]
+  },
+  {
+    "color_cap": 4,
+    "connect_caps": 1,
+    "family": "banlanx_6xx",
+    "features": {},
+    "friendly_name": "SP642E",
+    "home_uri": "/sp630e",
+    "legacy_uniled_supported": true,
+    "model_id": 45,
+    "name": "SP642E",
+    "parent_id": 31,
+    "spec_functions": 87,
+    "support_level": "limited",
+    "transports": [
+      "ble"
+    ]
+  },
+  {
+    "color_cap": 4,
+    "connect_caps": 1,
+    "family": "banlanx_6xx",
+    "features": {},
+    "friendly_name": "SP643E",
+    "home_uri": "/sp630e",
+    "legacy_uniled_supported": true,
+    "model_id": 46,
+    "name": "SP643E",
+    "parent_id": 31,
+    "spec_functions": 87,
+    "support_level": "limited",
+    "transports": [
+      "ble"
+    ]
+  },
+  {
+    "color_cap": 4,
+    "connect_caps": 1,
+    "family": "banlanx_6xx",
+    "features": {},
+    "friendly_name": "SP644E",
+    "home_uri": "/sp630e",
+    "legacy_uniled_supported": true,
+    "model_id": 47,
+    "name": "SP644E",
+    "parent_id": 31,
+    "spec_functions": 87,
+    "support_level": "limited",
+    "transports": [
+      "ble"
+    ]
+  },
+  {
+    "color_cap": 4,
+    "connect_caps": 1,
+    "family": "banlanx_6xx",
+    "features": {},
+    "friendly_name": "SP645E",
+    "home_uri": "/sp630e",
+    "legacy_uniled_supported": true,
+    "model_id": 48,
+    "name": "SP645E",
+    "parent_id": 31,
+    "spec_functions": 87,
+    "support_level": "limited",
+    "transports": [
+      "ble"
+    ]
+  },
+  {
+    "color_cap": 4,
+    "connect_caps": 1,
+    "family": "banlanx_6xx",
+    "features": {},
+    "friendly_name": "SP646E",
+    "home_uri": "/sp630e",
+    "legacy_uniled_supported": true,
+    "model_id": 49,
+    "name": "SP646E",
+    "parent_id": 31,
+    "spec_functions": 87,
+    "support_level": "limited",
+    "transports": [
+      "ble"
+    ]
+  },
+  {
+    "color_cap": 4,
+    "connect_caps": 1,
+    "family": "banlanx_6xx",
+    "features": {},
+    "friendly_name": "SP647E",
+    "home_uri": "/sp630e",
+    "legacy_uniled_supported": true,
+    "model_id": 50,
+    "name": "SP647E",
+    "parent_id": 31,
+    "spec_functions": 87,
+    "support_level": "limited",
+    "transports": [
+      "ble"
+    ]
+  },
+  {
+    "color_cap": 4,
+    "connect_caps": 1,
+    "family": "banlanx_6xx",
+    "features": {},
+    "friendly_name": "SP648E",
+    "home_uri": "/sp630e",
+    "legacy_uniled_supported": true,
+    "model_id": 51,
+    "name": "SP648E",
+    "parent_id": 31,
+    "spec_functions": 87,
+    "support_level": "limited",
+    "transports": [
+      "ble"
+    ]
+  },
+  {
+    "color_cap": 4,
+    "connect_caps": 1,
+    "family": "banlanx_6xx",
+    "features": {},
+    "friendly_name": "SP649E",
+    "home_uri": "/sp630e",
+    "legacy_uniled_supported": true,
+    "model_id": 52,
+    "name": "SP649E",
+    "parent_id": 31,
+    "spec_functions": 87,
+    "support_level": "limited",
+    "transports": [
+      "ble"
+    ]
+  },
+  {
+    "color_cap": 4,
+    "connect_caps": 1,
+    "family": "banlanx_6xx",
+    "features": {},
+    "friendly_name": "SP64AE",
+    "home_uri": "/sp630e",
+    "legacy_uniled_supported": true,
+    "model_id": 53,
+    "name": "SP64AE",
+    "parent_id": 31,
+    "spec_functions": 87,
+    "support_level": "limited",
+    "transports": [
+      "ble"
+    ]
+  },
+  {
+    "color_cap": 4,
+    "connect_caps": 1,
+    "family": "banlanx_6xx",
+    "features": {},
+    "friendly_name": "SP64BE",
+    "home_uri": "/sp630e",
+    "legacy_uniled_supported": true,
+    "model_id": 54,
+    "name": "SP64BE",
+    "parent_id": 31,
+    "spec_functions": 87,
+    "support_level": "limited",
+    "transports": [
+      "ble"
+    ]
+  },
+  {
+    "color_cap": 4,
+    "connect_caps": 1,
+    "family": "banlanx_6xx",
+    "features": {},
+    "friendly_name": "SP64CE",
+    "home_uri": "/sp630e",
+    "legacy_uniled_supported": true,
+    "model_id": 55,
+    "name": "SP64CE",
+    "parent_id": 31,
+    "spec_functions": 87,
+    "support_level": "limited",
+    "transports": [
+      "ble"
+    ]
+  },
+  {
+    "color_cap": 4,
+    "connect_caps": 1,
+    "family": "banlanx_6xx",
+    "features": {},
+    "friendly_name": "SP651E",
+    "home_uri": "/sp630e",
+    "legacy_uniled_supported": true,
+    "model_id": 56,
+    "name": "SP651E",
+    "parent_id": 31,
+    "spec_functions": 87,
+    "support_level": "limited",
+    "transports": [
+      "ble"
+    ]
+  },
+  {
+    "color_cap": 4,
+    "connect_caps": 1,
+    "family": "banlanx_6xx",
+    "features": {},
+    "friendly_name": "SP652E",
+    "home_uri": "/sp630e",
+    "legacy_uniled_supported": true,
+    "model_id": 57,
+    "name": "SP652E",
+    "parent_id": 31,
+    "spec_functions": 87,
+    "support_level": "limited",
+    "transports": [
+      "ble"
+    ]
+  },
+  {
+    "color_cap": 4,
+    "connect_caps": 1,
+    "family": "banlanx_6xx",
+    "features": {},
+    "friendly_name": "SP653E",
+    "home_uri": "/sp630e",
+    "legacy_uniled_supported": true,
+    "model_id": 58,
+    "name": "SP653E",
+    "parent_id": 31,
+    "spec_functions": 87,
+    "support_level": "limited",
+    "transports": [
+      "ble"
+    ]
+  },
+  {
+    "color_cap": 4,
+    "connect_caps": 1,
+    "family": "banlanx_6xx",
+    "features": {},
+    "friendly_name": "SP654E",
+    "home_uri": "/sp630e",
+    "legacy_uniled_supported": true,
+    "model_id": 59,
+    "name": "SP654E",
+    "parent_id": 31,
+    "spec_functions": 87,
+    "support_level": "limited",
+    "transports": [
+      "ble"
+    ]
+  },
+  {
+    "color_cap": 4,
+    "connect_caps": 1,
+    "family": "banlanx_6xx",
+    "features": {},
+    "friendly_name": "SP655E",
+    "home_uri": "/sp630e",
+    "legacy_uniled_supported": true,
+    "model_id": 60,
+    "name": "SP655E",
+    "parent_id": 31,
+    "spec_functions": 87,
+    "support_level": "limited",
+    "transports": [
+      "ble"
+    ]
+  },
+  {
+    "color_cap": 4,
+    "connect_caps": 1,
+    "family": "banlanx_6xx",
+    "features": {},
+    "friendly_name": "SP656E",
+    "home_uri": "/sp630e",
+    "legacy_uniled_supported": true,
+    "model_id": 61,
+    "name": "SP656E",
+    "parent_id": 31,
+    "spec_functions": 87,
+    "support_level": "limited",
+    "transports": [
+      "ble"
+    ]
+  },
+  {
+    "color_cap": 4,
+    "connect_caps": 1,
+    "family": "banlanx_6xx",
+    "features": {},
+    "friendly_name": "SP657E",
+    "home_uri": "/sp630e",
+    "legacy_uniled_supported": true,
+    "model_id": 62,
+    "name": "SP657E",
+    "parent_id": 31,
+    "spec_functions": 87,
+    "support_level": "limited",
+    "transports": [
+      "ble"
+    ]
+  },
+  {
+    "color_cap": 4,
+    "connect_caps": 1,
+    "family": "banlanx_6xx",
+    "features": {},
+    "friendly_name": "SP658E",
+    "home_uri": "/sp630e",
+    "legacy_uniled_supported": true,
+    "model_id": 63,
+    "name": "SP658E",
+    "parent_id": 31,
+    "spec_functions": 87,
+    "support_level": "limited",
+    "transports": [
+      "ble"
+    ]
+  },
+  {
+    "color_cap": 4,
+    "connect_caps": 1,
+    "family": "banlanx_6xx",
+    "features": {},
+    "friendly_name": "SP659E",
+    "home_uri": "/sp630e",
+    "legacy_uniled_supported": true,
+    "model_id": 64,
+    "name": "SP659E",
+    "parent_id": 31,
+    "spec_functions": 87,
+    "support_level": "limited",
+    "transports": [
+      "ble"
+    ]
+  },
+  {
+    "color_cap": 4,
+    "connect_caps": 1,
+    "family": "banlanx_6xx",
+    "features": {},
+    "friendly_name": "SP65AE",
+    "home_uri": "/sp630e",
+    "legacy_uniled_supported": true,
+    "model_id": 65,
+    "name": "SP65AE",
+    "parent_id": 31,
+    "spec_functions": 87,
+    "support_level": "limited",
+    "transports": [
+      "ble"
+    ]
+  },
+  {
+    "color_cap": 4,
+    "connect_caps": 1,
+    "family": "banlanx_6xx",
+    "features": {},
+    "friendly_name": "SP65BE",
+    "home_uri": "/sp630e",
+    "legacy_uniled_supported": true,
+    "model_id": 66,
+    "name": "SP65BE",
+    "parent_id": 31,
+    "spec_functions": 87,
+    "support_level": "limited",
+    "transports": [
+      "ble"
+    ]
+  },
+  {
+    "color_cap": 4,
+    "connect_caps": 1,
+    "family": "banlanx_6xx",
+    "features": {},
+    "friendly_name": "SP65CE",
+    "home_uri": "/sp630e",
+    "legacy_uniled_supported": true,
+    "model_id": 67,
+    "name": "SP65CE",
+    "parent_id": 31,
+    "spec_functions": 87,
+    "support_level": "limited",
+    "transports": [
+      "ble"
+    ]
+  },
+  {
+    "color_cap": 4,
+    "connect_caps": 1,
+    "family": "banlanx_6xx",
+    "features": {},
+    "friendly_name": "SP643E",
+    "home_uri": "/sp630e",
+    "legacy_uniled_supported": true,
+    "model_id": 68,
+    "name": "SP643E",
+    "parent_id": 46,
+    "spec_functions": 85,
+    "support_level": "limited",
+    "transports": [
+      "ble"
+    ]
+  },
+  {
+    "color_cap": 4,
+    "connect_caps": 1,
+    "family": "banlanx_6xx",
+    "features": {},
+    "friendly_name": "SP648E",
+    "home_uri": "/sp630e",
+    "legacy_uniled_supported": true,
+    "model_id": 69,
+    "name": "SP648E",
+    "parent_id": 51,
+    "spec_functions": 87,
+    "support_level": "limited",
+    "transports": [
+      "ble"
+    ]
+  },
+  {
+    "color_cap": 4,
+    "connect_caps": 1,
+    "family": "banlanx_6xx",
+    "features": {},
+    "friendly_name": "SP637E",
+    "home_uri": "/sp630e",
+    "legacy_uniled_supported": true,
+    "model_id": 70,
+    "name": "SP637E",
+    "parent_id": 38,
+    "spec_functions": 87,
+    "support_level": "limited",
+    "transports": [
+      "ble"
+    ]
+  },
+  {
+    "color_cap": 4,
+    "connect_caps": 1,
+    "family": "banlanx_6xx",
+    "features": {},
+    "friendly_name": "SP63AE",
+    "home_uri": "/sp630e",
+    "legacy_uniled_supported": true,
+    "model_id": 71,
+    "name": "SP63AE",
+    "parent_id": 41,
+    "spec_functions": 87,
+    "support_level": "limited",
+    "transports": [
+      "ble"
+    ]
+  },
+  {
+    "color_cap": 4,
+    "connect_caps": 1,
+    "family": "banlanx_6xx",
+    "features": {},
+    "friendly_name": "SP647E",
+    "home_uri": "/sp630e",
+    "legacy_uniled_supported": true,
+    "model_id": 72,
+    "name": "SP647E",
+    "parent_id": 50,
+    "spec_functions": 87,
+    "support_level": "limited",
+    "transports": [
+      "ble"
+    ]
+  },
+  {
+    "color_cap": 4,
+    "connect_caps": 1,
+    "family": "banlanx_6xx",
+    "features": {},
+    "friendly_name": "SP64AE",
+    "home_uri": "/sp630e",
+    "legacy_uniled_supported": true,
+    "model_id": 73,
+    "name": "SP64AE",
+    "parent_id": 53,
+    "spec_functions": 87,
+    "support_level": "limited",
+    "transports": [
+      "ble"
+    ]
+  },
+  {
+    "color_cap": 4,
+    "connect_caps": 7,
+    "family": "banlanx_custom_5xx",
+    "features": {
+      "customFeature": 1,
+      "maxPixelChannels": 3600,
+      "musicFeature": 3,
+      "otherFeature": 1,
+      "settingFeature": 1
+    },
+    "friendly_name": "SP530E",
+    "home_uri": "/sp630e",
+    "legacy_uniled_supported": false,
+    "model_id": 78,
+    "name": "SP530E",
+    "parent_id": null,
+    "spec_functions": 87,
+    "support_level": "limited",
+    "transports": [
+      "ble",
+      "lan",
+      "cloud_optional"
+    ]
+  },
+  {
+    "color_cap": 4,
+    "connect_caps": 1,
+    "family": "banlanx_6xx",
+    "features": {},
+    "friendly_name": "SP642E",
+    "home_uri": "/sp630e",
+    "legacy_uniled_supported": true,
+    "model_id": 74,
+    "name": "SP642E",
+    "parent_id": 45,
+    "spec_functions": 87,
+    "support_level": "limited",
+    "transports": [
+      "ble"
+    ]
+  },
+  {
+    "color_cap": 4,
+    "connect_caps": 1,
+    "family": "banlanx_6xx",
+    "features": {},
+    "friendly_name": "SP657E",
+    "home_uri": "/sp630e",
+    "legacy_uniled_supported": true,
+    "model_id": 75,
+    "name": "SP657E",
+    "parent_id": 62,
+    "spec_functions": 87,
+    "support_level": "limited",
+    "transports": [
+      "ble"
+    ]
+  },
+  {
+    "color_cap": 4,
+    "connect_caps": 1,
+    "family": "banlanx_6xx",
+    "features": {},
+    "friendly_name": "SP648E",
+    "home_uri": "/sp630e",
+    "legacy_uniled_supported": true,
+    "model_id": 76,
+    "name": "SP648E",
+    "parent_id": 51,
+    "spec_functions": 87,
+    "support_level": "limited",
+    "transports": [
+      "ble"
+    ]
+  },
+  {
+    "color_cap": 4,
+    "connect_caps": 1,
+    "family": "banlanx_6xx",
+    "features": {},
+    "friendly_name": "SP634E",
+    "home_uri": "/sp630e",
+    "legacy_uniled_supported": true,
+    "model_id": 77,
+    "name": "SP634E",
+    "parent_id": 35,
+    "spec_functions": 81,
+    "support_level": "limited",
+    "transports": [
+      "ble"
+    ]
+  },
+  {
+    "color_cap": 4,
+    "connect_caps": 7,
+    "family": "banlanx_custom_5xx",
+    "features": {
+      "customFeature": 1,
+      "maxDataLength": 185,
+      "maxPixelChannels": 3600,
+      "otherFeature": 1
+    },
+    "friendly_name": "SP540E",
+    "home_uri": "/sp630e",
+    "legacy_uniled_supported": false,
+    "model_id": 91,
+    "name": "SP540E",
+    "parent_id": null,
+    "spec_functions": 87,
+    "support_level": "limited",
+    "transports": [
+      "ble",
+      "lan",
+      "cloud_optional"
+    ]
+  },
+  {
+    "color_cap": 4,
+    "connect_caps": 1,
+    "family": "banlanx_car_lights",
+    "features": {},
+    "friendly_name": "SP701E",
+    "home_uri": "/car_lights",
+    "legacy_uniled_supported": false,
+    "model_id": 257,
+    "name": "SP701E",
+    "parent_id": 65537,
+    "spec_functions": 2,
+    "support_level": "recognized",
+    "transports": [
+      "ble"
+    ]
+  },
+  {
+    "color_cap": 4,
+    "connect_caps": 1,
+    "family": "banlanx_car_lights",
+    "features": {},
+    "friendly_name": "SP702E",
+    "home_uri": "/car_lights",
+    "legacy_uniled_supported": false,
+    "model_id": 258,
+    "name": "SP702E",
+    "parent_id": 65537,
+    "spec_functions": 2,
+    "support_level": "recognized",
+    "transports": [
+      "ble"
+    ]
+  },
+  {
+    "color_cap": 4,
+    "connect_caps": 1,
+    "family": "banlanx_car_lights",
+    "features": {},
+    "friendly_name": "Car Lights",
+    "home_uri": "/car_lights",
+    "legacy_uniled_supported": false,
+    "model_id": 65537,
+    "name": "Car Lights",
+    "parent_id": null,
+    "spec_functions": 2,
+    "support_level": "recognized",
+    "transports": [
+      "ble"
+    ]
+  },
+  {
+    "color_cap": 4,
+    "connect_caps": 1,
+    "family": "banlanx_6xx",
+    "features": {},
+    "friendly_name": "SP648E",
+    "home_uri": "/sp630e",
+    "legacy_uniled_supported": true,
+    "model_id": 104,
+    "name": "SP648E",
+    "parent_id": 31,
+    "spec_functions": 81,
+    "support_level": "limited",
+    "transports": [
+      "ble"
+    ]
+  },
+  {
+    "color_cap": 4,
+    "connect_caps": 7,
+    "family": "banlanx_custom_5xx",
+    "features": {
+      "customFeature": 1,
+      "maxDataLength": 185,
+      "maxPixelChannels": 3600,
+      "otherFeature": 1
+    },
+    "friendly_name": "SP541E",
+    "home_uri": "/sp630e",
+    "legacy_uniled_supported": false,
+    "model_id": 92,
+    "name": "SP541E",
+    "parent_id": 91,
+    "spec_functions": 87,
+    "support_level": "limited",
+    "transports": [
+      "ble",
+      "lan",
+      "cloud_optional"
+    ]
+  },
+  {
+    "color_cap": 4,
+    "connect_caps": 7,
+    "family": "banlanx_custom_5xx",
+    "features": {
+      "customFeature": 1,
+      "maxDataLength": 185,
+      "maxPixelChannels": 3600,
+      "otherFeature": 1
+    },
+    "friendly_name": "SP542E",
+    "home_uri": "/sp630e",
+    "legacy_uniled_supported": false,
+    "model_id": 93,
+    "name": "SP542E",
+    "parent_id": 91,
+    "spec_functions": 87,
+    "support_level": "limited",
+    "transports": [
+      "ble",
+      "lan",
+      "cloud_optional"
+    ]
+  },
+  {
+    "color_cap": 4,
+    "connect_caps": 7,
+    "family": "banlanx_custom_5xx",
+    "features": {
+      "customFeature": 1,
+      "maxDataLength": 185,
+      "maxPixelChannels": 3600,
+      "otherFeature": 1
+    },
+    "friendly_name": "SP543E",
+    "home_uri": "/sp630e",
+    "legacy_uniled_supported": false,
+    "model_id": 94,
+    "name": "SP543E",
+    "parent_id": 91,
+    "spec_functions": 87,
+    "support_level": "limited",
+    "transports": [
+      "ble",
+      "lan",
+      "cloud_optional"
+    ]
+  },
+  {
+    "color_cap": 4,
+    "connect_caps": 7,
+    "family": "banlanx_custom_5xx",
+    "features": {
+      "customFeature": 1,
+      "maxDataLength": 185,
+      "maxPixelChannels": 3600,
+      "otherFeature": 1
+    },
+    "friendly_name": "SP544E",
+    "home_uri": "/sp630e",
+    "legacy_uniled_supported": false,
+    "model_id": 95,
+    "name": "SP544E",
+    "parent_id": 91,
+    "spec_functions": 87,
+    "support_level": "limited",
+    "transports": [
+      "ble",
+      "lan",
+      "cloud_optional"
+    ]
+  },
+  {
+    "color_cap": 4,
+    "connect_caps": 7,
+    "family": "banlanx_custom_5xx",
+    "features": {
+      "customFeature": 1,
+      "maxDataLength": 185,
+      "maxPixelChannels": 3600,
+      "otherFeature": 1
+    },
+    "friendly_name": "SP545E",
+    "home_uri": "/sp630e",
+    "legacy_uniled_supported": false,
+    "model_id": 96,
+    "name": "SP545E",
+    "parent_id": 91,
+    "spec_functions": 87,
+    "support_level": "limited",
+    "transports": [
+      "ble",
+      "lan",
+      "cloud_optional"
+    ]
+  },
+  {
+    "color_cap": 4,
+    "connect_caps": 7,
+    "family": "banlanx_custom_5xx",
+    "features": {
+      "customFeature": 1,
+      "maxDataLength": 185,
+      "maxPixelChannels": 3600,
+      "otherFeature": 1
+    },
+    "friendly_name": "SP546E",
+    "home_uri": "/sp630e",
+    "legacy_uniled_supported": false,
+    "model_id": 97,
+    "name": "SP546E",
+    "parent_id": 91,
+    "spec_functions": 87,
+    "support_level": "limited",
+    "transports": [
+      "ble",
+      "lan",
+      "cloud_optional"
+    ]
+  },
+  {
+    "color_cap": 4,
+    "connect_caps": 7,
+    "family": "banlanx_custom_5xx",
+    "features": {
+      "customFeature": 1,
+      "maxDataLength": 185,
+      "maxPixelChannels": 3600,
+      "otherFeature": 1,
+      "supportGetNetInfo": 37
+    },
+    "friendly_name": "SP547E",
+    "home_uri": "/sp630e",
+    "legacy_uniled_supported": false,
+    "model_id": 98,
+    "name": "SP547E",
+    "parent_id": 91,
+    "spec_functions": 87,
+    "support_level": "limited",
+    "transports": [
+      "ble",
+      "lan",
+      "cloud_optional"
+    ]
+  },
+  {
+    "color_cap": 4,
+    "connect_caps": 7,
+    "family": "banlanx_custom_5xx",
+    "features": {
+      "customFeature": 1,
+      "maxDataLength": 185,
+      "maxPixelChannels": 3600,
+      "otherFeature": 1,
+      "supportGetNetInfo": 37
+    },
+    "friendly_name": "SP548E",
+    "home_uri": "/sp630e",
+    "legacy_uniled_supported": false,
+    "model_id": 99,
+    "name": "SP548E",
+    "parent_id": 91,
+    "spec_functions": 87,
+    "support_level": "limited",
+    "transports": [
+      "ble",
+      "lan",
+      "cloud_optional"
+    ]
+  },
+  {
+    "color_cap": 4,
+    "connect_caps": 7,
+    "family": "banlanx_custom_5xx",
+    "features": {
+      "customFeature": 1,
+      "maxDataLength": 185,
+      "maxPixelChannels": 3600,
+      "otherFeature": 1
+    },
+    "friendly_name": "SP549E",
+    "home_uri": "/sp630e",
+    "legacy_uniled_supported": false,
+    "model_id": 100,
+    "name": "SP549E",
+    "parent_id": 91,
+    "spec_functions": 87,
+    "support_level": "limited",
+    "transports": [
+      "ble",
+      "lan",
+      "cloud_optional"
+    ]
+  },
+  {
+    "color_cap": 4,
+    "connect_caps": 7,
+    "family": "banlanx_custom_5xx",
+    "features": {
+      "customFeature": 1,
+      "maxDataLength": 185,
+      "maxPixelChannels": 3600,
+      "otherFeature": 1
+    },
+    "friendly_name": "SP54AE",
+    "home_uri": "/sp630e",
+    "legacy_uniled_supported": false,
+    "model_id": 101,
+    "name": "SP54AE",
+    "parent_id": 91,
+    "spec_functions": 87,
+    "support_level": "limited",
+    "transports": [
+      "ble",
+      "lan",
+      "cloud_optional"
+    ]
+  },
+  {
+    "color_cap": 4,
+    "connect_caps": 7,
+    "family": "banlanx_custom_5xx",
+    "features": {
+      "customFeature": 1,
+      "maxDataLength": 185,
+      "maxPixelChannels": 3600,
+      "otherFeature": 1
+    },
+    "friendly_name": "SP54BE",
+    "home_uri": "/sp630e",
+    "legacy_uniled_supported": false,
+    "model_id": 102,
+    "name": "SP54BE",
+    "parent_id": 91,
+    "spec_functions": 87,
+    "support_level": "limited",
+    "transports": [
+      "ble",
+      "lan",
+      "cloud_optional"
+    ]
+  },
+  {
+    "color_cap": 4,
+    "connect_caps": 7,
+    "family": "banlanx_custom_5xx",
+    "features": {
+      "customFeature": 1,
+      "maxDataLength": 185,
+      "maxPixelChannels": 3600,
+      "otherFeature": 1
+    },
+    "friendly_name": "SP54CE",
+    "home_uri": "/sp630e",
+    "legacy_uniled_supported": false,
+    "model_id": 103,
+    "name": "SP54CE",
+    "parent_id": 91,
+    "spec_functions": 87,
+    "support_level": "limited",
+    "transports": [
+      "ble",
+      "lan",
+      "cloud_optional"
+    ]
+  },
+  {
+    "color_cap": 4,
+    "connect_caps": 7,
+    "family": "banlanx_custom_5xx",
+    "features": {
+      "customFeature": 1,
+      "maxDataLength": 185,
+      "maxPixelChannels": 3600,
+      "musicFeature": 3,
+      "otherFeature": 1,
+      "settingFeature": 1
+    },
+    "friendly_name": "SP531E",
+    "home_uri": "/sp630e",
+    "legacy_uniled_supported": false,
+    "model_id": 79,
+    "name": "SP531E",
+    "parent_id": 78,
+    "spec_functions": 87,
+    "support_level": "limited",
+    "transports": [
+      "ble",
+      "lan",
+      "cloud_optional"
+    ]
+  },
+  {
+    "color_cap": 4,
+    "connect_caps": 7,
+    "family": "banlanx_custom_5xx",
+    "features": {
+      "customFeature": 1,
+      "maxDataLength": 185,
+      "maxPixelChannels": 3600,
+      "musicFeature": 3,
+      "otherFeature": 1,
+      "settingFeature": 1
+    },
+    "friendly_name": "SP532E",
+    "home_uri": "/sp630e",
+    "legacy_uniled_supported": false,
+    "model_id": 80,
+    "name": "SP532E",
+    "parent_id": 78,
+    "spec_functions": 87,
+    "support_level": "limited",
+    "transports": [
+      "ble",
+      "lan",
+      "cloud_optional"
+    ]
+  },
+  {
+    "color_cap": 4,
+    "connect_caps": 7,
+    "family": "banlanx_custom_5xx",
+    "features": {
+      "customFeature": 1,
+      "maxDataLength": 185,
+      "maxPixelChannels": 3600,
+      "musicFeature": 3,
+      "otherFeature": 1,
+      "settingFeature": 1
+    },
+    "friendly_name": "SP533E",
+    "home_uri": "/sp630e",
+    "legacy_uniled_supported": false,
+    "model_id": 81,
+    "name": "SP533E",
+    "parent_id": 78,
+    "spec_functions": 87,
+    "support_level": "limited",
+    "transports": [
+      "ble",
+      "lan",
+      "cloud_optional"
+    ]
+  },
+  {
+    "color_cap": 4,
+    "connect_caps": 7,
+    "family": "banlanx_custom_5xx",
+    "features": {
+      "customFeature": 1,
+      "maxDataLength": 185,
+      "maxPixelChannels": 3600,
+      "musicFeature": 3,
+      "otherFeature": 1,
+      "settingFeature": 1
+    },
+    "friendly_name": "SP534E",
+    "home_uri": "/sp630e",
+    "legacy_uniled_supported": false,
+    "model_id": 82,
+    "name": "SP534E",
+    "parent_id": 78,
+    "spec_functions": 87,
+    "support_level": "limited",
+    "transports": [
+      "ble",
+      "lan",
+      "cloud_optional"
+    ]
+  },
+  {
+    "color_cap": 4,
+    "connect_caps": 7,
+    "family": "banlanx_custom_5xx",
+    "features": {
+      "customFeature": 1,
+      "maxDataLength": 185,
+      "maxPixelChannels": 3600,
+      "musicFeature": 3,
+      "otherFeature": 1,
+      "settingFeature": 1
+    },
+    "friendly_name": "SP535E",
+    "home_uri": "/sp630e",
+    "legacy_uniled_supported": false,
+    "model_id": 83,
+    "name": "SP535E",
+    "parent_id": 78,
+    "spec_functions": 87,
+    "support_level": "limited",
+    "transports": [
+      "ble",
+      "lan",
+      "cloud_optional"
+    ]
+  },
+  {
+    "color_cap": 4,
+    "connect_caps": 7,
+    "family": "banlanx_custom_5xx",
+    "features": {
+      "customFeature": 1,
+      "maxPixelChannels": 3600,
+      "musicFeature": 3,
+      "otherFeature": 1,
+      "settingFeature": 1
+    },
+    "friendly_name": "SP536E",
+    "home_uri": "/sp630e",
+    "legacy_uniled_supported": false,
+    "model_id": 84,
+    "name": "SP536E",
+    "parent_id": 78,
+    "spec_functions": 87,
+    "support_level": "limited",
+    "transports": [
+      "ble",
+      "lan",
+      "cloud_optional"
+    ]
+  },
+  {
+    "color_cap": 4,
+    "connect_caps": 7,
+    "family": "banlanx_custom_5xx",
+    "features": {
+      "customFeature": 1,
+      "maxPixelChannels": 3600,
+      "musicFeature": 3,
+      "otherFeature": 1,
+      "settingFeature": 1
+    },
+    "friendly_name": "SP537E",
+    "home_uri": "/sp630e",
+    "legacy_uniled_supported": false,
+    "model_id": 85,
+    "name": "SP537E",
+    "parent_id": 78,
+    "spec_functions": 87,
+    "support_level": "limited",
+    "transports": [
+      "ble",
+      "lan",
+      "cloud_optional"
+    ]
+  },
+  {
+    "color_cap": 4,
+    "connect_caps": 7,
+    "family": "banlanx_custom_5xx",
+    "features": {
+      "customFeature": 1,
+      "maxPixelChannels": 3600,
+      "musicFeature": 3,
+      "otherFeature": 1,
+      "settingFeature": 1
+    },
+    "friendly_name": "SP538E",
+    "home_uri": "/sp630e",
+    "legacy_uniled_supported": false,
+    "model_id": 86,
+    "name": "SP538E",
+    "parent_id": 78,
+    "spec_functions": 87,
+    "support_level": "limited",
+    "transports": [
+      "ble",
+      "lan",
+      "cloud_optional"
+    ]
+  },
+  {
+    "color_cap": 4,
+    "connect_caps": 7,
+    "family": "banlanx_custom_5xx",
+    "features": {
+      "customFeature": 1,
+      "maxPixelChannels": 3600,
+      "musicFeature": 3,
+      "otherFeature": 1,
+      "settingFeature": 1
+    },
+    "friendly_name": "SP539E",
+    "home_uri": "/sp630e",
+    "legacy_uniled_supported": false,
+    "model_id": 87,
+    "name": "SP539E",
+    "parent_id": 78,
+    "spec_functions": 87,
+    "support_level": "limited",
+    "transports": [
+      "ble",
+      "lan",
+      "cloud_optional"
+    ]
+  },
+  {
+    "color_cap": 4,
+    "connect_caps": 7,
+    "family": "banlanx_custom_5xx",
+    "features": {
+      "customFeature": 1,
+      "maxPixelChannels": 3600,
+      "musicFeature": 3,
+      "otherFeature": 1,
+      "settingFeature": 1
+    },
+    "friendly_name": "SP53AE",
+    "home_uri": "/sp630e",
+    "legacy_uniled_supported": false,
+    "model_id": 88,
+    "name": "SP53AE",
+    "parent_id": 78,
+    "spec_functions": 87,
+    "support_level": "limited",
+    "transports": [
+      "ble",
+      "lan",
+      "cloud_optional"
+    ]
+  },
+  {
+    "color_cap": 4,
+    "connect_caps": 7,
+    "family": "banlanx_custom_5xx",
+    "features": {
+      "customFeature": 1,
+      "maxPixelChannels": 3600,
+      "musicFeature": 3,
+      "otherFeature": 1,
+      "settingFeature": 1
+    },
+    "friendly_name": "SP53BE",
+    "home_uri": "/sp630e",
+    "legacy_uniled_supported": false,
+    "model_id": 89,
+    "name": "SP53BE",
+    "parent_id": 78,
+    "spec_functions": 87,
+    "support_level": "limited",
+    "transports": [
+      "ble",
+      "lan",
+      "cloud_optional"
+    ]
+  },
+  {
+    "color_cap": 4,
+    "connect_caps": 7,
+    "family": "banlanx_custom_5xx",
+    "features": {
+      "customFeature": 1,
+      "maxPixelChannels": 3600,
+      "musicFeature": 3,
+      "otherFeature": 1,
+      "settingFeature": 1
+    },
+    "friendly_name": "SP53CE",
+    "home_uri": "/sp630e",
+    "legacy_uniled_supported": false,
+    "model_id": 90,
+    "name": "SP53CE",
+    "parent_id": 78,
+    "spec_functions": 87,
+    "support_level": "limited",
+    "transports": [
+      "ble",
+      "lan",
+      "cloud_optional"
+    ]
+  },
+  {
+    "color_cap": 4,
+    "connect_caps": 7,
+    "family": "banlanx_custom_5xx",
+    "features": {
+      "customFeature": 1,
+      "maxDataLength": 185,
+      "maxPixelChannels": 3600,
+      "otherFeature": 1
+    },
+    "friendly_name": "SP548E",
+    "home_uri": "/sp630e",
+    "legacy_uniled_supported": false,
+    "model_id": 105,
+    "name": "SP548E",
+    "parent_id": 99,
+    "spec_functions": 87,
+    "support_level": "limited",
+    "transports": [
+      "ble",
+      "lan",
+      "cloud_optional"
+    ]
+  },
+  {
+    "color_cap": 4,
+    "connect_caps": 7,
+    "family": "banlanx_custom_5xx",
+    "features": {
+      "customFeature": 1,
+      "maxDataLength": 185,
+      "maxPixelChannels": 3600,
+      "otherFeature": 1
+    },
+    "friendly_name": "SP547E",
+    "home_uri": "/sp630e",
+    "legacy_uniled_supported": false,
+    "model_id": 106,
+    "name": "SP547E",
+    "parent_id": 98,
+    "spec_functions": 87,
+    "support_level": "limited",
+    "transports": [
+      "ble",
+      "lan",
+      "cloud_optional"
+    ]
+  },
+  {
+    "color_cap": 4,
+    "connect_caps": 7,
+    "family": "banlanx_custom_5xx",
+    "features": {
+      "customFeature": 1,
+      "maxDataLength": 185,
+      "maxPixelChannels": 3600,
+      "otherFeature": 1
+    },
+    "friendly_name": "SP549E",
+    "home_uri": "/sp630e",
+    "legacy_uniled_supported": false,
+    "model_id": 107,
+    "name": "SP549E",
+    "parent_id": 100,
+    "spec_functions": 87,
+    "support_level": "limited",
+    "transports": [
+      "ble",
+      "lan",
+      "cloud_optional"
+    ]
+  },
+  {
+    "color_cap": 4,
+    "connect_caps": 1,
+    "family": "banlanx_6xx",
+    "features": {},
+    "friendly_name": "SP649E",
+    "home_uri": "/sp630e",
+    "legacy_uniled_supported": true,
+    "model_id": 108,
+    "name": "SP649E",
+    "parent_id": 52,
+    "spec_functions": 87,
+    "support_level": "limited",
+    "transports": [
+      "ble"
+    ]
+  },
+  {
+    "color_cap": 0,
+    "connect_caps": 1,
+    "family": "banlanx_car_lights",
+    "features": {},
+    "friendly_name": "SP-MIC",
+    "home_uri": "/car_lights",
+    "legacy_uniled_supported": false,
+    "model_id": 44033,
+    "name": "SP-MIC",
+    "parent_id": 65537,
+    "spec_functions": 0,
+    "support_level": "recognized",
+    "transports": [
+      "ble"
+    ]
+  },
+  {
+    "color_cap": 4,
+    "connect_caps": 7,
+    "family": "banlanx_custom_5xx",
+    "features": {
+      "customFeature": 1,
+      "maxDataLength": 185,
+      "maxPixelChannels": 3600,
+      "otherFeature": 1
+    },
+    "friendly_name": "SP521E",
+    "home_uri": "/sp630e",
+    "legacy_uniled_supported": false,
+    "model_id": 109,
+    "name": "SP521E",
+    "parent_id": 91,
+    "spec_functions": 85,
+    "support_level": "limited",
+    "transports": [
+      "ble",
+      "lan",
+      "cloud_optional"
+    ]
+  },
+  {
+    "color_cap": 4,
+    "connect_caps": 7,
+    "family": "banlanx_custom_5xx",
+    "features": {
+      "customFeature": 1,
+      "maxDataLength": 185,
+      "maxPixelChannels": 3600,
+      "otherFeature": 1
+    },
+    "friendly_name": "SP522E",
+    "home_uri": "/sp630e",
+    "legacy_uniled_supported": false,
+    "model_id": 110,
+    "name": "SP522E",
+    "parent_id": 91,
+    "spec_functions": 85,
+    "support_level": "limited",
+    "transports": [
+      "ble",
+      "lan",
+      "cloud_optional"
+    ]
+  },
+  {
+    "color_cap": 4,
+    "connect_caps": 7,
+    "family": "banlanx_custom_5xx",
+    "features": {
+      "customFeature": 1,
+      "maxDataLength": 185,
+      "maxPixelChannels": 3600,
+      "otherFeature": 1
+    },
+    "friendly_name": "SP523E",
+    "home_uri": "/sp630e",
+    "legacy_uniled_supported": false,
+    "model_id": 111,
+    "name": "SP523E",
+    "parent_id": 91,
+    "spec_functions": 85,
+    "support_level": "limited",
+    "transports": [
+      "ble",
+      "lan",
+      "cloud_optional"
+    ]
+  },
+  {
+    "color_cap": 4,
+    "connect_caps": 7,
+    "family": "banlanx_custom_5xx",
+    "features": {
+      "customFeature": 1,
+      "maxDataLength": 185,
+      "maxPixelChannels": 3600,
+      "otherFeature": 1
+    },
+    "friendly_name": "SP524E",
+    "home_uri": "/sp630e",
+    "legacy_uniled_supported": false,
+    "model_id": 112,
+    "name": "SP524E",
+    "parent_id": 91,
+    "spec_functions": 85,
+    "support_level": "limited",
+    "transports": [
+      "ble",
+      "lan",
+      "cloud_optional"
+    ]
+  },
+  {
+    "color_cap": 4,
+    "connect_caps": 7,
+    "family": "banlanx_custom_5xx",
+    "features": {
+      "customFeature": 1,
+      "maxDataLength": 185,
+      "maxPixelChannels": 3600,
+      "otherFeature": 1
+    },
+    "friendly_name": "SP525E",
+    "home_uri": "/sp630e",
+    "legacy_uniled_supported": false,
+    "model_id": 113,
+    "name": "SP525E",
+    "parent_id": 91,
+    "spec_functions": 85,
+    "support_level": "limited",
+    "transports": [
+      "ble",
+      "lan",
+      "cloud_optional"
+    ]
+  },
+  {
+    "color_cap": 4,
+    "connect_caps": 7,
+    "family": "banlanx_custom_5xx",
+    "features": {
+      "customFeature": 1,
+      "maxDataLength": 185,
+      "maxPixelChannels": 3600,
+      "otherFeature": 1
+    },
+    "friendly_name": "SP526E",
+    "home_uri": "/sp630e",
+    "legacy_uniled_supported": false,
+    "model_id": 114,
+    "name": "SP526E",
+    "parent_id": 91,
+    "spec_functions": 85,
+    "support_level": "limited",
+    "transports": [
+      "ble",
+      "lan",
+      "cloud_optional"
+    ]
+  },
+  {
+    "color_cap": 4,
+    "connect_caps": 7,
+    "family": "banlanx_custom_5xx",
+    "features": {
+      "customFeature": 1,
+      "maxDataLength": 185,
+      "maxPixelChannels": 3600,
+      "otherFeature": 1
+    },
+    "friendly_name": "SP527E",
+    "home_uri": "/sp630e",
+    "legacy_uniled_supported": false,
+    "model_id": 115,
+    "name": "SP527E",
+    "parent_id": 91,
+    "spec_functions": 85,
+    "support_level": "limited",
+    "transports": [
+      "ble",
+      "lan",
+      "cloud_optional"
+    ]
+  },
+  {
+    "color_cap": 4,
+    "connect_caps": 7,
+    "family": "banlanx_custom_5xx",
+    "features": {
+      "customFeature": 1,
+      "maxDataLength": 185,
+      "maxPixelChannels": 3600,
+      "otherFeature": 1
+    },
+    "friendly_name": "SP528E",
+    "home_uri": "/sp630e",
+    "legacy_uniled_supported": false,
+    "model_id": 116,
+    "name": "SP528E",
+    "parent_id": 91,
+    "spec_functions": 85,
+    "support_level": "limited",
+    "transports": [
+      "ble",
+      "lan",
+      "cloud_optional"
+    ]
+  },
+  {
+    "color_cap": 4,
+    "connect_caps": 7,
+    "family": "banlanx_custom_5xx",
+    "features": {
+      "customFeature": 1,
+      "maxDataLength": 185,
+      "maxPixelChannels": 3600,
+      "otherFeature": 1
+    },
+    "friendly_name": "SP529E",
+    "home_uri": "/sp630e",
+    "legacy_uniled_supported": false,
+    "model_id": 117,
+    "name": "SP529E",
+    "parent_id": 91,
+    "spec_functions": 85,
+    "support_level": "limited",
+    "transports": [
+      "ble",
+      "lan",
+      "cloud_optional"
+    ]
+  },
+  {
+    "color_cap": 4,
+    "connect_caps": 7,
+    "family": "banlanx_custom_5xx",
+    "features": {
+      "customFeature": 1,
+      "maxDataLength": 185,
+      "maxPixelChannels": 3600,
+      "otherFeature": 1
+    },
+    "friendly_name": "SP52AE",
+    "home_uri": "/sp630e",
+    "legacy_uniled_supported": false,
+    "model_id": 118,
+    "name": "SP52AE",
+    "parent_id": 91,
+    "spec_functions": 85,
+    "support_level": "limited",
+    "transports": [
+      "ble",
+      "lan",
+      "cloud_optional"
+    ]
+  },
+  {
+    "color_cap": 4,
+    "connect_caps": 7,
+    "family": "banlanx_custom_5xx",
+    "features": {
+      "customFeature": 1,
+      "maxDataLength": 185,
+      "maxPixelChannels": 3600,
+      "otherFeature": 1
+    },
+    "friendly_name": "SP52BE",
+    "home_uri": "/sp630e",
+    "legacy_uniled_supported": false,
+    "model_id": 119,
+    "name": "SP52BE",
+    "parent_id": 91,
+    "spec_functions": 85,
+    "support_level": "limited",
+    "transports": [
+      "ble",
+      "lan",
+      "cloud_optional"
+    ]
+  },
+  {
+    "color_cap": 4,
+    "connect_caps": 7,
+    "family": "banlanx_custom_5xx",
+    "features": {
+      "customFeature": 1,
+      "maxDataLength": 185,
+      "maxPixelChannels": 3600,
+      "otherFeature": 1
+    },
+    "friendly_name": "SP52CE",
+    "home_uri": "/sp630e",
+    "legacy_uniled_supported": false,
+    "model_id": 120,
+    "name": "SP52CE",
+    "parent_id": 91,
+    "spec_functions": 85,
+    "support_level": "limited",
+    "transports": [
+      "ble",
+      "lan",
+      "cloud_optional"
+    ]
+  },
+  {
+    "color_cap": 4,
+    "connect_caps": 1,
+    "family": "banlanx_scene_ui",
+    "features": {
+      "features": 1,
+      "maxPixelChannels": 1800
+    },
+    "friendly_name": "SP660E",
+    "home_uri": "/device/scene_ui",
+    "legacy_uniled_supported": false,
+    "model_id": 121,
+    "name": "SP660E",
+    "parent_id": null,
+    "spec_functions": 87,
+    "support_level": "recognized",
+    "transports": [
+      "ble"
+    ]
+  },
+  {
+    "color_cap": 8,
+    "connect_caps": 1,
+    "family": "banlanx_scene_ui",
+    "features": {
+      "features": 1,
+      "maxPixelChannels": 1800
+    },
+    "friendly_name": "SP661E",
+    "home_uri": "/device/scene_ui",
+    "legacy_uniled_supported": false,
+    "model_id": 122,
+    "name": "SP661E",
+    "parent_id": 121,
+    "spec_functions": 87,
+    "support_level": "recognized",
+    "transports": [
+      "ble"
+    ]
+  },
+  {
+    "color_cap": 8,
+    "connect_caps": 1,
+    "family": "banlanx_scene_ui",
+    "features": {
+      "features": 1,
+      "maxPixelChannels": 1800
+    },
+    "friendly_name": "SP662E",
+    "home_uri": "/device/scene_ui",
+    "legacy_uniled_supported": false,
+    "model_id": 123,
+    "name": "SP662E",
+    "parent_id": 121,
+    "spec_functions": 87,
+    "support_level": "recognized",
+    "transports": [
+      "ble"
+    ]
+  },
+  {
+    "color_cap": 1,
+    "connect_caps": 1,
+    "family": "banlanx_scene_ui",
+    "features": {
+      "features": 1,
+      "maxPixelChannels": 1800
+    },
+    "friendly_name": "SP663E",
+    "home_uri": "/device/scene_ui",
+    "legacy_uniled_supported": false,
+    "model_id": 124,
+    "name": "SP663E",
+    "parent_id": 121,
+    "spec_functions": 87,
+    "support_level": "recognized",
+    "transports": [
+      "ble"
+    ]
+  },
+  {
+    "color_cap": 2,
+    "connect_caps": 1,
+    "family": "banlanx_scene_ui",
+    "features": {
+      "features": 1,
+      "maxPixelChannels": 1800
+    },
+    "friendly_name": "SP664E",
+    "home_uri": "/device/scene_ui",
+    "legacy_uniled_supported": false,
+    "model_id": 125,
+    "name": "SP664E",
+    "parent_id": 121,
+    "spec_functions": 87,
+    "support_level": "recognized",
+    "transports": [
+      "ble"
+    ]
+  },
+  {
+    "color_cap": 4,
+    "connect_caps": 1,
+    "family": "banlanx_scene_ui",
+    "features": {
+      "features": 1,
+      "maxPixelChannels": 1800
+    },
+    "friendly_name": "SP665E",
+    "home_uri": "/device/scene_ui",
+    "legacy_uniled_supported": false,
+    "model_id": 126,
+    "name": "SP665E",
+    "parent_id": 121,
+    "spec_functions": 87,
+    "support_level": "recognized",
+    "transports": [
+      "ble"
+    ]
+  },
+  {
+    "color_cap": 4,
+    "connect_caps": 1,
+    "family": "banlanx_scene_ui",
+    "features": {
+      "features": 1,
+      "maxPixelChannels": 1800
+    },
+    "friendly_name": "SP666E",
+    "home_uri": "/device/scene_ui",
+    "legacy_uniled_supported": false,
+    "model_id": 127,
+    "name": "SP666E",
+    "parent_id": 121,
+    "spec_functions": 87,
+    "support_level": "recognized",
+    "transports": [
+      "ble"
+    ]
+  },
+  {
+    "color_cap": 4,
+    "connect_caps": 1,
+    "family": "banlanx_scene_ui",
+    "features": {
+      "features": 1,
+      "maxPixelChannels": 1800
+    },
+    "friendly_name": "SP667E",
+    "home_uri": "/device/scene_ui",
+    "legacy_uniled_supported": false,
+    "model_id": 128,
+    "name": "SP667E",
+    "parent_id": 121,
+    "spec_functions": 87,
+    "support_level": "recognized",
+    "transports": [
+      "ble"
+    ]
+  },
+  {
+    "color_cap": 4,
+    "connect_caps": 1,
+    "family": "banlanx_scene_ui",
+    "features": {
+      "features": 1,
+      "maxPixelChannels": 1800
+    },
+    "friendly_name": "SP668E",
+    "home_uri": "/device/scene_ui",
+    "legacy_uniled_supported": false,
+    "model_id": 129,
+    "name": "SP668E",
+    "parent_id": 121,
+    "spec_functions": 87,
+    "support_level": "recognized",
+    "transports": [
+      "ble"
+    ]
+  },
+  {
+    "color_cap": 4,
+    "connect_caps": 1,
+    "family": "banlanx_scene_ui",
+    "features": {
+      "features": 1,
+      "maxPixelChannels": 1800
+    },
+    "friendly_name": "SP669E",
+    "home_uri": "/device/scene_ui",
+    "legacy_uniled_supported": false,
+    "model_id": 130,
+    "name": "SP669E",
+    "parent_id": 121,
+    "spec_functions": 87,
+    "support_level": "recognized",
+    "transports": [
+      "ble"
+    ]
+  },
+  {
+    "color_cap": 4,
+    "connect_caps": 1,
+    "family": "banlanx_scene_ui",
+    "features": {
+      "features": 1,
+      "maxPixelChannels": 1800
+    },
+    "friendly_name": "SP66AE",
+    "home_uri": "/device/scene_ui",
+    "legacy_uniled_supported": false,
+    "model_id": 131,
+    "name": "SP66AE",
+    "parent_id": 121,
+    "spec_functions": 87,
+    "support_level": "recognized",
+    "transports": [
+      "ble"
+    ]
+  },
+  {
+    "color_cap": 4,
+    "connect_caps": 1,
+    "family": "banlanx_scene_ui",
+    "features": {
+      "features": 1,
+      "maxPixelChannels": 1800
+    },
+    "friendly_name": "SP66BE",
+    "home_uri": "/device/scene_ui",
+    "legacy_uniled_supported": false,
+    "model_id": 132,
+    "name": "SP66BE",
+    "parent_id": 121,
+    "spec_functions": 87,
+    "support_level": "recognized",
+    "transports": [
+      "ble"
+    ]
+  },
+  {
+    "color_cap": 4,
+    "connect_caps": 1,
+    "family": "banlanx_scene_ui",
+    "features": {
+      "features": 1,
+      "maxPixelChannels": 1800
+    },
+    "friendly_name": "SP66CE",
+    "home_uri": "/device/scene_ui",
+    "legacy_uniled_supported": false,
+    "model_id": 133,
+    "name": "SP66CE",
+    "parent_id": 121,
+    "spec_functions": 87,
+    "support_level": "recognized",
+    "transports": [
+      "ble"
+    ]
+  },
+  {
+    "color_cap": 4,
+    "connect_caps": 1,
+    "family": "banlanx_scene_ui",
+    "features": {
+      "features": 1,
+      "maxPixelChannels": 1800
+    },
+    "friendly_name": "DynamicBar",
+    "home_uri": "/device/scene_ui",
+    "legacy_uniled_supported": false,
+    "model_id": 134,
+    "name": "DynamicBar",
+    "parent_id": 121,
+    "spec_functions": 87,
+    "support_level": "recognized",
+    "transports": [
+      "ble"
+    ]
+  },
+  {
+    "color_cap": 4,
+    "connect_caps": 1,
+    "family": "banlanx_scene_ui",
+    "features": {
+      "features": 1,
+      "maxPixelChannels": 1800
+    },
+    "friendly_name": "SP679E",
+    "home_uri": "/device/scene_ui",
+    "legacy_uniled_supported": false,
+    "model_id": 135,
+    "name": "SP679E",
+    "parent_id": 121,
+    "spec_functions": 87,
+    "support_level": "recognized",
+    "transports": [
+      "ble"
+    ]
+  },
+  {
+    "color_cap": 4,
+    "connect_caps": 1,
+    "family": "banlanx_6xx",
+    "features": {},
+    "friendly_name": "SP639E",
+    "home_uri": "/sp630e",
+    "legacy_uniled_supported": true,
+    "model_id": 136,
+    "name": "SP639E",
+    "parent_id": 40,
+    "spec_functions": 87,
+    "support_level": "limited",
+    "transports": [
+      "ble"
+    ]
+  },
+  {
+    "color_cap": 4,
+    "connect_caps": 1,
+    "family": "banlanx_6xx",
+    "features": {},
+    "friendly_name": "SP633E",
+    "home_uri": "/sp630e",
+    "legacy_uniled_supported": true,
+    "model_id": 137,
+    "name": "SP633E",
+    "parent_id": 34,
+    "spec_functions": 87,
+    "support_level": "limited",
+    "transports": [
+      "ble"
+    ]
+  },
+  {
+    "color_cap": 4,
+    "connect_caps": 7,
+    "family": "banlanx_custom_5xx",
+    "features": {
+      "customFeature": 1,
+      "maxDataLength": 185,
+      "maxPixelChannels": 3600,
+      "otherFeature": 1
+    },
+    "friendly_name": "SP541E",
+    "home_uri": "/sp630e",
+    "legacy_uniled_supported": false,
+    "model_id": 138,
+    "name": "SP541E",
+    "parent_id": 92,
+    "spec_functions": 87,
+    "support_level": "limited",
+    "transports": [
+      "ble",
+      "lan",
+      "cloud_optional"
+    ]
+  },
+  {
+    "color_cap": 4,
+    "connect_caps": 7,
+    "family": "banlanx_custom_5xx",
+    "features": {
+      "customFeature": 1,
+      "maxDataLength": 185,
+      "maxPixelChannels": 3600,
+      "otherFeature": 1
+    },
+    "friendly_name": "SP542E",
+    "home_uri": "/sp630e",
+    "legacy_uniled_supported": false,
+    "model_id": 139,
+    "name": "SP542E",
+    "parent_id": 93,
+    "spec_functions": 87,
+    "support_level": "limited",
+    "transports": [
+      "ble",
+      "lan",
+      "cloud_optional"
+    ]
+  },
+  {
+    "color_cap": 4,
+    "connect_caps": 7,
+    "family": "banlanx_custom_5xx",
+    "features": {
+      "customFeature": 1,
+      "maxDataLength": 185,
+      "maxPixelChannels": 3600,
+      "otherFeature": 1
+    },
+    "friendly_name": "SP543E",
+    "home_uri": "/sp630e",
+    "legacy_uniled_supported": false,
+    "model_id": 140,
+    "name": "SP543E",
+    "parent_id": 94,
+    "spec_functions": 87,
+    "support_level": "limited",
+    "transports": [
+      "ble",
+      "lan",
+      "cloud_optional"
+    ]
+  },
+  {
+    "color_cap": 4,
+    "connect_caps": 1,
+    "family": "banlanx_6xx",
+    "features": {},
+    "friendly_name": "SP638E",
+    "home_uri": "/sp630e",
+    "legacy_uniled_supported": true,
+    "model_id": 141,
+    "name": "SP638E",
+    "parent_id": 39,
+    "spec_functions": 87,
+    "support_level": "limited",
+    "transports": [
+      "ble"
+    ]
+  },
+  {
+    "color_cap": 4,
+    "connect_caps": 8,
+    "family": "banlanx_scene_mesh",
+    "features": {
+      "features": 0,
+      "maxPixelChannels": 2700
+    },
+    "friendly_name": "SP320E",
+    "home_uri": "/device/scene_ui",
+    "legacy_uniled_supported": false,
+    "model_id": 160,
+    "name": "SP320E",
+    "parent_id": null,
+    "spec_functions": 1,
+    "support_level": "recognized",
+    "transports": [
+      "ble_mesh"
+    ]
+  },
+  {
+    "color_cap": 8,
+    "connect_caps": 8,
+    "family": "banlanx_scene_mesh",
+    "features": {
+      "features": 0,
+      "maxPixelChannels": 2700
+    },
+    "friendly_name": "SP321E",
+    "home_uri": "/device/scene_ui",
+    "legacy_uniled_supported": false,
+    "model_id": 161,
+    "name": "SP321E",
+    "parent_id": 160,
+    "spec_functions": 71,
+    "support_level": "recognized",
+    "transports": [
+      "ble_mesh"
+    ]
+  },
+  {
+    "color_cap": 8,
+    "connect_caps": 8,
+    "family": "banlanx_scene_mesh",
+    "features": {
+      "features": 0,
+      "maxPixelChannels": 2700
+    },
+    "friendly_name": "SP322E",
+    "home_uri": "/device/scene_ui",
+    "legacy_uniled_supported": false,
+    "model_id": 162,
+    "name": "SP322E",
+    "parent_id": 160,
+    "spec_functions": 71,
+    "support_level": "recognized",
+    "transports": [
+      "ble_mesh"
+    ]
+  },
+  {
+    "color_cap": 1,
+    "connect_caps": 8,
+    "family": "banlanx_scene_mesh",
+    "features": {
+      "features": 0,
+      "maxPixelChannels": 2700
+    },
+    "friendly_name": "SP323E",
+    "home_uri": "/device/scene_ui",
+    "legacy_uniled_supported": false,
+    "model_id": 163,
+    "name": "SP323E",
+    "parent_id": 160,
+    "spec_functions": 71,
+    "support_level": "recognized",
+    "transports": [
+      "ble_mesh"
+    ]
+  },
+  {
+    "color_cap": 2,
+    "connect_caps": 8,
+    "family": "banlanx_scene_mesh",
+    "features": {
+      "features": 0,
+      "maxPixelChannels": 2700
+    },
+    "friendly_name": "SP324E",
+    "home_uri": "/device/scene_ui",
+    "legacy_uniled_supported": false,
+    "model_id": 164,
+    "name": "SP324E",
+    "parent_id": 160,
+    "spec_functions": 71,
+    "support_level": "recognized",
+    "transports": [
+      "ble_mesh"
+    ]
+  },
+  {
+    "color_cap": 4,
+    "connect_caps": 8,
+    "family": "banlanx_scene_mesh",
+    "features": {
+      "features": 0,
+      "maxPixelChannels": 2700
+    },
+    "friendly_name": "SP325E",
+    "home_uri": "/device/scene_ui",
+    "legacy_uniled_supported": false,
+    "model_id": 165,
+    "name": "SP325E",
+    "parent_id": 160,
+    "spec_functions": 71,
+    "support_level": "recognized",
+    "transports": [
+      "ble_mesh"
+    ]
+  },
+  {
+    "color_cap": 4,
+    "connect_caps": 8,
+    "family": "banlanx_scene_mesh",
+    "features": {
+      "features": 0,
+      "maxPixelChannels": 2700
+    },
+    "friendly_name": "SP326E",
+    "home_uri": "/device/scene_ui",
+    "legacy_uniled_supported": false,
+    "model_id": 166,
+    "name": "SP326E",
+    "parent_id": 160,
+    "spec_functions": 1,
+    "support_level": "recognized",
+    "transports": [
+      "ble_mesh"
+    ]
+  },
+  {
+    "color_cap": 4,
+    "connect_caps": 8,
+    "family": "banlanx_scene_mesh",
+    "features": {
+      "features": 0,
+      "maxPixelChannels": 2700
+    },
+    "friendly_name": "SP327E",
+    "home_uri": "/device/scene_ui",
+    "legacy_uniled_supported": false,
+    "model_id": 167,
+    "name": "SP327E",
+    "parent_id": 160,
+    "spec_functions": 1,
+    "support_level": "recognized",
+    "transports": [
+      "ble_mesh"
+    ]
+  },
+  {
+    "color_cap": 1,
+    "connect_caps": 8,
+    "family": "banlanx_scene_mesh",
+    "features": {
+      "features": 0,
+      "maxPixelChannels": 2700
+    },
+    "friendly_name": "SP328E",
+    "home_uri": "/device/scene_ui",
+    "legacy_uniled_supported": false,
+    "model_id": 168,
+    "name": "SP328E",
+    "parent_id": 160,
+    "spec_functions": 71,
+    "support_level": "recognized",
+    "transports": [
+      "ble_mesh"
+    ]
+  },
+  {
+    "color_cap": 4,
+    "connect_caps": 8,
+    "family": "banlanx_scene_mesh",
+    "features": {
+      "features": 0,
+      "maxPixelChannels": 2700
+    },
+    "friendly_name": "SP329E",
+    "home_uri": "/device/scene_ui",
+    "legacy_uniled_supported": false,
+    "model_id": 169,
+    "name": "SP329E",
+    "parent_id": 160,
+    "spec_functions": 1,
+    "support_level": "recognized",
+    "transports": [
+      "ble_mesh"
+    ]
+  },
+  {
+    "color_cap": 4,
+    "connect_caps": 8,
+    "family": "banlanx_scene_mesh",
+    "features": {
+      "features": 0,
+      "maxPixelChannels": 2700
+    },
+    "friendly_name": "SP32AE",
+    "home_uri": "/device/scene_ui",
+    "legacy_uniled_supported": false,
+    "model_id": 170,
+    "name": "SP32AE",
+    "parent_id": 160,
+    "spec_functions": 1,
+    "support_level": "recognized",
+    "transports": [
+      "ble_mesh"
+    ]
+  },
+  {
+    "color_cap": 4,
+    "connect_caps": 8,
+    "family": "banlanx_scene_mesh",
+    "features": {
+      "features": 0,
+      "maxPixelChannels": 2700
+    },
+    "friendly_name": "SP32BE",
+    "home_uri": "/device/scene_ui",
+    "legacy_uniled_supported": false,
+    "model_id": 171,
+    "name": "SP32BE",
+    "parent_id": 160,
+    "spec_functions": 1,
+    "support_level": "recognized",
+    "transports": [
+      "ble_mesh"
+    ]
+  },
+  {
+    "color_cap": 4,
+    "connect_caps": 8,
+    "family": "banlanx_scene_mesh",
+    "features": {
+      "features": 0,
+      "maxPixelChannels": 2700
+    },
+    "friendly_name": "SP32CE",
+    "home_uri": "/device/scene_ui",
+    "legacy_uniled_supported": false,
+    "model_id": 172,
+    "name": "SP32CE",
+    "parent_id": 160,
+    "spec_functions": 1,
+    "support_level": "recognized",
+    "transports": [
+      "ble_mesh"
+    ]
+  },
+  {
+    "color_cap": 1,
+    "connect_caps": 1,
+    "family": "banlanx_v2",
+    "features": {},
+    "friendly_name": "SP611E",
+    "home_uri": "/sp611e",
+    "legacy_uniled_supported": true,
+    "model_id": 142,
+    "name": "SP611E",
+    "parent_id": 4,
+    "spec_functions": 87,
+    "support_level": "limited",
+    "transports": [
+      "ble"
+    ]
+  },
+  {
+    "color_cap": 1,
+    "connect_caps": 1,
+    "family": "banlanx_v2",
+    "features": {},
+    "friendly_name": "LED Strip",
+    "home_uri": "/sp611e",
+    "legacy_uniled_supported": false,
+    "model_id": 143,
+    "name": "LED Strip",
+    "parent_id": 28,
+    "spec_functions": 87,
+    "support_level": "limited",
+    "transports": [
+      "ble"
+    ]
+  },
+  {
+    "color_cap": 4,
+    "connect_caps": 1,
+    "family": "banlanx_6xx",
+    "features": {},
+    "friendly_name": "360PhotoB",
+    "home_uri": "/sp630e",
+    "legacy_uniled_supported": false,
+    "model_id": 144,
+    "name": "360PhotoB",
+    "parent_id": 31,
+    "spec_functions": 87,
+    "support_level": "limited",
+    "transports": [
+      "ble"
+    ]
+  },
+  {
+    "color_cap": 4,
+    "connect_caps": 1,
+    "family": "banlanx_6xx",
+    "features": {},
+    "friendly_name": "SP643E",
+    "home_uri": "/sp630e",
+    "legacy_uniled_supported": true,
+    "model_id": 145,
+    "name": "SP643E",
+    "parent_id": 46,
+    "spec_functions": 87,
+    "support_level": "limited",
+    "transports": [
+      "ble"
+    ]
+  },
+  {
+    "color_cap": 4,
+    "connect_caps": 1,
+    "family": "banlanx_6xx",
+    "features": {},
+    "friendly_name": "SP64AE",
+    "home_uri": "/sp630e",
+    "legacy_uniled_supported": true,
+    "model_id": 146,
+    "name": "SP64AE",
+    "parent_id": 53,
+    "spec_functions": 87,
+    "support_level": "limited",
+    "transports": [
+      "ble"
+    ]
+  },
+  {
+    "color_cap": 1,
+    "connect_caps": 7,
+    "family": "banlanx_custom_5xx",
+    "features": {
+      "customFeature": 1,
+      "maxDataLength": 185,
+      "maxPixelChannels": 3600,
+      "otherFeature": 1
+    },
+    "friendly_name": "SP548E",
+    "home_uri": "/sp630e",
+    "legacy_uniled_supported": false,
+    "model_id": 147,
+    "name": "SP548E",
+    "parent_id": 99,
+    "spec_functions": 87,
+    "support_level": "limited",
+    "transports": [
+      "ble",
+      "lan",
+      "cloud_optional"
+    ]
+  },
+  {
+    "color_cap": 1,
+    "connect_caps": 7,
+    "family": "banlanx_custom_5xx",
+    "features": {
+      "customFeature": 1,
+      "maxDataLength": 185,
+      "maxPixelChannels": 3600,
+      "otherFeature": 1
+    },
+    "friendly_name": "SP548E",
+    "home_uri": "/sp630e",
+    "legacy_uniled_supported": false,
+    "model_id": 148,
+    "name": "SP548E",
+    "parent_id": 99,
+    "spec_functions": 87,
+    "support_level": "limited",
+    "transports": [
+      "ble",
+      "lan",
+      "cloud_optional"
+    ]
+  },
+  {
+    "color_cap": 8,
+    "connect_caps": 8,
+    "family": "banlanx_scene_mesh",
+    "features": {
+      "features": 0,
+      "maxPixelChannels": 2700
+    },
+    "friendly_name": "SP310E",
+    "home_uri": "/device/scene_ui",
+    "legacy_uniled_supported": false,
+    "model_id": 176,
+    "name": "SP310E",
+    "parent_id": null,
+    "spec_functions": 71,
+    "support_level": "recognized",
+    "transports": [
+      "ble_mesh"
+    ]
+  },
+  {
+    "color_cap": 8,
+    "connect_caps": 8,
+    "family": "banlanx_scene_mesh",
+    "features": {
+      "features": 0,
+      "maxPixelChannels": 2700
+    },
+    "friendly_name": "SP311E",
+    "home_uri": "/device/scene_ui",
+    "legacy_uniled_supported": false,
+    "model_id": 177,
+    "name": "SP311E",
+    "parent_id": 176,
+    "spec_functions": 71,
+    "support_level": "recognized",
+    "transports": [
+      "ble_mesh"
+    ]
+  },
+  {
+    "color_cap": 8,
+    "connect_caps": 8,
+    "family": "banlanx_scene_mesh",
+    "features": {
+      "features": 0,
+      "maxPixelChannels": 2700
+    },
+    "friendly_name": "SP312E",
+    "home_uri": "/device/scene_ui",
+    "legacy_uniled_supported": false,
+    "model_id": 178,
+    "name": "SP312E",
+    "parent_id": 176,
+    "spec_functions": 71,
+    "support_level": "recognized",
+    "transports": [
+      "ble_mesh"
+    ]
+  },
+  {
+    "color_cap": 8,
+    "connect_caps": 8,
+    "family": "banlanx_scene_mesh",
+    "features": {
+      "features": 0,
+      "maxPixelChannels": 2700
+    },
+    "friendly_name": "SP313E",
+    "home_uri": "/device/scene_ui",
+    "legacy_uniled_supported": false,
+    "model_id": 179,
+    "name": "SP313E",
+    "parent_id": 176,
+    "spec_functions": 71,
+    "support_level": "recognized",
+    "transports": [
+      "ble_mesh"
+    ]
+  },
+  {
+    "color_cap": 8,
+    "connect_caps": 8,
+    "family": "banlanx_scene_mesh",
+    "features": {
+      "features": 0,
+      "maxPixelChannels": 2700
+    },
+    "friendly_name": "SP314E",
+    "home_uri": "/device/scene_ui",
+    "legacy_uniled_supported": false,
+    "model_id": 180,
+    "name": "SP314E",
+    "parent_id": 176,
+    "spec_functions": 71,
+    "support_level": "recognized",
+    "transports": [
+      "ble_mesh"
+    ]
+  },
+  {
+    "color_cap": 8,
+    "connect_caps": 8,
+    "family": "banlanx_scene_mesh",
+    "features": {
+      "features": 0,
+      "maxPixelChannels": 2700
+    },
+    "friendly_name": "SP315E",
+    "home_uri": "/device/scene_ui",
+    "legacy_uniled_supported": false,
+    "model_id": 181,
+    "name": "SP315E",
+    "parent_id": 176,
+    "spec_functions": 71,
+    "support_level": "recognized",
+    "transports": [
+      "ble_mesh"
+    ]
+  },
+  {
+    "color_cap": 8,
+    "connect_caps": 8,
+    "family": "banlanx_scene_mesh",
+    "features": {
+      "features": 0,
+      "maxPixelChannels": 2700
+    },
+    "friendly_name": "SP316E",
+    "home_uri": "/device/scene_ui",
+    "legacy_uniled_supported": false,
+    "model_id": 182,
+    "name": "SP316E",
+    "parent_id": 176,
+    "spec_functions": 71,
+    "support_level": "recognized",
+    "transports": [
+      "ble_mesh"
+    ]
+  },
+  {
+    "color_cap": 8,
+    "connect_caps": 8,
+    "family": "banlanx_scene_mesh",
+    "features": {
+      "features": 0,
+      "maxPixelChannels": 2700
+    },
+    "friendly_name": "SP317E",
+    "home_uri": "/device/scene_ui",
+    "legacy_uniled_supported": false,
+    "model_id": 183,
+    "name": "SP317E",
+    "parent_id": 176,
+    "spec_functions": 71,
+    "support_level": "recognized",
+    "transports": [
+      "ble_mesh"
+    ]
+  },
+  {
+    "color_cap": 8,
+    "connect_caps": 8,
+    "family": "banlanx_scene_mesh",
+    "features": {
+      "features": 0,
+      "maxPixelChannels": 2700
+    },
+    "friendly_name": "SP318E",
+    "home_uri": "/device/scene_ui",
+    "legacy_uniled_supported": false,
+    "model_id": 184,
+    "name": "SP318E",
+    "parent_id": 176,
+    "spec_functions": 71,
+    "support_level": "recognized",
+    "transports": [
+      "ble_mesh"
+    ]
+  },
+  {
+    "color_cap": 8,
+    "connect_caps": 8,
+    "family": "banlanx_scene_mesh",
+    "features": {
+      "features": 0,
+      "maxPixelChannels": 2700
+    },
+    "friendly_name": "SP319E",
+    "home_uri": "/device/scene_ui",
+    "legacy_uniled_supported": false,
+    "model_id": 185,
+    "name": "SP319E",
+    "parent_id": 176,
+    "spec_functions": 71,
+    "support_level": "recognized",
+    "transports": [
+      "ble_mesh"
+    ]
+  },
+  {
+    "color_cap": 8,
+    "connect_caps": 8,
+    "family": "banlanx_scene_mesh",
+    "features": {
+      "features": 0,
+      "maxPixelChannels": 2700
+    },
+    "friendly_name": "SP31AE",
+    "home_uri": "/device/scene_ui",
+    "legacy_uniled_supported": false,
+    "model_id": 186,
+    "name": "SP31AE",
+    "parent_id": 176,
+    "spec_functions": 71,
+    "support_level": "recognized",
+    "transports": [
+      "ble_mesh"
+    ]
+  },
+  {
+    "color_cap": 8,
+    "connect_caps": 8,
+    "family": "banlanx_scene_mesh",
+    "features": {
+      "features": 0,
+      "maxPixelChannels": 2700
+    },
+    "friendly_name": "SP31BE",
+    "home_uri": "/device/scene_ui",
+    "legacy_uniled_supported": false,
+    "model_id": 187,
+    "name": "SP31BE",
+    "parent_id": 176,
+    "spec_functions": 71,
+    "support_level": "recognized",
+    "transports": [
+      "ble_mesh"
+    ]
+  },
+  {
+    "color_cap": 8,
+    "connect_caps": 8,
+    "family": "banlanx_scene_mesh",
+    "features": {
+      "features": 0,
+      "maxPixelChannels": 2700
+    },
+    "friendly_name": "SP31CE",
+    "home_uri": "/device/scene_ui",
+    "legacy_uniled_supported": false,
+    "model_id": 188,
+    "name": "SP31CE",
+    "parent_id": 176,
+    "spec_functions": 71,
+    "support_level": "recognized",
+    "transports": [
+      "ble_mesh"
+    ]
+  },
+  {
+    "color_cap": 1,
+    "connect_caps": 1,
+    "family": "banlanx_scene_ui",
+    "features": {
+      "features": 1,
+      "maxPixelChannels": 3000
+    },
+    "friendly_name": "SP558E",
+    "home_uri": "/device/scene_ui",
+    "legacy_uniled_supported": false,
+    "model_id": 200,
+    "name": "SP558E",
+    "parent_id": 121,
+    "spec_functions": 87,
+    "support_level": "recognized",
+    "transports": [
+      "ble"
+    ]
+  },
+  {
+    "color_cap": 1,
+    "connect_caps": 1,
+    "family": "banlanx_6xx",
+    "features": {},
+    "friendly_name": "SP638E",
+    "home_uri": "/sp630e",
+    "legacy_uniled_supported": true,
+    "model_id": 149,
+    "name": "SP638E",
+    "parent_id": 39,
+    "spec_functions": 87,
+    "support_level": "limited",
+    "transports": [
+      "ble"
+    ]
+  },
+  {
+    "color_cap": 1,
+    "connect_caps": 1,
+    "family": "banlanx_scene_ui",
+    "features": {
+      "features": 1
+    },
+    "friendly_name": "SP553E",
+    "home_uri": "/device/scene_ui",
+    "legacy_uniled_supported": false,
+    "model_id": 195,
+    "name": "SP553E",
+    "parent_id": 121,
+    "spec_functions": 87,
+    "support_level": "recognized",
+    "transports": [
+      "ble"
+    ]
+  },
+  {
+    "color_cap": 2,
+    "connect_caps": 1,
+    "family": "banlanx_scene_ui",
+    "features": {
+      "features": 1
+    },
+    "friendly_name": "SP554E",
+    "home_uri": "/device/scene_ui",
+    "legacy_uniled_supported": false,
+    "model_id": 196,
+    "name": "SP554E",
+    "parent_id": 121,
+    "spec_functions": 95,
+    "support_level": "recognized",
+    "transports": [
+      "ble"
+    ]
+  },
+  {
+    "color_cap": 2,
+    "connect_caps": 1,
+    "family": "banlanx_scene_ui",
+    "features": {
+      "features": 1,
+      "maxPixelChannels": 3000
+    },
+    "friendly_name": "SP559E",
+    "home_uri": "/device/scene_ui",
+    "legacy_uniled_supported": false,
+    "model_id": 201,
+    "name": "SP559E",
+    "parent_id": 121,
+    "spec_functions": 95,
+    "support_level": "recognized",
+    "transports": [
+      "ble"
+    ]
+  },
+  {
+    "color_cap": 2,
+    "connect_caps": 1,
+    "family": "banlanx_scene_ui",
+    "features": {
+      "features": 1,
+      "maxPixelChannels": 3000
+    },
+    "friendly_name": "SP55BE",
+    "home_uri": "/device/scene_ui",
+    "legacy_uniled_supported": false,
+    "model_id": 203,
+    "name": "SP55BE",
+    "parent_id": 121,
+    "spec_functions": 87,
+    "support_level": "recognized",
+    "transports": [
+      "ble"
+    ]
+  },
+  {
+    "color_cap": 8,
+    "connect_caps": 1,
+    "family": "banlanx_scene_ui",
+    "features": {
+      "features": 1
+    },
+    "friendly_name": "SP551E",
+    "home_uri": "/device/scene_ui",
+    "legacy_uniled_supported": false,
+    "model_id": 193,
+    "name": "SP551E",
+    "parent_id": 121,
+    "spec_functions": 87,
+    "support_level": "recognized",
+    "transports": [
+      "ble"
+    ]
+  },
+  {
+    "color_cap": 8,
+    "connect_caps": 1,
+    "family": "banlanx_scene_ui",
+    "features": {
+      "features": 1
+    },
+    "friendly_name": "SP552E",
+    "home_uri": "/device/scene_ui",
+    "legacy_uniled_supported": false,
+    "model_id": 194,
+    "name": "SP552E",
+    "parent_id": 121,
+    "spec_functions": 87,
+    "support_level": "recognized",
+    "transports": [
+      "ble"
+    ]
+  },
+  {
+    "color_cap": 8,
+    "connect_caps": 1,
+    "family": "banlanx_scene_ui",
+    "features": {
+      "features": 1,
+      "maxPixelChannels": 3000
+    },
+    "friendly_name": "SP556E",
+    "home_uri": "/device/scene_ui",
+    "legacy_uniled_supported": false,
+    "model_id": 198,
+    "name": "SP556E",
+    "parent_id": 121,
+    "spec_functions": 87,
+    "support_level": "recognized",
+    "transports": [
+      "ble"
+    ]
+  },
+  {
+    "color_cap": 8,
+    "connect_caps": 1,
+    "family": "banlanx_scene_ui",
+    "features": {
+      "features": 1,
+      "maxPixelChannels": 3000
+    },
+    "friendly_name": "SP557E",
+    "home_uri": "/device/scene_ui",
+    "legacy_uniled_supported": false,
+    "model_id": 199,
+    "name": "SP557E",
+    "parent_id": 121,
+    "spec_functions": 87,
+    "support_level": "recognized",
+    "transports": [
+      "ble"
+    ]
+  },
+  {
+    "color_cap": 1,
+    "connect_caps": 7,
+    "family": "fish_tank",
+    "features": {},
+    "friendly_name": "鱼缸灯",
+    "home_uri": "/device/fish_tank_lights",
+    "legacy_uniled_supported": false,
+    "model_id": 150,
+    "name": "FT001",
+    "parent_id": null,
+    "spec_functions": 145,
+    "support_level": "recognized",
+    "transports": [
+      "ble",
+      "lan",
+      "cloud_optional"
+    ]
+  },
+  {
+    "color_cap": 0,
+    "connect_caps": 8,
+    "family": "zengge_mesh",
+    "features": {},
+    "friendly_name": "RG4",
+    "home_uri": "/device/ble_mesh_rc",
+    "legacy_uniled_supported": false,
+    "model_id": 44034,
+    "name": "RG4",
+    "parent_id": null,
+    "spec_functions": 0,
+    "support_level": "limited",
+    "transports": [
+      "ble_mesh"
+    ]
+  },
+  {
+    "color_cap": 4,
+    "connect_caps": 1,
+    "family": "banlanx_scene_ui",
+    "features": {
+      "features": 1,
+      "maxPixelChannels": 1800
+    },
+    "friendly_name": "SP665E",
+    "home_uri": "/device/scene_ui",
+    "legacy_uniled_supported": false,
+    "model_id": 260,
+    "name": "SP665E",
+    "parent_id": 126,
+    "spec_functions": 85,
+    "support_level": "recognized",
+    "transports": [
+      "ble"
+    ]
+  },
+  {
+    "color_cap": 8,
+    "connect_caps": 1,
+    "family": "legacy_led_chord",
+    "features": {},
+    "friendly_name": "SP107E",
+    "home_uri": "/legacy/uniled/led_chord",
+    "legacy_uniled_supported": true,
+    "model_id": 4222,
+    "name": "SP107E",
+    "parent_id": null,
+    "spec_functions": 0,
+    "support_level": "limited",
+    "transports": [
+      "ble"
+    ]
+  },
+  {
+    "color_cap": 8,
+    "connect_caps": 1,
+    "family": "legacy_led_hue",
+    "features": {},
+    "friendly_name": "SP110E",
+    "home_uri": "/legacy/uniled/led_hue",
+    "legacy_uniled_supported": true,
+    "model_id": 4366,
+    "name": "SP110E",
+    "parent_id": null,
+    "spec_functions": 0,
+    "support_level": "limited",
+    "transports": [
+      "ble"
+    ]
+  }
+]

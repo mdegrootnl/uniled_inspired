@@ -1,0 +1,1124 @@
+{
+  "title": "UniLED Next",
+  "config": {
+    "step": {
+      "user": {
+        "title": "Add UniLED controller",
+        "description": "Choose the model and enter a stable local identifier.",
+        "data": {
+          "model": "Model",
+          "model_id": "APK model ID",
+          "transport": "Transport",
+          "device_id": "Device identifier",
+          "host": "Host",
+          "address": "Bluetooth address",
+          "mesh_uuid": "Mesh UUID",
+          "mesh_node_id": "Mesh node ID",
+          "mesh_node_type": "Mesh node type",
+          "mesh_node_wiring": "Mesh node wiring"
+        }
+      },
+      "zengge_cloud": {
+        "title": "Import MagicHue mesh data",
+        "description": "Import node metadata for mesh {mesh_uuid}.",
+        "data": {
+          "cloud_skip": "Skip cloud import",
+          "cloud_username": "MagicHue username",
+          "cloud_password": "MagicHue password",
+          "cloud_country": "Country"
+        }
+      },
+      "bluetooth_confirm": {
+        "title": "Add discovered UniLED controller?",
+        "description": "{model} was discovered at {address}, but this model is catalog-only for now. UniLED can add diagnostic entities, but local command and status support are not proven yet. Discovery evidence: {discovery_source}, {discovery_match}, {discovery_confidence}."
+      },
+      "reconfigure": {
+        "title": "Reconfigure UniLED controller",
+        "description": "Update the local connection details for this entry.",
+        "data": {
+          "device_id": "Device identifier",
+          "host": "Host",
+          "address": "Bluetooth address",
+          "mesh_uuid": "Mesh UUID",
+          "mesh_node_id": "Mesh node ID",
+          "mesh_node_type": "Mesh node type",
+          "mesh_node_wiring": "Mesh node wiring"
+        }
+      }
+    },
+    "abort": {
+      "already_configured": "This UniLED controller is already configured.",
+      "invalid_address": "The discovered Bluetooth address is invalid.",
+      "invalid_host": "The discovered LAN host is invalid.",
+      "mesh_not_supported": "This entry does not support MagicHue mesh import.",
+      "not_connectable": "This Bluetooth discovery is not connectable.",
+      "reconfigure_successful": "Reconfiguration successful.",
+      "required": "The Bluetooth discovery did not include an address.",
+      "unknown_model": "The discovered device name is not in the UniLED catalog.",
+      "unknown_model_id": "The discovered LAN packet did not identify a known UniLED model.",
+      "unsupported_ble_transport": "This discovered device does not advertise BLE support.",
+      "unsupported_lan_transport": "This discovered LAN device does not have a proven local command path."
+    },
+    "error": {
+      "invalid_address": "Enter a Bluetooth address without spaces.",
+      "invalid_host": "Enter a host name or IP address without spaces or paths.",
+      "invalid_model_id": "Enter the APK model ID as a decimal or hex number.",
+      "invalid_mesh_node_id": "Enter the mesh node ID as a decimal or hex number.",
+      "invalid_mesh_node_type": "Enter the mesh node type as a decimal or hex number.",
+      "invalid_mesh_node_wiring": "Enter the mesh node wiring as a decimal or hex number.",
+      "invalid_mesh_uuid": "Enter a positive mesh UUID as a decimal or hex number.",
+      "mesh_identity_mismatch": "This mesh UUID belongs to another mesh. Remove and re-add to change mesh identity.",
+      "mesh_fetch": "Could not fetch MagicHue mesh data.",
+      "mesh_login": "MagicHue login failed.",
+      "mesh_no_devices": "No devices for this mesh were found in the MagicHue account.",
+      "mesh_not_supported": "This entry does not support MagicHue mesh import.",
+      "required": "Required",
+      "unknown_model": "Unknown or unsupported model.",
+      "unknown_model_id": "This APK model ID does not match the selected model.",
+      "unsupported_ble_transport": "This model does not advertise BLE support.",
+      "unsupported_lan_transport": "This model does not advertise LAN support.",
+      "unsupported_mesh_transport": "This model does not advertise mesh support.",
+      "unsupported_transport": "Unsupported transport."
+    }
+  },
+  "options": {
+    "step": {
+      "zengge_cloud": {
+        "title": "Refresh MagicHue mesh data",
+        "description": "Refresh node metadata for mesh {mesh_uuid}.",
+        "data": {
+          "cloud_username": "MagicHue username",
+          "cloud_password": "MagicHue password",
+          "cloud_country": "Country"
+        }
+      }
+    },
+    "abort": {
+      "mesh_not_supported": "This entry does not support MagicHue mesh import."
+    },
+    "error": {
+      "mesh_fetch": "Could not fetch MagicHue mesh data.",
+      "mesh_login": "MagicHue login failed.",
+      "mesh_no_devices": "No devices for this mesh were found in the MagicHue account.",
+      "mesh_not_supported": "This entry does not support MagicHue mesh import.",
+      "required": "Required",
+      "unsupported_mesh_transport": "This model does not advertise mesh support."
+    }
+  },
+  "entity": {
+    "button": {
+      "refresh": {
+        "name": "Refresh"
+      }
+    },
+    "light": {
+      "output_light": {
+        "name": "Output {output}"
+      },
+      "mesh_node_light": {
+        "name": "Node {node}"
+      }
+    },
+    "number": {
+      "effect_speed": {
+        "name": "Effect speed"
+      },
+      "effect_level": {
+        "name": "Effect level"
+      },
+      "effect_length": {
+        "name": "Effect length"
+      },
+      "audio_sensitivity": {
+        "name": "Audio sensitivity"
+      },
+      "onoff_pixels": {
+        "name": "On/off pixels"
+      },
+      "output_effect_speed": {
+        "name": "Output {output} effect speed"
+      },
+      "output_effect_length": {
+        "name": "Output {output} effect length"
+      },
+      "output_audio_sensitivity": {
+        "name": "Output {output} audio sensitivity"
+      },
+      "mesh_node_effect_speed": {
+        "name": "Node {node} effect speed"
+      },
+      "mesh_node_effect_level": {
+        "name": "Node {node} effect level"
+      }
+    },
+    "scene": {
+      "scene_slot": {
+        "name": "Scene {slot}"
+      }
+    },
+    "select": {
+      "audio_input": {
+        "name": "Audio input"
+      },
+      "effect": {
+        "name": "Effect"
+      },
+      "light_mode": {
+        "name": "Light mode"
+      },
+      "onoff_effect": {
+        "name": "On/off effect"
+      },
+      "onoff_speed": {
+        "name": "On/off speed"
+      },
+      "on_power": {
+        "name": "On power"
+      },
+      "light_type": {
+        "name": "Light type"
+      },
+      "chip_order": {
+        "name": "Chip order"
+      },
+      "output_effect": {
+        "name": "Output {output} effect"
+      },
+      "output_chip_order": {
+        "name": "Output {output} chip order"
+      },
+      "mesh_node_effect": {
+        "name": "Node {node} effect"
+      }
+    },
+    "switch": {
+      "effect_direction": {
+        "name": "Effect direction"
+      },
+      "effect_loop": {
+        "name": "Effect loop"
+      },
+      "scene_loop": {
+        "name": "Scene loop"
+      },
+      "effect_play": {
+        "name": "Effect play"
+      },
+      "coexistence": {
+        "name": "Coexistence"
+      },
+      "output_effect_direction": {
+        "name": "Output {output} effect direction"
+      }
+    },
+    "sensor": {
+      "accessory_role": {
+        "name": "Accessory role"
+      },
+      "ble_plugin_argument_count": {
+        "name": "BLE plugin argument count"
+      },
+      "ble_plugin_channel_count": {
+        "name": "BLE plugin channel count"
+      },
+      "ble_plugin_contract_hint_count": {
+        "name": "BLE plugin contract hint count"
+      },
+      "ble_plugin_method_count": {
+        "name": "BLE plugin method count"
+      },
+      "ble_plugin_result_field_count": {
+        "name": "BLE plugin result field count"
+      },
+      "ble_profile": {
+        "name": "BLE profile"
+      },
+      "ble_uuid_binding_status": {
+        "name": "BLE UUID binding status"
+      },
+      "ble_known_service_uuid_count": {
+        "name": "BLE known service UUID count"
+      },
+      "ble_protocol_gap_count": {
+        "name": "BLE protocol gap count"
+      },
+      "ble_uuid_pool_count": {
+        "name": "BLE APK UUID pool count"
+      },
+      "ble_uuid_inventory_count": {
+        "name": "BLE APK UUID inventory count"
+      },
+      "ble_unbound_uuid_candidate_count": {
+        "name": "BLE unbound UUID candidate count"
+      },
+      "ble_legacy_uuid_candidate_count": {
+        "name": "BLE legacy UUID candidate count"
+      },
+      "car_light_accessory_asset_count": {
+        "name": "Car light accessory asset count"
+      },
+      "car_light_animation_asset_count": {
+        "name": "Car light animation asset count"
+      },
+      "car_light_apk_asset_evidence_count": {
+        "name": "Car light APK asset evidence count"
+      },
+      "car_light_apk_package_asset_count": {
+        "name": "Car light APK package asset count"
+      },
+      "car_light_apk_string_evidence_count": {
+        "name": "Car light APK string evidence count"
+      },
+      "car_light_command_blocker_count": {
+        "name": "Car light command blocker count"
+      },
+      "car_light_control_surface_count": {
+        "name": "Car light control surface count"
+      },
+      "car_light_model_role_hint_count": {
+        "name": "Car light model role hint count"
+      },
+      "car_light_password_entry_hint_count": {
+        "name": "Car light password entry hint count"
+      },
+      "car_light_password_flow_state_count": {
+        "name": "Car light password flow state count"
+      },
+      "car_light_password_hint_count": {
+        "name": "Car light password hint count"
+      },
+      "car_light_password_policy_hint_count": {
+        "name": "Car light password policy hint count"
+      },
+      "car_light_password_reset_hint_count": {
+        "name": "Car light password reset hint count"
+      },
+      "car_light_profile": {
+        "name": "Car light profile"
+      },
+      "car_light_protocol_gap_count": {
+        "name": "Car light protocol gap count"
+      },
+      "car_light_required_controller": {
+        "name": "Car light required controller"
+      },
+      "car_light_route_count": {
+        "name": "Car light route count"
+      },
+      "car_light_setup_flow_hint_count": {
+        "name": "Car light setup flow hint count"
+      },
+      "car_light_setup_key_hint_count": {
+        "name": "Car light setup key hint count"
+      },
+      "car_light_ordered_setup_model_count": {
+        "name": "Car light ordered setup model count"
+      },
+      "car_light_required_setup_dependency_count": {
+        "name": "Car light required setup dependency count"
+      },
+      "car_light_setup_dependency": {
+        "name": "Car light setup dependency"
+      },
+      "car_light_setup_dependency_count": {
+        "name": "Car light setup dependency count"
+      },
+      "car_light_setup_order": {
+        "name": "Car light setup order"
+      },
+      "car_light_setup_requirement_count": {
+        "name": "Car light setup requirement count"
+      },
+      "car_light_setup_stage": {
+        "name": "Car light setup stage"
+      },
+      "car_light_subdevice_filter_count": {
+        "name": "Car light subdevice filter count"
+      },
+      "car_light_subdevice_hint_count": {
+        "name": "Car light subdevice hint count"
+      },
+      "car_light_trigger_action_count": {
+        "name": "Car light trigger action count"
+      },
+      "car_light_trigger_count": {
+        "name": "Car light trigger count"
+      },
+      "car_light_trigger_image_asset_count": {
+        "name": "Car light trigger image asset count"
+      },
+      "car_light_trigger_storage_hint_count": {
+        "name": "Car light trigger storage hint count"
+      },
+      "car_light_zone_count": {
+        "name": "Car light zone count"
+      },
+      "car_light_zone_image_asset_count": {
+        "name": "Car light zone image asset count"
+      },
+      "catalog_model": {
+        "name": "Catalog model"
+      },
+      "catalog_model_id": {
+        "name": "Catalog model ID"
+      },
+      "catalog_parent_id": {
+        "name": "Catalog parent ID"
+      },
+      "catalog_connect_caps": {
+        "name": "Catalog connectCaps"
+      },
+      "catalog_connect_capabilities": {
+        "name": "Catalog connect capabilities"
+      },
+      "catalog_spec_functions": {
+        "name": "Catalog specFunctions"
+      },
+      "catalog_spec_function_bits": {
+        "name": "Catalog specFunction bits"
+      },
+      "catalog_color_cap": {
+        "name": "Catalog colorCap"
+      },
+      "catalog_color_capabilities": {
+        "name": "Catalog color capabilities"
+      },
+      "catalog_feature_count": {
+        "name": "Catalog feature count"
+      },
+      "catalog_feature_keys": {
+        "name": "Catalog feature keys"
+      },
+      "catalog_feature_summary": {
+        "name": "Catalog feature summary"
+      },
+      "catalog_variant_count": {
+        "name": "Catalog variant count"
+      },
+      "catalog_variant_ids": {
+        "name": "Catalog variant IDs"
+      },
+      "cloud_account_auth_endpoint_count": {
+        "name": "Cloud account auth endpoint count"
+      },
+      "cloud_auth_endpoint_count": {
+        "name": "Cloud auth endpoint count"
+      },
+      "cloud_auth_token_hint_count": {
+        "name": "Cloud auth token hint count"
+      },
+      "cloud_base_url_count": {
+        "name": "Cloud base URL count"
+      },
+      "cloud_btmesh_endpoint_count": {
+        "name": "Cloud BT mesh endpoint count"
+      },
+      "cloud_command_blocker_count": {
+        "name": "Cloud command blocker count"
+      },
+      "cloud_command_related_endpoint_count": {
+        "name": "Cloud command-related endpoint count"
+      },
+      "cloud_content_endpoint_count": {
+        "name": "Cloud content endpoint count"
+      },
+      "cloud_device_endpoint_count": {
+        "name": "Cloud device endpoint count"
+      },
+      "cloud_device_identity_hint_count": {
+        "name": "Cloud device identity hint count"
+      },
+      "cloud_document_url_count": {
+        "name": "Cloud document URL count"
+      },
+      "cloud_endpoint_count": {
+        "name": "Cloud endpoint count"
+      },
+      "cloud_endpoint_group_count": {
+        "name": "Cloud endpoint group count"
+      },
+      "cloud_endpoint_inventory_count": {
+        "name": "Cloud endpoint inventory count"
+      },
+      "cloud_header_contract_hint_count": {
+        "name": "Cloud header contract hint count"
+      },
+      "cloud_home_device_endpoint_count": {
+        "name": "Cloud home device endpoint count"
+      },
+      "cloud_http_header_hint_count": {
+        "name": "Cloud HTTP header hint count"
+      },
+      "cloud_local_device_endpoint_count": {
+        "name": "Cloud local device endpoint count"
+      },
+      "cloud_profile": {
+        "name": "Cloud profile"
+      },
+      "cloud_protocol_gap_count": {
+        "name": "Cloud protocol gap count"
+      },
+      "cloud_request_contract_hint_count": {
+        "name": "Cloud request contract hint count"
+      },
+      "cloud_raw_command_endpoint": {
+        "name": "Cloud raw command endpoint"
+      },
+      "cloud_raw_command_endpoint_count": {
+        "name": "Cloud raw command endpoint count"
+      },
+      "cloud_root_device_endpoint_count": {
+        "name": "Cloud root device endpoint count"
+      },
+      "cloud_signature_hint_count": {
+        "name": "Cloud signature hint count"
+      },
+      "cloud_signature_contract_hint_count": {
+        "name": "Cloud signature contract hint count"
+      },
+      "cloud_token_contract_hint_count": {
+        "name": "Cloud token contract hint count"
+      },
+      "cloud_transport_hint_count": {
+        "name": "Cloud transport hint count"
+      },
+      "cloud_unproven_auth_endpoint_count": {
+        "name": "Cloud unproven auth endpoint count"
+      },
+      "cloud_unresolved_base_url_endpoint_count": {
+        "name": "Cloud unresolved base URL endpoint count"
+      },
+      "cloud_user_device_endpoint_count": {
+        "name": "Cloud user device endpoint count"
+      },
+      "cloud_voice_endpoint_count": {
+        "name": "Cloud voice endpoint count"
+      },
+      "configured_transport": {
+        "name": "Configured transport"
+      },
+      "discovery_source": {
+        "name": "Discovery source"
+      },
+      "discovery_match": {
+        "name": "Discovery match"
+      },
+      "discovery_confidence": {
+        "name": "Discovery confidence"
+      },
+      "runtime_transport_state": {
+        "name": "Runtime transport state"
+      },
+      "last_refresh_result": {
+        "name": "Last refresh result"
+      },
+      "custom_effect_slot": {
+        "name": "Custom effect slot"
+      },
+      "diy_color_count": {
+        "name": "DIY color count"
+      },
+      "diy_effect_type": {
+        "name": "DIY effect type"
+      },
+      "effect_type": {
+        "name": "Effect type"
+      },
+      "fish_tank_apk_asset_evidence_count": {
+        "name": "Fish-tank APK asset evidence count"
+      },
+      "fish_tank_apk_package_asset_count": {
+        "name": "Fish-tank APK package asset count"
+      },
+      "fish_tank_apk_string_evidence_count": {
+        "name": "Fish-tank APK string evidence count"
+      },
+      "fish_tank_app_method_count": {
+        "name": "Fish-tank app method count"
+      },
+      "fish_tank_brightness_string_hint_count": {
+        "name": "Fish-tank brightness string hint count"
+      },
+      "fish_tank_channel_asset_count": {
+        "name": "Fish-tank channel asset count"
+      },
+      "fish_tank_command_blocker_count": {
+        "name": "Fish-tank command blocker count"
+      },
+      "fish_tank_control_surface_count": {
+        "name": "Fish-tank control surface count"
+      },
+      "fish_tank_data_model_hint_count": {
+        "name": "Fish-tank data-model hint count"
+      },
+      "fish_tank_favorite_service_hint_count": {
+        "name": "Fish-tank favorite service hint count"
+      },
+      "fish_tank_favorite_storage_hint_count": {
+        "name": "Fish-tank favorite storage hint count"
+      },
+      "fish_tank_effect_asset_count": {
+        "name": "Fish-tank effect asset count"
+      },
+      "fish_tank_effect_hint_count": {
+        "name": "Fish-tank effect hint count"
+      },
+      "fish_tank_effect_string_hint_count": {
+        "name": "Fish-tank effect string hint count"
+      },
+      "fish_tank_favorite_action_count": {
+        "name": "Fish-tank favorite action count"
+      },
+      "fish_tank_favorite_action_type_count": {
+        "name": "Fish-tank favorite action type count"
+      },
+      "fish_tank_favorite_asset_count": {
+        "name": "Fish-tank favorite asset count"
+      },
+      "fish_tank_favorite_clear_hint_count": {
+        "name": "Fish-tank favorite clear hint count"
+      },
+      "fish_tank_favorite_loop_action_count": {
+        "name": "Fish-tank favorite loop action count"
+      },
+      "fish_tank_favorite_loop_hint_count": {
+        "name": "Fish-tank favorite loop hint count"
+      },
+      "fish_tank_favorite_recall_hint_count": {
+        "name": "Fish-tank favorite recall hint count"
+      },
+      "fish_tank_favorite_slot_count": {
+        "name": "Fish-tank favorite slot count"
+      },
+      "fish_tank_favorite_store_hint_count": {
+        "name": "Fish-tank favorite store hint count"
+      },
+      "fish_tank_firmware_prompt_hint_count": {
+        "name": "Fish-tank firmware prompt hint count"
+      },
+      "fish_tank_icon_asset_count": {
+        "name": "Fish-tank icon asset count"
+      },
+      "fish_tank_image_asset_count": {
+        "name": "Fish-tank image asset count"
+      },
+      "fish_tank_light_channel_count": {
+        "name": "Fish-tank light channel count"
+      },
+      "fish_tank_profile": {
+        "name": "Fish-tank profile"
+      },
+      "fish_tank_protocol_gap_count": {
+        "name": "Fish-tank protocol gap count"
+      },
+      "fish_tank_raw_string_hint_count": {
+        "name": "Fish-tank raw string hint count"
+      },
+      "fish_tank_route_count": {
+        "name": "Fish-tank route count"
+      },
+      "fish_tank_timer_action_count": {
+        "name": "Fish-tank timer action count"
+      },
+      "fish_tank_timer_asset_count": {
+        "name": "Fish-tank timer asset count"
+      },
+      "fish_tank_timer_hint_count": {
+        "name": "Fish-tank timer hint count"
+      },
+      "fish_tank_timer_limit": {
+        "name": "Fish-tank timer limit"
+      },
+      "fish_tank_timer_slot_count": {
+        "name": "Fish-tank timer slot count"
+      },
+      "fish_tank_timer_storage_hint_count": {
+        "name": "Fish-tank timer storage hint count"
+      },
+      "fish_tank_timer_string_hint_count": {
+        "name": "Fish-tank timer string hint count"
+      },
+      "fish_tank_brightness_state_hint_count": {
+        "name": "Fish-tank brightness state hint count"
+      },
+      "fish_tank_workflow_hint_count": {
+        "name": "Fish-tank workflow hint count"
+      },
+      "lan_bonsoir_argument_count": {
+        "name": "LAN Bonsoir argument count"
+      },
+      "lan_bonsoir_method_count": {
+        "name": "LAN Bonsoir method count"
+      },
+      "lan_bonsoir_nsd_method_count": {
+        "name": "LAN Bonsoir NSD method count"
+      },
+      "lan_bonsoir_service_type_flow_hint_count": {
+        "name": "LAN Bonsoir service-type flow hint count"
+      },
+      "lan_bonsoir_txt_query_flow_hint_count": {
+        "name": "LAN Bonsoir TXT query flow hint count"
+      },
+      "lan_discovery_channel_count": {
+        "name": "LAN discovery channel count"
+      },
+      "lan_discovery_gap_count": {
+        "name": "LAN discovery gap count"
+      },
+      "lan_discovery_plugin_count": {
+        "name": "LAN discovery plugin count"
+      },
+      "lan_discovery_status_hint_count": {
+        "name": "LAN discovery status hint count"
+      },
+      "lan_host_network_method_count": {
+        "name": "LAN host network method count"
+      },
+      "lan_host_setup_mode": {
+        "name": "LAN host setup mode"
+      },
+      "lan_mdns_txt_buffer_bytes": {
+        "name": "LAN mDNS TXT buffer"
+      },
+      "lan_mdns_txt_query_class": {
+        "name": "LAN mDNS TXT query class"
+      },
+      "lan_mdns_txt_query_timeout_ms": {
+        "name": "LAN mDNS TXT query timeout"
+      },
+      "lan_mdns_txt_record_type": {
+        "name": "LAN mDNS TXT record type"
+      },
+      "lan_multicast_lock_method_count": {
+        "name": "LAN multicast-lock method count"
+      },
+      "lan_network_cloud_setup_prompt_count": {
+        "name": "LAN network cloud setup prompt count"
+      },
+      "lan_network_setup_guide_asset_count": {
+        "name": "LAN network setup guide asset count"
+      },
+      "lan_network_setup_prompt_count": {
+        "name": "LAN network setup prompt count"
+      },
+      "lan_network_setup_route_count": {
+        "name": "LAN network setup route count"
+      },
+      "lan_profile": {
+        "name": "LAN profile"
+      },
+      "lan_raw_socket_hint_count": {
+        "name": "LAN raw socket hint count"
+      },
+      "lan_udp_receive_buffer_bytes": {
+        "name": "LAN UDP receive buffer"
+      },
+      "lan_udp_socket_timeout_ms": {
+        "name": "LAN UDP socket timeout"
+      },
+      "legacy_uniled_command_count": {
+        "name": "Legacy UniLED command count"
+      },
+      "legacy_uniled_parity": {
+        "name": "Legacy UniLED parity candidate"
+      },
+      "legacy_uniled_parity_gap_count": {
+        "name": "Legacy UniLED parity gap count"
+      },
+      "legacy_uniled_parity_profile": {
+        "name": "Legacy UniLED parity profile"
+      },
+      "legacy_uniled_status_parser_count": {
+        "name": "Legacy UniLED status parser count"
+      },
+      "legacy_uniled_stubbed_command_count": {
+        "name": "Legacy UniLED stubbed command count"
+      },
+      "max_data_length": {
+        "name": "Maximum data length"
+      },
+      "max_pixel_channels": {
+        "name": "Maximum pixel channels"
+      },
+      "mesh_apk_asset_evidence_count": {
+        "name": "Mesh APK asset evidence count"
+      },
+      "mesh_apk_package_asset_count": {
+        "name": "Mesh APK package asset count"
+      },
+      "mesh_apk_string_evidence_count": {
+        "name": "Mesh APK string evidence count"
+      },
+      "mesh_bridge_seen": {
+        "name": "Mesh bridge seen"
+      },
+      "mesh_bulb_node_count": {
+        "name": "Mesh bulb node count"
+      },
+      "mesh_command_node_count": {
+        "name": "Mesh command node count"
+      },
+      "mesh_control_blocker_count": {
+        "name": "Mesh control blocker count"
+      },
+      "mesh_known_node_count": {
+        "name": "Mesh known node count"
+      },
+      "mesh_panel_node_count": {
+        "name": "Mesh panel node count"
+      },
+      "mesh_strip_node_count": {
+        "name": "Mesh strip node count"
+      },
+      "mesh_panel_status": {
+        "name": "Panel node {node} status"
+      },
+      "mesh_profile": {
+        "name": "Mesh profile"
+      },
+      "mesh_provisioning_hint_count": {
+        "name": "Mesh provisioning hint count"
+      },
+      "mesh_provisioning_state_count": {
+        "name": "Mesh provisioning state count"
+      },
+      "mesh_role": {
+        "name": "Mesh role"
+      },
+      "mesh_route_count": {
+        "name": "Mesh APK route count"
+      },
+      "mesh_sig_mesh_uuid_hint_count": {
+        "name": "Mesh SIG UUID hint count"
+      },
+      "network_apk_asset_evidence_count": {
+        "name": "Network APK asset evidence count"
+      },
+      "network_apk_package_asset_count": {
+        "name": "Network APK package asset count"
+      },
+      "network_apk_string_evidence_count": {
+        "name": "Network APK string evidence count"
+      },
+      "network_app_method_count": {
+        "name": "Network app method count"
+      },
+      "network_artnet_field_count": {
+        "name": "Network Art-Net field count"
+      },
+      "network_catalog_hint_count": {
+        "name": "Network catalog hint count"
+      },
+      "network_command_blocker_count": {
+        "name": "Network command blocker count"
+      },
+      "network_content_mode_count": {
+        "name": "Network content mode count"
+      },
+      "network_import_constraint_count": {
+        "name": "Network import constraint count"
+      },
+      "network_info": {
+        "name": "Network information"
+      },
+      "network_lfx_effect_count": {
+        "name": "Network LFX effect count"
+      },
+      "network_lfx_gif_asset_count": {
+        "name": "Network LFX GIF asset count"
+      },
+      "network_lfx_gif_count": {
+        "name": "Network LFX GIF count"
+      },
+      "network_matrix_music_control_count": {
+        "name": "Network matrix music control count"
+      },
+      "network_native_effect_generator_hint_count": {
+        "name": "Network native effect generator hint count"
+      },
+      "network_native_export_hint_count": {
+        "name": "Network native export hint count"
+      },
+      "network_native_frame_hint_count": {
+        "name": "Network native frame helper count"
+      },
+      "network_native_lfx_param_hint_count": {
+        "name": "Network native LFX parameter hint count"
+      },
+      "network_native_library_hint_count": {
+        "name": "Network native library hint count"
+      },
+      "network_native_matrix_mode_hint_count": {
+        "name": "Network native matrix mode hint count"
+      },
+      "network_native_pixel_helper_hint_count": {
+        "name": "Network native pixel helper hint count"
+      },
+      "network_playlist_action_count": {
+        "name": "Network playlist action count"
+      },
+      "network_port_field_count": {
+        "name": "Network port field count"
+      },
+      "network_profile": {
+        "name": "Network controller profile"
+      },
+      "network_protocol_gap_count": {
+        "name": "Network protocol gap count"
+      },
+      "network_raw_string_hint_count": {
+        "name": "Network raw string hint count"
+      },
+      "network_regular_lfx_effect_asset_count": {
+        "name": "Network regular LFX effect asset count"
+      },
+      "network_route_count": {
+        "name": "Network route count"
+      },
+      "network_surface_count": {
+        "name": "Network surface count"
+      },
+      "network_transport_hint_count": {
+        "name": "Network transport hint count"
+      },
+      "network_workflow_hint_count": {
+        "name": "Network workflow hint count"
+      },
+      "protocol_evidence_hint_count": {
+        "name": "Protocol evidence hint count"
+      },
+      "protocol_evidence_kind": {
+        "name": "Protocol evidence kind"
+      },
+      "protocol_evidence_profile": {
+        "name": "Protocol evidence profile"
+      },
+      "protocol_family": {
+        "name": "Protocol family"
+      },
+      "scene_apk_asset_evidence_count": {
+        "name": "Scene APK asset evidence count"
+      },
+      "scene_apk_package_asset_count": {
+        "name": "Scene APK package asset count"
+      },
+      "scene_apk_string_evidence_count": {
+        "name": "Scene APK string evidence count"
+      },
+      "scene_app_method_count": {
+        "name": "Scene app method count"
+      },
+      "scene_catalog_hint_count": {
+        "name": "Scene catalog hint count"
+      },
+      "scene_command_blocker_count": {
+        "name": "Scene command blocker count"
+      },
+      "scene_control_surface_count": {
+        "name": "Scene control surface count"
+      },
+      "scene_diy_action_count": {
+        "name": "Scene DIY action count"
+      },
+      "scene_favorite_action_count": {
+        "name": "Scene favorite action count"
+      },
+      "scene_lfx_route_count": {
+        "name": "Scene LFX route count"
+      },
+      "scene_lfx_data_model_hint_count": {
+        "name": "Scene LFX data-model hint count"
+      },
+      "scene_lfx_frame_field_hint_count": {
+        "name": "Scene LFX frame-field hint count"
+      },
+      "scene_mode_effect_count": {
+        "name": "Scene mode effect count"
+      },
+      "scene_mode_icon_count": {
+        "name": "Scene mode icon count"
+      },
+      "scene_mode_icon_sample_count": {
+        "name": "Scene mode icon sample count"
+      },
+      "scene_native_animation_export_count": {
+        "name": "Scene native animation export count"
+      },
+      "scene_native_color_order_hint_count": {
+        "name": "Scene native color order hint count"
+      },
+      "scene_native_code_anchor_count": {
+        "name": "Scene native code anchor count"
+      },
+      "scene_native_drive_export_count": {
+        "name": "Scene native drive export count"
+      },
+      "scene_native_export_hint_count": {
+        "name": "Scene native export hint count"
+      },
+      "scene_native_frame_hint_count": {
+        "name": "Scene native frame helper count"
+      },
+      "scene_native_handler_count": {
+        "name": "Scene native handler count"
+      },
+      "scene_native_ic_only_api_count": {
+        "name": "Scene native IC-only API count"
+      },
+      "scene_native_library_hint_count": {
+        "name": "Scene native library hint count"
+      },
+      "scene_native_loop_handler_count": {
+        "name": "Scene native loop handler count"
+      },
+      "scene_native_music_effect_hint_count": {
+        "name": "Scene native music effect hint count"
+      },
+      "scene_native_opcode_hint_count": {
+        "name": "Scene native opcode helper count"
+      },
+      "scene_native_paired_api_count": {
+        "name": "Scene native paired API count"
+      },
+      "scene_native_persistence_handler_count": {
+        "name": "Scene native persistence handler count"
+      },
+      "scene_native_persistence_export_count": {
+        "name": "Scene native persistence export count"
+      },
+      "scene_native_persistence_capability_count": {
+        "name": "Scene native persistence capability count"
+      },
+      "scene_native_pwm_driver_hint_count": {
+        "name": "Scene native PWM driver hint count"
+      },
+      "scene_native_pwm_table_hint_count": {
+        "name": "Scene native PWM table hint count"
+      },
+      "scene_native_state_export_count": {
+        "name": "Scene native state export count"
+      },
+      "scene_native_state_hint_count": {
+        "name": "Scene native state helper count"
+      },
+      "scene_preset_count": {
+        "name": "Scene preset count"
+      },
+      "scene_profile": {
+        "name": "Scene profile"
+      },
+      "scene_protocol_gap_count": {
+        "name": "Scene protocol gap count"
+      },
+      "scene_raw_string_hint_count": {
+        "name": "Scene raw string hint count"
+      },
+      "scene_recent_action_count": {
+        "name": "Scene recent action count"
+      },
+      "scene_route_count": {
+        "name": "Scene route count"
+      },
+      "scene_setup_requirement_count": {
+        "name": "Scene setup requirement count"
+      },
+      "scene_storage_hint_count": {
+        "name": "Scene storage hint count"
+      },
+      "scene_timer_action_count": {
+        "name": "Scene timer action count"
+      },
+      "scene_timer_route_count": {
+        "name": "Scene timer route count"
+      },
+      "scene_transport_hint_count": {
+        "name": "Scene transport hint count"
+      },
+      "scene_white_brightness_anchor_count": {
+        "name": "Scene white-brightness anchor count"
+      },
+      "sp630e_apk_asset_evidence_count": {
+        "name": "SP630E APK asset evidence count"
+      },
+      "sp630e_apk_package_asset_count": {
+        "name": "SP630E APK package asset count"
+      },
+      "sp630e_apk_string_evidence_count": {
+        "name": "SP630E APK string evidence count"
+      },
+      "sp630e_app_method_count": {
+        "name": "SP630E app method count"
+      },
+      "sp630e_catalog_hint_count": {
+        "name": "SP630E catalog hint count"
+      },
+      "sp630e_control_surface_count": {
+        "name": "SP630E control surface count"
+      },
+      "sp630e_data_model_hint_count": {
+        "name": "SP630E data-model hint count"
+      },
+      "sp630e_favorite_limit_hint_count": {
+        "name": "SP630E favorite limit hint count"
+      },
+      "sp630e_motor_hint_count": {
+        "name": "SP630E motor hint count"
+      },
+      "sp630e_music_asset_count": {
+        "name": "SP630E music asset count"
+      },
+      "sp630e_native_lfx_hint_count": {
+        "name": "SP630E native LFX hint count"
+      },
+      "sp630e_network_hint_count": {
+        "name": "SP630E network hint count"
+      },
+      "sp630e_profile": {
+        "name": "SP630E surface profile"
+      },
+      "sp630e_protocol_gap_count": {
+        "name": "SP630E protocol gap count"
+      },
+      "sp630e_remote_hint_count": {
+        "name": "SP630E remote hint count"
+      },
+      "sp630e_route_count": {
+        "name": "SP630E route count"
+      },
+      "sp630e_timer_hint_count": {
+        "name": "SP630E timer hint count"
+      },
+      "sp630e_timer_limit": {
+        "name": "SP630E timer limit"
+      },
+      "support_disposition": {
+        "name": "Support disposition"
+      },
+      "support_blocker_count": {
+        "name": "Support blocker count"
+      },
+      "support_blockers": {
+        "name": "Support blockers"
+      },
+      "support_level": {
+        "name": "Support level"
+      },
+      "timer_count": {
+        "name": "Timer count"
+      },
+      "transport": {
+        "name": "Transport"
+      }
+    }
+  },
+  "issues": {
+    "migration_failed": {
+      "title": "UniLED entry needs manual migration repair",
+      "description": "UniLED could not migrate {title}. The stored {field} value failed with {reason}. Reconfigure the entry if the local details are known, or remove and add it again."
+    },
+    "setup_invalid": {
+      "title": "UniLED entry cannot be loaded",
+      "description": "UniLED could not load {title}. The stored {field} value failed with {reason}. Reconfigure the entry with valid local details, or remove and add it again."
+    }
+  }
+}

@@ -1,0 +1,104 @@
+set_state:
+  name: Set state
+  description: Set one or more supported states on a UniLED light entity.
+  target:
+    entity:
+      integration: uniled
+      domain: light
+  fields:
+    power:
+      name: Power
+      description: Turn the light on or off. Leave out to keep power unchanged.
+      selector:
+        boolean:
+    effect:
+      name: Effect
+      description: Light effect name.
+      selector:
+        text:
+    effect_speed:
+      name: Effect speed
+      description: Effect speed byte.
+      selector:
+        number:
+          min: 0
+          max: 255
+    effect_length:
+      name: Effect length
+      description: Effect length byte.
+      selector:
+        number:
+          min: 0
+          max: 255
+    effect_direction:
+      name: Effect direction
+      description: Effect direction.
+      selector:
+        boolean:
+    effect_loop:
+      name: Effect loop
+      description: Effect loop state.
+      selector:
+        boolean:
+    effect_play:
+      name: Effect play
+      description: Effect play or pause state.
+      selector:
+        boolean:
+    sensitivity:
+      name: Input sensitivity
+      description: Microphone or audio-input sensitivity byte.
+      selector:
+        number:
+          min: 0
+          max: 255
+    rgb_color:
+      name: RGB color
+      description: RGB color.
+      selector:
+        color_rgb:
+    rgbw_color:
+      name: RGBW color
+      description: Four-item RGBW list with values from 0 to 255.
+      advanced: true
+      example: "[255, 100, 100, 50]"
+      selector:
+        object:
+    rgbww_color:
+      name: RGBWW color
+      description: Five-item RGB cold/warm white list with values from 0 to 255.
+      advanced: true
+      example: "[255, 100, 100, 32, 64]"
+      selector:
+        object:
+    white:
+      name: White
+      description: White channel level from 0 to 255.
+      advanced: true
+      selector:
+        number:
+          min: 0
+          max: 255
+    brightness:
+      name: Brightness
+      description: Brightness from 0 to 255.
+      advanced: true
+      selector:
+        number:
+          min: 0
+          max: 255
+    transition:
+      name: Transition
+      description: Transition duration in seconds for supported mesh commands.
+      advanced: true
+      selector:
+        number:
+          min: 0
+          mode: box
+    color_temp_kelvin:
+      name: Color temperature
+      description: Color temperature in Kelvin.
+      advanced: true
+      selector:
+        color_temp:
+          unit: kelvin
