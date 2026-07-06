@@ -19,6 +19,15 @@ from custom_components.uniled.core import (
 )
 
 
+def _sptech_frame(command: int, payload: bytes = b"") -> bytes:
+    return (
+        b"SPTECH\x00"
+        + bytes([command, 0x00, 0x00, 0x00])
+        + len(payload).to_bytes(2, "big")
+        + payload
+    )
+
+
 def test_protocol_registry_routes_legacy_parity_families() -> None:
     """Legacy parity model names resolve to command builders."""
     catalog = default_catalog()
@@ -40,6 +49,13 @@ def test_protocol_registry_routes_legacy_parity_families() -> None:
         assert model is not None
 
         assert isinstance(protocol_for_model(model), protocol_type), name
+
+    sp548 = catalog.resolve_name("SP548E")
+    assert sp548 is not None
+    sp548_protocol = protocol_for_model(sp548)
+
+    assert isinstance(sp548_protocol, BanlanXCustom5xxProtocol)
+    assert sp548_protocol.model_name == "SP548E"
 
     sp602 = catalog.resolve_name("SP602E")
     sp608 = catalog.resolve_name("SP608E")
@@ -406,13 +422,33 @@ def test_legacy_led_chord_commands_match_old_uniled_payloads() -> None:
         bytes.fromhex("01 02 03 0c"),
         bytes.fromhex("04 00 00 0b"),
     )
+    assert protocol.build_rgb2_color(5, 6, 7) == bytes.fromhex("05 06 07 10")
     assert protocol.build_effect(0xB5) == bytes.fromhex("b5 00 00 08")
     assert protocol.build_light_mode(1) == bytes.fromhex("01 00 00 0d")
     assert protocol.build_light_mode(2) == bytes.fromhex("01 00 00 0f")
     assert protocol.build_light_mode(3) == bytes.fromhex("01 00 00 12")
     assert protocol.build_effect_speed(6) == bytes.fromhex("06 00 00 09")
     assert protocol.build_sensitivity(7) == bytes.fromhex("07 00 00 13")
+    assert protocol.build_chip_type(3) == bytes.fromhex("03 00 00 05")
     assert protocol.build_chip_order(2) == bytes.fromhex("02 00 00 04")
+    assert protocol.build_segment_count(4, 5) == bytes.fromhex("04 05 00 06")
+    assert protocol.build_segment_pixels(6, segment_count=4) == bytes.fromhex(
+        "04 06 00 06"
+    )
+
+    for builder in (
+        lambda: protocol.build_chip_type(0x1B),
+        lambda: protocol.build_segment_count(65, 1),
+        lambda: protocol.build_segment_count(1, 151),
+        lambda: protocol.build_segment_count(64, 16),
+        lambda: protocol.build_segment_pixels(6),
+    ):
+        try:
+            builder()
+        except ProtocolCommandError:
+            pass
+        else:
+            raise AssertionError("LED Chord should reject invalid config commands")
 
 
 def test_legacy_led_hue_commands_match_old_uniled_payloads() -> None:
@@ -433,34 +469,110 @@ def test_legacy_led_hue_commands_match_old_uniled_payloads() -> None:
     assert protocol.build_effect_loop(True) == bytes.fromhex("00 00 00 06")
     assert protocol.build_effect_loop(False) == bytes.fromhex("79 00 00 2c")
     assert protocol.build_effect_speed(6) == bytes.fromhex("06 00 00 03")
+    assert protocol.build_chip_type(3) == bytes.fromhex("03 00 00 1c")
     assert protocol.build_chip_order(2) == bytes.fromhex("02 00 00 3c")
+    assert protocol.build_segment_pixels(300) == bytes.fromhex("01 2c 00 2d")
+
+    for builder in (
+        lambda: protocol.build_chip_type(0x1B),
+        lambda: protocol.build_segment_pixels(0),
+        lambda: protocol.build_segment_pixels(1025),
+    ):
+        try:
+            builder()
+        except ProtocolCommandError:
+            pass
+        else:
+            raise AssertionError("LED Hue should reject invalid config commands")
 
 
 def test_sptech_lan_commands_match_recovered_frame_shape() -> None:
     """SP541E LAN commands use the recovered SPTECH TCP envelope."""
     protocol = SPTechLANProtocol()
 
-    assert protocol.build_state_query() == bytes.fromhex(
-        "53 50 54 45 43 48 00 02 00 00 00 00 00"
+    assert protocol.build_state_query() == _sptech_frame(0x02)
+    assert protocol.build_power(True) == _sptech_frame(0x50, bytes([0x01]))
+    assert protocol.build_power(False) == _sptech_frame(0x50, bytes([0x00]))
+    assert protocol.build_brightness(64) == _sptech_frame(0x51, bytes([0x01, 0x40]))
+    assert protocol.build_white_level(65) == _sptech_frame(0x51, bytes([0x01, 0x41]))
+    assert protocol.build_rgb_color(1, 2, 3, level=128) == (
+        _sptech_frame(0x52, bytes([0x01, 0x02, 0x03, 0x80])),
     )
-    assert protocol.build_power(True) == bytes.fromhex(
-        "53 50 54 45 43 48 00 50 00 00 00 00 01 01"
+    assert protocol.build_light_mode(0x03, 0x05) == _sptech_frame(
+        0x53,
+        bytes([0x03, 0x05]),
     )
-    assert protocol.build_power(False) == bytes.fromhex(
-        "53 50 54 45 43 48 00 50 00 00 00 00 01 00"
+    assert protocol.build_effect_speed(6) == _sptech_frame(0x54, bytes([0x06]))
+    assert protocol.build_dynamic_rgb_color(1, 2, 3) == _sptech_frame(
+        0x57,
+        bytes([0x01, 0x02, 0x03]),
     )
-    assert protocol.build_brightness(64) == bytes.fromhex(
-        "53 50 54 45 43 48 00 51 00 00 00 00 02 01 40"
+    assert protocol.build_cct_color(10, 20) == _sptech_frame(
+        0x61,
+        bytes([0x0A, 0x14]),
     )
-    assert protocol.build_white_level(65) == bytes.fromhex(
-        "53 50 54 45 43 48 00 51 00 00 00 00 02 01 41"
+    assert protocol.build_cct_color(10, 20, static=False) == _sptech_frame(
+        0x60,
+        bytes([0x0A, 0x14]),
     )
-    assert protocol.build_light_mode(0x02, 0x01) == bytes.fromhex(
-        "53 50 54 45 43 48 00 53 00 00 00 00 02 02 01"
+    assert protocol.build_rgbw_color(1, 2, 3, 4, level=128) == (
+        _sptech_frame(0x52, bytes([0x01, 0x02, 0x03, 0x80])),
+        _sptech_frame(0x51, bytes([0x01, 0x04])),
     )
-    assert protocol.build_effect_speed(6) == bytes.fromhex(
-        "53 50 54 45 43 48 00 54 00 00 00 00 01 06"
+    assert protocol.build_rgbw_color(1, 2, 3, 4, static=False) == (
+        _sptech_frame(0x57, bytes([0x01, 0x02, 0x03])),
+        _sptech_frame(0x51, bytes([0x01, 0x04])),
     )
+    assert protocol.build_rgbww_color(1, 2, 3, 4, 5, level=128) == (
+        _sptech_frame(0x52, bytes([0x01, 0x02, 0x03, 0x80])),
+        _sptech_frame(0x61, bytes([0x04, 0x05])),
+    )
+    assert protocol.build_rgbww_color(1, 2, 3, 4, 5, static=False) == (
+        _sptech_frame(0x57, bytes([0x01, 0x02, 0x03])),
+        _sptech_frame(0x60, bytes([0x04, 0x05])),
+    )
+    assert protocol.build_onoff_config(2, 3, 300) == _sptech_frame(
+        0x08,
+        bytes([0x01, 0x02, 0x03, 0x01, 0x2C]),
+    )
+    assert protocol.build_coexistence(True) == _sptech_frame(0x0A, bytes([0x01]))
+    assert protocol.build_on_power(2) == _sptech_frame(0x0B, bytes([0x02]))
+    assert protocol.build_light_type(
+        0x86,
+        2,
+        0x03,
+        0x05,
+        power=True,
+        refresh=True,
+    ) == (
+        _sptech_frame(0x50, bytes([0x00])),
+        _sptech_frame(0x6A, bytes([0x01, 0x06])),
+        _sptech_frame(0x6B, bytes([0x02])),
+        _sptech_frame(0x53, bytes([0x03, 0x05])),
+        _sptech_frame(0x02),
+    )
+    assert protocol.build_chip_order(2) == _sptech_frame(0x6B, bytes([0x02]))
+
+    try:
+        protocol.build_chip_order(24)
+    except ProtocolCommandError:
+        pass
+    else:
+        raise AssertionError("chip order outside recovered range should fail")
+
+    try:
+        protocol.build_onoff_config(0, 1, 1)
+    except ProtocolCommandError:
+        pass
+    else:
+        raise AssertionError("on/off effect outside recovered range should fail")
+
+    try:
+        protocol.build_light_type(0x8F, 0, 0x01, 0x01)
+    except ProtocolCommandError:
+        pass
+    else:
+        raise AssertionError("light type outside recovered range should fail")
 
 
 def test_command_validation_rejects_unsafe_values() -> None:

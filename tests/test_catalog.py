@@ -360,6 +360,22 @@ def test_manifest_contains_telink_mesh_bluetooth_matcher() -> None:
     } in manifest["bluetooth"]
 
 
+def test_manifest_contains_banlanx_manufacturer_data_matchers() -> None:
+    """Name-less BanlanX BLE advertisements can trigger config flow."""
+    manifest = json.loads(
+        Path("custom_components/uniled/manifest.json").read_text(encoding="utf-8")
+    )
+
+    manufacturer_ids = {
+        matcher.get("manufacturer_id")
+        for matcher in manifest["bluetooth"]
+        if "manufacturer_id" in matcher
+    }
+
+    assert 0x5053 in manufacturer_ids
+    assert 5053 in manufacturer_ids
+
+
 def test_manifest_bluetooth_matchers_are_connectable() -> None:
     """Every current Bluetooth setup path needs an outgoing BLE connection."""
     manifest = json.loads(

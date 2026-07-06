@@ -20,6 +20,7 @@ from ..state import ChannelState, DeviceState, ParseNotificationError
 from .base import ProtocolCommandError, UnsupportedCommand, byte_value, ranged_value
 from .base import rgb_value as _rgb_value
 from .framing import (
+    Custom5xxStatusAssembler,
     DirectStatusAssembler,
     HeaderedStatusAssembler,
     IndexedStatusAssembler,
@@ -41,11 +42,16 @@ _LED_CHORD_LIGHT_MODE_AUTO_STRIP = 0x02
 _LED_CHORD_LIGHT_MODE_AUTO_MATRIX = 0x03
 _LED_CHORD_EFFECT_SPEED_MAX = 186
 _LED_CHORD_SENSITIVITY_MAX = 165
+_LED_CHORD_MAX_SEGMENT_COUNT = 64
+_LED_CHORD_MAX_SEGMENT_PIXELS = 150
+_LED_CHORD_MAX_TOTAL_PIXELS = 960
 _LED_HUE_EFFECT_TYPE_AUTO = 0x00
 _LED_HUE_EFFECT_TYPE_DYNAMIC = 0x01
 _LED_HUE_EFFECT_TYPE_STATIC = 0x79
 _LED_HUE_EFFECT_SPEED_MAX = 186
+_LED_HUE_MAX_SEGMENT_PIXELS = 1024
 _LED_HUE_AUTO_CYCLE_EFFECT = "Auto Cycle FX's"
+_LEGACY_LED_CHIP_TYPE_MAX = 0x1A
 
 _LED_CHORD_LIGHT_MODES = {
     _LED_CHORD_LIGHT_MODE_SINGULAR: "Single FX",
@@ -113,6 +119,17 @@ class LegacyProtocol:
     ) -> tuple[bytes, ...]:
         """Build an RGB color command."""
         raise UnsupportedCommand(f"{self.name} does not implement RGB")
+
+    def build_rgb2_color(
+        self,
+        red: int,
+        green: int,
+        blue: int,
+        *,
+        channel: int = 0,
+    ) -> bytes:
+        """Build a secondary/matrix RGB color command."""
+        raise UnsupportedCommand(f"{self.name} does not implement RGB2")
 
     def build_dynamic_rgb_color(
         self,
@@ -255,6 +272,30 @@ class LegacyProtocol:
     def build_chip_order(self, value: int, *, channel: int = 0) -> bytes:
         """Build a chip-order command."""
         raise UnsupportedCommand(f"{self.name} does not implement chip order")
+
+    def build_chip_type(self, value: int, *, channel: int = 0) -> bytes:
+        """Build a chip-type command."""
+        raise UnsupportedCommand(f"{self.name} does not implement chip type")
+
+    def build_segment_count(
+        self,
+        segments: int,
+        pixels: int | None = None,
+        *,
+        channel: int = 0,
+    ) -> bytes:
+        """Build a segment-count configuration command."""
+        raise UnsupportedCommand(f"{self.name} does not implement segment count")
+
+    def build_segment_pixels(
+        self,
+        pixels: int,
+        *,
+        segment_count: int | None = None,
+        channel: int = 0,
+    ) -> bytes:
+        """Build a segment-pixel configuration command."""
+        raise UnsupportedCommand(f"{self.name} does not implement segment pixels")
 
     def build_scene(self, scene: int, *, channel: int = 0) -> bytes:
         """Build a scene recall command."""
@@ -1069,6 +1110,7 @@ class BanlanX6xxProtocol(LegacyProtocol):
     """SP630E/SP63x/SP64x/SP65x command builder."""
 
     name: str = "banlanx_6xx"
+    model_name: str | None = None
 
     def build_state_query(self) -> bytes:
         return _encode_6xx(0x02, bytes([0x01]))
@@ -1329,6 +1371,7 @@ class BanlanX6xxProtocol(LegacyProtocol):
             light_type,
             mode,
             effect,
+            model_name=self.model_name,
         )
         brightness = (
             0xFF
@@ -1367,6 +1410,7 @@ class BanlanX6xxProtocol(LegacyProtocol):
                 light_type,
                 mode,
                 effect,
+                model_name=self.model_name,
             ),
             effect_type=banlanx6xx_effect_type_for_mode(mode),
             light_mode_number=mode,
@@ -1445,6 +1489,22 @@ class BanlanXCustom5xxProtocol(BanlanX6xxProtocol):
 
     name: str = "banlanx_custom_5xx"
 
+    def parse_status(self, data: bytes) -> DeviceState:
+        """Parse SP6xx-style or SPTech-chunked custom 5xx status payloads."""
+        packet = bytes(data)
+        if packet and packet[0] in {0x00, 0x01}:
+            from .sptech import SPTechLANProtocol
+
+            return SPTechLANProtocol(
+                name=self.name,
+                model_name=self.model_name or "SP530E",
+            ).parse_status(packet)
+        return BanlanX6xxProtocol.parse_status(self, packet)
+
+    def make_status_assembler(self) -> StatusAssembler:
+        """Create an assembler for direct and fragmented custom 5xx status."""
+        return Custom5xxStatusAssembler(self.name)
+
 
 @dataclass(frozen=True, slots=True)
 class LegacyLEDChordProtocol(LegacyProtocol):
@@ -1475,6 +1535,17 @@ class LegacyLEDChordProtocol(LegacyProtocol):
     ) -> tuple[bytes, ...]:
         red, green, blue = _rgb_value(red, green, blue)
         return (bytes([red, green, blue, 0x0C]),)
+
+    def build_rgb2_color(
+        self,
+        red: int,
+        green: int,
+        blue: int,
+        *,
+        channel: int = 0,
+    ) -> bytes:
+        red, green, blue = _rgb_value(red, green, blue)
+        return bytes([red, green, blue, 0x10])
 
     def build_rgbw_color(
         self,
@@ -1533,6 +1604,51 @@ class LegacyLEDChordProtocol(LegacyProtocol):
 
     def build_chip_order(self, value: int, *, channel: int = 0) -> bytes:
         return bytes([byte_value(value, field="chip order"), 0x00, 0x00, 0x04])
+
+    def build_chip_type(self, value: int, *, channel: int = 0) -> bytes:
+        return bytes([_legacy_led_chip_type(value), 0x00, 0x00, 0x05])
+
+    def build_segment_count(
+        self,
+        segments: int,
+        pixels: int | None = None,
+        *,
+        channel: int = 0,
+    ) -> bytes:
+        if pixels is None:
+            raise ProtocolCommandError(
+                "segment pixels are required for stateless LED Chord commands"
+            )
+        segment_count = ranged_value(
+            segments,
+            field="segment count",
+            minimum=1,
+            maximum=_LED_CHORD_MAX_SEGMENT_COUNT,
+        )
+        segment_pixels = ranged_value(
+            pixels,
+            field="segment pixels",
+            minimum=1,
+            maximum=_LED_CHORD_MAX_SEGMENT_PIXELS,
+        )
+        if segment_count * segment_pixels > _LED_CHORD_MAX_TOTAL_PIXELS:
+            raise ProtocolCommandError(
+                "segment count times segment pixels must be 960 or less"
+            )
+        return bytes([segment_count, segment_pixels, 0x00, 0x06])
+
+    def build_segment_pixels(
+        self,
+        pixels: int,
+        *,
+        segment_count: int | None = None,
+        channel: int = 0,
+    ) -> bytes:
+        if segment_count is None:
+            raise ProtocolCommandError(
+                "segment count is required for stateless LED Chord commands"
+            )
+        return self.build_segment_count(segment_count, pixels, channel=channel)
 
     def parse_status(self, data: bytes) -> DeviceState:
         packet = bytes(data)
@@ -1681,6 +1797,24 @@ class LegacyLEDHueProtocol(LegacyProtocol):
     def build_chip_order(self, value: int, *, channel: int = 0) -> bytes:
         return bytes([byte_value(value, field="chip order"), 0x00, 0x00, 0x3C])
 
+    def build_chip_type(self, value: int, *, channel: int = 0) -> bytes:
+        return bytes([_legacy_led_chip_type(value), 0x00, 0x00, 0x1C])
+
+    def build_segment_pixels(
+        self,
+        pixels: int,
+        *,
+        segment_count: int | None = None,
+        channel: int = 0,
+    ) -> bytes:
+        value = ranged_value(
+            pixels,
+            field="segment pixels",
+            minimum=1,
+            maximum=_LED_HUE_MAX_SEGMENT_PIXELS,
+        ).to_bytes(2, "big")
+        return bytes([value[0], value[1], 0x00, 0x2D])
+
     def parse_status(self, data: bytes) -> DeviceState:
         packet = bytes(data)
         if len(packet) == 13:
@@ -1769,6 +1903,15 @@ class LEDChordStatusAssembler:
 
 def _bool(state: bool) -> int:
     return 0x01 if state else 0x00
+
+
+def _legacy_led_chip_type(value: int) -> int:
+    return ranged_value(
+        value,
+        field="chip type",
+        minimum=0,
+        maximum=_LEGACY_LED_CHIP_TYPE_MAX,
+    )
 
 
 def _banlanx2_timer_metadata(

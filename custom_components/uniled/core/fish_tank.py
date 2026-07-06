@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from .apk_commands import ApkCommandIdHint, apk_command_id_hints_for_names
 from .catalog import CatalogModel, ProtocolFamily
 
 FISH_TANK_PACKAGE = "packages/fish_tank_lights"
@@ -156,13 +157,26 @@ FISH_TANK_TIMER_ACTIONS = (
 FISH_TANK_APP_METHOD_HINTS = (
     "getNetworkInfo",
     "setBrightness",
+    "setLfxMode",
     "setLfxColor",
     "setLfxColorTemp",
+    "setLfxLoopMode",
     "setLfxSpeed",
     "setSolidColor",
     "setSolidColorTemp",
     "saveFavoriteEffectList",
     "updateFavoriteLfxList",
+    "favoriteLfx",
+)
+
+FISH_TANK_APP_COMMAND_ID_NAMES = (
+    *FISH_TANK_APP_METHOD_HINTS,
+    "saveTimingTask",
+    "removeTimingTask",
+)
+
+FISH_TANK_APP_COMMAND_ID_HINTS = apk_command_id_hints_for_names(
+    FISH_TANK_APP_COMMAND_ID_NAMES
 )
 
 FISH_TANK_DATA_MODEL_HINTS = (
@@ -380,6 +394,7 @@ class FishTankProfile:
     timer_actions: tuple[str, ...]
     catalog_hints: tuple[str, ...]
     app_method_hints: tuple[str, ...]
+    app_command_id_hints: tuple[ApkCommandIdHint, ...]
     data_model_hints: tuple[str, ...]
     favorite_service_hints: tuple[str, ...]
     favorite_storage_hints: tuple[str, ...]
@@ -438,6 +453,7 @@ def fish_tank_profile_for_model(model: CatalogModel) -> FishTankProfile | None:
             + ",".join(transport.value for transport in model.transports),
         ),
         app_method_hints=FISH_TANK_APP_METHOD_HINTS,
+        app_command_id_hints=FISH_TANK_APP_COMMAND_ID_HINTS,
         data_model_hints=FISH_TANK_DATA_MODEL_HINTS,
         favorite_service_hints=FISH_TANK_FAVORITE_SERVICE_HINTS,
         favorite_storage_hints=FISH_TANK_FAVORITE_STORAGE_HINTS,
@@ -497,6 +513,7 @@ def describe_fish_tank_profile(profile: FishTankProfile | None) -> str | None:
         f"timer_strings={len(profile.timer_string_hints)}; "
         f"timer_actions={len(profile.timer_actions)}; "
         f"methods={len(profile.app_method_hints)}; "
+        f"app_command_ids={len(profile.app_command_id_hints)}; "
         f"data={len(profile.data_model_hints)}; "
         f"favorite_services={len(profile.favorite_service_hints)}; "
         f"favorite_storage={len(profile.favorite_storage_hints)}; "

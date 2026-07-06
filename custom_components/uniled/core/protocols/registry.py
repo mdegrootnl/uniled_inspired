@@ -35,9 +35,9 @@ def protocol_for_model(model: CatalogModel) -> LegacyProtocol | None:
             spec_functions=model.spec_functions,
         )
     if model.family is ProtocolFamily.BANLANX_6XX:
-        return BanlanX6xxProtocol()
+        return BanlanX6xxProtocol(model_name=model.name)
     if model.family is ProtocolFamily.BANLANX_CUSTOM_5XX:
-        return BanlanXCustom5xxProtocol()
+        return BanlanXCustom5xxProtocol(model_name=model.name)
     if model.family is ProtocolFamily.LEGACY_LED_CHORD:
         return LegacyLEDChordProtocol()
     if model.family is ProtocolFamily.LEGACY_LED_HUE:

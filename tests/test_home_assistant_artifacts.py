@@ -109,3 +109,12 @@ def test_platform_entities_apply_planner_enabled_defaults() -> None:
 
         assert "entity_registry_enabled_default" in source, filename
         assert "_attr_entity_registry_enabled_default" in source, filename
+
+
+def test_light_platform_uses_kelvin_color_temp_attribute() -> None:
+    """HA 2026 removed the legacy ATTR_COLOR_TEMP light attribute import."""
+    source = Path("custom_components/uniled/light.py").read_text(encoding="utf-8")
+
+    assert "ATTR_COLOR_TEMP_KELVIN" in source
+    assert "ATTR_COLOR_TEMP," not in source
+    assert "ATTR_COLOR_TEMP " not in source

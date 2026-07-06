@@ -64,7 +64,7 @@ class UniLEDBLETransport:
         )
         self._client = client
         self._notification_characteristic = self._resolve_characteristic(
-            self._profile.notification_uuid,
+            self._profile.notification_uuid_candidates,
             "notify",
         )
         await client.start_notify(
@@ -102,7 +102,7 @@ class UniLEDBLETransport:
 
         if self._write_characteristic is None:
             self._write_characteristic = self._resolve_characteristic(
-                self._profile.write_uuid,
+                self._profile.write_uuid_candidates,
                 "write",
             )
         await self._client.write_gatt_char(
@@ -116,33 +116,41 @@ class UniLEDBLETransport:
         """Forward a BLE notification into the protocol session."""
         self._notification_callback(bytes(data))
 
-    def _resolve_characteristic(self, uuid: str, purpose: str) -> Any:
+    def _resolve_characteristic(
+        self,
+        uuids: str | tuple[str, ...],
+        purpose: str,
+    ) -> Any:
         """Return a service-scoped GATT characteristic when services are known."""
         if self._client is None:
             raise TransportError(f"{self._name} BLE client is not connected")
+        candidates = (uuids,) if isinstance(uuids, str) else uuids
         services = getattr(self._client, "services", None)
         if services is None:
-            return uuid
+            return candidates[0]
 
         for service_uuid in self._profile.service_uuids:
             service = _service_by_uuid(services, service_uuid)
             if service is None:
                 continue
-            characteristic = _characteristic_by_uuid(service, uuid)
-            if characteristic is not None:
-                return characteristic
+            for uuid in candidates:
+                characteristic = _characteristic_by_uuid(service, uuid)
+                if characteristic is not None:
+                    return characteristic
 
         if self._profile.service_uuids:
             service_list = ", ".join(self._profile.service_uuids)
+            uuid_list = ", ".join(candidates)
             raise TransportError(
-                
-                    f"{self._name} does not expose {purpose} characteristic "
-                    f"{uuid} under expected service(s): {service_list}"
-                
+                f"{self._name} does not expose {purpose} characteristic "
+                f"{uuid_list} under expected service(s): {service_list}"
             )
 
-        characteristic = _characteristic_from_collection(services, uuid)
-        return characteristic or uuid
+        for uuid in candidates:
+            characteristic = _characteristic_from_collection(services, uuid)
+            if characteristic is not None:
+                return characteristic
+        return candidates[0]
 
 
 class UniLEDZenggeMeshTransport:

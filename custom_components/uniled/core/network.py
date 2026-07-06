@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from .apk_commands import ApkCommandIdHint, apk_command_id_hints_for_names
 from .catalog import CatalogModel, ProtocolFamily
 
 SP801E_PACKAGE = "packages/module_sp801e"
@@ -189,7 +190,12 @@ SP801E_APP_METHOD_HINTS = (
     "removePlaylist",
 )
 
+SP801E_APP_COMMAND_ID_HINTS = apk_command_id_hints_for_names(
+    SP801E_APP_METHOD_HINTS
+)
+
 SP802E_APP_METHOD_HINTS = (
+    "getNetworkInfo",
     "setLedPanelLayout",
     "setLfxMode",
     "setLfxSpeed",
@@ -208,6 +214,10 @@ SP802E_APP_METHOD_HINTS = (
     "setMatrixMusicColColor",
     "setMatrixMusicColColorType",
     "setMatrixMusicColGradientColor",
+)
+
+SP802E_APP_COMMAND_ID_HINTS = apk_command_id_hints_for_names(
+    SP802E_APP_METHOD_HINTS
 )
 
 SP801E_WORKFLOW_HINTS = (
@@ -561,8 +571,8 @@ SP802E_APK_STRING_EVIDENCE = (
         "/sp802e/edit_led_layout"
     ),
     (
-        "Native strings expose LFX setter names including setLfxMode, "
-        "setLfxSpeed, and setLedPanelLayout"
+        "Native strings expose getNetworkInfo and LFX setter names including "
+        "setLfxMode, setLfxSpeed, and setLedPanelLayout"
     ),
     "Native library exports expose libwled_lfx.so matrix/LFX symbols",
     "Native library strings expose SP802E LFX parameter and mode-switch helpers",
@@ -607,6 +617,7 @@ class NetworkProfile:
     lfx_gif_count: int
     lfx_gif_assets: tuple[str, ...]
     app_method_hints: tuple[str, ...]
+    app_command_id_hints: tuple[ApkCommandIdHint, ...]
     workflow_hints: tuple[str, ...]
     raw_string_hints: tuple[str, ...]
     import_constraints: tuple[str, ...]
@@ -621,6 +632,7 @@ class NetworkProfile:
     native_matrix_mode_hints: tuple[str, ...]
     native_pixel_helper_hints: tuple[str, ...]
     native_export_hints: tuple[str, ...]
+    native_export_detail_anchors: tuple[tuple[str, int, int], ...]
     command_protocol_known: bool
     package_asset_count: int
     apk_asset_evidence: tuple[str, ...]
@@ -650,6 +662,7 @@ def network_profile_for_model(model: CatalogModel) -> NetworkProfile | None:
             lfx_gif_count=0,
             lfx_gif_assets=(),
             app_method_hints=SP801E_APP_METHOD_HINTS,
+            app_command_id_hints=SP801E_APP_COMMAND_ID_HINTS,
             workflow_hints=SP801E_WORKFLOW_HINTS,
             raw_string_hints=SP801E_RAW_STRING_HINTS,
             import_constraints=SP801E_IMPORT_CONSTRAINTS,
@@ -664,6 +677,7 @@ def network_profile_for_model(model: CatalogModel) -> NetworkProfile | None:
             native_matrix_mode_hints=(),
             native_pixel_helper_hints=(),
             native_export_hints=(),
+            native_export_detail_anchors=(),
             command_protocol_known=False,
             package_asset_count=SP801E_PACKAGE_ASSET_COUNT,
             apk_asset_evidence=SP801E_APK_ASSET_EVIDENCE,
@@ -688,6 +702,7 @@ def network_profile_for_model(model: CatalogModel) -> NetworkProfile | None:
             lfx_gif_count=SP802E_LFX_GIF_COUNT,
             lfx_gif_assets=SP802E_LFX_GIF_ASSETS,
             app_method_hints=SP802E_APP_METHOD_HINTS,
+            app_command_id_hints=SP802E_APP_COMMAND_ID_HINTS,
             workflow_hints=SP802E_WORKFLOW_HINTS,
             raw_string_hints=SP802E_RAW_STRING_HINTS,
             import_constraints=SP802E_IMPORT_CONSTRAINTS,
@@ -702,6 +717,7 @@ def network_profile_for_model(model: CatalogModel) -> NetworkProfile | None:
             native_matrix_mode_hints=SP802E_NATIVE_MATRIX_MODE_HINTS,
             native_pixel_helper_hints=SP802E_NATIVE_PIXEL_HELPER_HINTS,
             native_export_hints=SP802E_NATIVE_EXPORT_HINTS,
+            native_export_detail_anchors=SP802E_NATIVE_EXPORT_DETAIL_ANCHORS,
             command_protocol_known=False,
             package_asset_count=SP802E_PACKAGE_ASSET_COUNT,
             apk_asset_evidence=SP802E_APK_ASSET_EVIDENCE,
@@ -750,6 +766,8 @@ def describe_network_profile(profile: NetworkProfile | None) -> str | None:
         markers.append("panel_layout")
     if profile.app_method_hints:
         markers.append(f"methods={len(profile.app_method_hints)}")
+    if profile.app_command_id_hints:
+        markers.append(f"app_command_ids={len(profile.app_command_id_hints)}")
     if profile.native_library_hints:
         markers.append(f"native_hints={len(profile.native_library_hints)}")
     if profile.native_frame_hints:
@@ -770,6 +788,10 @@ def describe_network_profile(profile: NetworkProfile | None) -> str | None:
         )
     if profile.native_export_hints:
         markers.append(f"native_exports={len(profile.native_export_hints)}")
+    if profile.native_export_detail_anchors:
+        markers.append(
+            f"native_export_details={len(profile.native_export_detail_anchors)}"
+        )
     if profile.workflow_hints:
         markers.append(f"workflows={len(profile.workflow_hints)}")
     if profile.raw_string_hints:

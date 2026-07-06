@@ -32,6 +32,10 @@
         "title": "Add discovered UniLED controller?",
         "description": "{model} was discovered at {address}, but this model is catalog-only for now. UniLED can add diagnostic entities, but local command and status support are not proven yet. Discovery evidence: {discovery_source}, {discovery_match}, {discovery_confidence}."
       },
+      "discovery_confirm": {
+        "title": "Add discovered LAN controller?",
+        "description": "{model} was discovered at {host} from legacy SPTech LAN model-code evidence. UniLED can add diagnostic entities and preserve LAN discovery details, but local LAN command and status support are not proven yet. Discovery evidence: {discovery_source}, {discovery_match}, {discovery_confidence}."
+      },
       "reconfigure": {
         "title": "Reconfigure UniLED controller",
         "description": "Update the local connection details for this entry.",
@@ -135,6 +139,12 @@
       "onoff_pixels": {
         "name": "On/off pixels"
       },
+      "segment_count": {
+        "name": "Segment count"
+      },
+      "segment_pixels": {
+        "name": "Segment pixels"
+      },
       "output_effect_speed": {
         "name": "Output {output} effect speed"
       },
@@ -181,6 +191,9 @@
       "chip_order": {
         "name": "Chip order"
       },
+      "chip_type": {
+        "name": "Chip type"
+      },
       "output_effect": {
         "name": "Output {output} effect"
       },
@@ -215,6 +228,15 @@
       "accessory_role": {
         "name": "Accessory role"
       },
+      "ble_adapter_state_result_field_count": {
+        "name": "BLE adapter-state result field count"
+      },
+      "ble_boolean_event_channel_count": {
+        "name": "BLE boolean event channel count"
+      },
+      "ble_characteristic_result_field_count": {
+        "name": "BLE characteristic result field count"
+      },
       "ble_plugin_argument_count": {
         "name": "BLE plugin argument count"
       },
@@ -224,14 +246,50 @@
       "ble_plugin_contract_hint_count": {
         "name": "BLE plugin contract hint count"
       },
+      "ble_plugin_error_code_count": {
+        "name": "BLE plugin error code count"
+      },
+      "ble_connection_event_field_count": {
+        "name": "BLE connection event field count"
+      },
+      "ble_descriptor_uuid_count": {
+        "name": "BLE descriptor UUID count"
+      },
+      "ble_device_found_event_field_count": {
+        "name": "BLE device-found event field count"
+      },
+      "ble_issue_advertisement_count": {
+        "name": "BLE old-UniLED issue advertisement count"
+      },
+      "ble_issue_advertisements": {
+        "name": "BLE old-UniLED issue advertisements"
+      },
+      "ble_notification_event_field_count": {
+        "name": "BLE notification event field count"
+      },
+      "ble_plugin_event_hint_count": {
+        "name": "BLE plugin event hint count"
+      },
       "ble_plugin_method_count": {
         "name": "BLE plugin method count"
       },
       "ble_plugin_result_field_count": {
         "name": "BLE plugin result field count"
       },
+      "ble_mtu_result_field_count": {
+        "name": "BLE MTU result field count"
+      },
       "ble_profile": {
         "name": "BLE profile"
+      },
+      "ble_rssi_result_field_count": {
+        "name": "BLE RSSI result field count"
+      },
+      "ble_scan_result_field_count": {
+        "name": "BLE scan result field count"
+      },
+      "ble_service_result_field_count": {
+        "name": "BLE service result field count"
       },
       "ble_uuid_binding_status": {
         "name": "BLE UUID binding status"
@@ -239,11 +297,23 @@
       "ble_known_service_uuid_count": {
         "name": "BLE known service UUID count"
       },
+      "ble_known_service_uuids": {
+        "name": "BLE known service UUIDs"
+      },
+      "ble_known_write_uuid": {
+        "name": "BLE known write UUID"
+      },
+      "ble_known_notify_uuid": {
+        "name": "BLE known notify UUID"
+      },
       "ble_protocol_gap_count": {
         "name": "BLE protocol gap count"
       },
       "ble_uuid_pool_count": {
         "name": "BLE APK UUID pool count"
+      },
+      "ble_apk_uuid_pool": {
+        "name": "BLE APK UUID pool"
       },
       "ble_uuid_inventory_count": {
         "name": "BLE APK UUID inventory count"
@@ -251,8 +321,14 @@
       "ble_unbound_uuid_candidate_count": {
         "name": "BLE unbound UUID candidate count"
       },
+      "ble_unbound_uuid_candidates": {
+        "name": "BLE unbound UUID candidates"
+      },
       "ble_legacy_uuid_candidate_count": {
         "name": "BLE legacy UUID candidate count"
+      },
+      "ble_legacy_uuid_candidates": {
+        "name": "BLE legacy UUID candidates"
       },
       "car_light_accessory_asset_count": {
         "name": "Car light accessory asset count"
@@ -268,6 +344,9 @@
       },
       "car_light_apk_string_evidence_count": {
         "name": "Car light APK string evidence count"
+      },
+      "car_light_app_command_id_count": {
+        "name": "Car light app command ID count"
       },
       "car_light_command_blocker_count": {
         "name": "Car light command blocker count"
@@ -536,6 +615,9 @@
       "fish_tank_app_method_count": {
         "name": "Fish-tank app method count"
       },
+      "fish_tank_app_command_id_count": {
+        "name": "Fish-tank app command ID count"
+      },
       "fish_tank_brightness_string_hint_count": {
         "name": "Fish-tank brightness string hint count"
       },
@@ -647,11 +729,20 @@
       "lan_bonsoir_argument_count": {
         "name": "LAN Bonsoir argument count"
       },
+      "lan_bonsoir_discovery_event_count": {
+        "name": "LAN Bonsoir discovery event count"
+      },
       "lan_bonsoir_method_count": {
         "name": "LAN Bonsoir method count"
       },
       "lan_bonsoir_nsd_method_count": {
         "name": "LAN Bonsoir NSD method count"
+      },
+      "lan_bonsoir_service_event_field_count": {
+        "name": "LAN Bonsoir service event field count"
+      },
+      "lan_bonsoir_service_normalization_hint_count": {
+        "name": "LAN Bonsoir service normalization hint count"
       },
       "lan_bonsoir_service_type_flow_hint_count": {
         "name": "LAN Bonsoir service-type flow hint count"
@@ -710,6 +801,18 @@
       "lan_raw_socket_hint_count": {
         "name": "LAN raw socket hint count"
       },
+      "lan_sptech_legacy_configuration_code_count": {
+        "name": "LAN SPTech legacy configuration-code count"
+      },
+      "lan_sptech_legacy_command_id_count": {
+        "name": "LAN SPTech legacy command ID count"
+      },
+      "lan_sptech_legacy_model_code_count": {
+        "name": "LAN SPTech legacy model-code count"
+      },
+      "lan_sptech_legacy_status_chunk_count": {
+        "name": "LAN SPTech legacy status chunk count"
+      },
       "lan_udp_receive_buffer_bytes": {
         "name": "LAN UDP receive buffer"
       },
@@ -748,6 +851,9 @@
       },
       "mesh_apk_string_evidence_count": {
         "name": "Mesh APK string evidence count"
+      },
+      "mesh_app_command_id_count": {
+        "name": "Mesh app command ID count"
       },
       "mesh_bridge_seen": {
         "name": "Mesh bridge seen"
@@ -803,6 +909,9 @@
       "network_app_method_count": {
         "name": "Network app method count"
       },
+      "network_app_command_id_count": {
+        "name": "Network app command ID count"
+      },
       "network_artnet_field_count": {
         "name": "Network Art-Net field count"
       },
@@ -835,6 +944,9 @@
       },
       "network_native_effect_generator_hint_count": {
         "name": "Network native effect generator hint count"
+      },
+      "network_native_export_detail_count": {
+        "name": "Network native export detail count"
       },
       "network_native_export_hint_count": {
         "name": "Network native export hint count"
@@ -907,6 +1019,9 @@
       },
       "scene_app_method_count": {
         "name": "Scene app method count"
+      },
+      "scene_app_command_id_count": {
+        "name": "Scene app command ID count"
       },
       "scene_catalog_hint_count": {
         "name": "Scene catalog hint count"
@@ -1049,6 +1164,9 @@
       "sp630e_app_method_count": {
         "name": "SP630E app method count"
       },
+      "sp630e_app_command_id_count": {
+        "name": "SP630E app command ID count"
+      },
       "sp630e_catalog_hint_count": {
         "name": "SP630E catalog hint count"
       },
@@ -1069,6 +1187,9 @@
       },
       "sp630e_native_lfx_hint_count": {
         "name": "SP630E native LFX hint count"
+      },
+      "sp630e_native_export_detail_count": {
+        "name": "SP630E native export detail count"
       },
       "sp630e_network_hint_count": {
         "name": "SP630E network hint count"

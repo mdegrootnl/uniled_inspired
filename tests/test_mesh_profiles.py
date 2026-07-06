@@ -8,7 +8,11 @@ from custom_components.uniled.core.transports import (
     mesh_profile_for_model,
     telink_mesh_advertisement,
 )
-from custom_components.uniled.core.transports.mesh import SIG_MESH_UUID_HINTS
+from custom_components.uniled.core.transports.mesh import (
+    MESH_APP_COMMAND_ID_HINTS,
+    MESH_APP_COMMAND_ID_NAMES,
+    SIG_MESH_UUID_HINTS,
+)
 
 
 def test_rg4_mesh_profile_preserves_old_uniled_zengge_facts() -> None:
@@ -56,6 +60,24 @@ def test_rg4_mesh_profile_preserves_old_uniled_zengge_facts() -> None:
         "old-UniLED default level=100",
     )
     assert profile.sig_mesh_uuid_hints == SIG_MESH_UUID_HINTS
+    assert profile.app_command_id_hints == MESH_APP_COMMAND_ID_HINTS
+    assert [hint.name for hint in profile.app_command_id_hints] == list(
+        MESH_APP_COMMAND_ID_NAMES
+    )
+    assert [hint.command_id for hint in profile.app_command_id_hints] == [
+        0x02,
+        0x23,
+        0x24,
+        0x26,
+        0xC0,
+        0xC1,
+        0xC2,
+        0xC3,
+        0xC4,
+        0xC5,
+        0xC7,
+        0xC8,
+    ]
     assert profile.control_gap_hints == (
         "Old UniLED exposed Zengge nodes as light/sensor features only",
         "Effect speed/level controls resend the current effect with the edited byte",
@@ -133,9 +155,10 @@ def test_rg4_mesh_profile_diagnostic_description_is_command_known() -> None:
         "zengge_mesh; telink_zengge; core_protocol_known; "
         "pairing_required; old_uniled_protocol_known; "
         "service=00010203-0405-0607-0809-0a0b0c0d1910; effects=20; "
-        "commands=8; effect_fields=7; sig_mesh_uuids=6; gaps=4; "
-        "blockers=4; routes=2; provisioning=11; provisioning_states=9; "
-        "package_assets=9; apk_assets=9; apk_strings=8"
+        "commands=8; effect_fields=7; sig_mesh_uuids=6; "
+        "app_command_ids=12; gaps=4; blockers=4; routes=2; "
+        "provisioning=11; provisioning_states=9; package_assets=9; "
+        "apk_assets=9; apk_strings=8"
     )
     feature = plan_for_model(model).feature("mesh_profile")
     assert feature.implemented is True
@@ -160,6 +183,10 @@ def test_banlanx_scene_mesh_profile_exposes_apk_setup_facts() -> None:
     assert profile.core_command_protocol_known is False
     assert profile.effect_names == ()
     assert profile.sig_mesh_uuid_hints == SIG_MESH_UUID_HINTS
+    assert profile.app_command_id_hints == MESH_APP_COMMAND_ID_HINTS
+    assert [hint.name for hint in profile.app_command_id_hints] == list(
+        MESH_APP_COMMAND_ID_NAMES
+    )
     assert profile.route_hints == ("/device/scene_ui",)
     assert profile.provisioning_hints == (
         (
@@ -193,8 +220,8 @@ def test_banlanx_scene_mesh_profile_exposes_apk_setup_facts() -> None:
     assert len(profile.apk_string_evidence) == 4
     assert describe_mesh_profile(profile) == (
         "banlanx_scene_mesh; banlanx_scene_mesh; core_protocol_pending; "
-        "sig_mesh_uuids=6; gaps=3; blockers=4; routes=1; provisioning=3; "
-        "package_assets=204; apk_strings=4"
+        "sig_mesh_uuids=6; app_command_ids=12; gaps=3; blockers=4; "
+        "routes=1; provisioning=3; package_assets=204; apk_strings=4"
     )
     assert plan_for_model(model).has_feature("mesh_profile")
     assert plan_for_model(model).feature("mesh_control_blocker_count").unit == (

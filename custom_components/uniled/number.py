@@ -164,6 +164,16 @@ class UniLEDCommandNumber(CoordinatorEntity[UniLEDCoordinator], NumberEntity):
                 pixels,
                 channel=self._feature.channel,
             )
+        elif self._feature.key == "segment_count":
+            await session.set_segment_count(
+                int_value,
+                channel=self._feature.channel,
+            )
+        elif self._feature.key == "segment_pixels":
+            await session.set_segment_pixels(
+                int_value,
+                channel=self._feature.channel,
+            )
         else:
             return
 

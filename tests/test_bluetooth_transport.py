@@ -138,6 +138,109 @@ def test_direct_ble_transport_resolves_write_characteristic_by_service() -> None
     assert fake.writes == [(expected, b"payload", True)]
 
 
+def test_direct_ble_transport_uses_service_fallback_order() -> None:
+    """SP6xx-style profiles can fall back from e0ff to legacy ffe0 service."""
+    fallback = FakeCharacteristic("char-write", "ffe0-service")
+    fake = FakeBleakClient()
+    fake.services = FakeServices(
+        [
+            FakeService("0000ffe0-0000-1000-8000-00805f9b34fb", [fallback]),
+        ]
+    )
+    transport = UniLEDBLETransport(
+        None,
+        address="AA:BB:CC:DD:EE:FF",
+        name="SP542E",
+        profile=BLEProfile(
+            service_uuids=(
+                "0000e0ff-0000-1000-8000-00805f9b34fb",
+                "0000ffe0-0000-1000-8000-00805f9b34fb",
+            ),
+            write_uuid="char-write",
+        ),
+        notification_callback=lambda data: DeviceState(raw=data),
+    )
+    transport._client = fake
+    transport._connected = True
+
+    asyncio.run(transport.send(b"payload"))
+
+    assert fake.writes == [(fallback, b"payload", False)]
+
+
+def test_direct_ble_transport_uses_v2_e0ff_service_fallback() -> None:
+    """SP611E issue #105 variants can use e0ff service with ffe1 characteristic."""
+    characteristic = FakeCharacteristic(
+        "0000ffe1-0000-1000-8000-00805f9b34fb",
+        "e0ff-service",
+    )
+    fake = FakeBleakClient()
+    fake.services = FakeServices(
+        [
+            FakeService(
+                "0000e0ff-0000-1000-8000-00805f9b34fb",
+                [characteristic],
+            ),
+        ]
+    )
+    transport = UniLEDBLETransport(
+        None,
+        address="21:06:28:00:4E:44",
+        name="SP611E",
+        profile=BLEProfile(
+            service_uuids=(
+                "0000ffe0-0000-1000-8000-00805f9b34fb",
+                "0000e0ff-0000-1000-8000-00805f9b34fb",
+            ),
+            write_uuid="0000ffe1-0000-1000-8000-00805f9b34fb",
+        ),
+        notification_callback=lambda data: DeviceState(raw=data),
+    )
+    transport._client = fake
+    transport._connected = True
+
+    asyncio.run(transport.send(b"payload"))
+
+    assert fake.writes == [(characteristic, b"payload", False)]
+
+
+def test_direct_ble_transport_uses_characteristic_fallbacks() -> None:
+    """SP60x issue #122 variants can use ffb0 service with ffb1 characteristic."""
+    fallback = FakeCharacteristic(
+        "0000ffb1-0000-1000-8000-00805f9b34fb",
+        "ffb1-characteristic",
+    )
+    fake = FakeBleakClient()
+    fake.services = FakeServices(
+        [
+            FakeService(
+                "0000ffb0-0000-1000-8000-00805f9b34fb",
+                [fallback],
+            ),
+        ]
+    )
+    transport = UniLEDBLETransport(
+        None,
+        address="FC:58:FA:A7:9A:EE",
+        name="SP608E",
+        profile=BLEProfile(
+            service_uuids=(
+                "0000ffe0-0000-1000-8000-00805f9b34fb",
+                "0000ffb0-0000-1000-8000-00805f9b34fb",
+            ),
+            write_uuid="0000ffe1-0000-1000-8000-00805f9b34fb",
+            fallback_write_uuids=("0000ffb1-0000-1000-8000-00805f9b34fb",),
+        ),
+        notification_callback=lambda data: DeviceState(raw=data),
+    )
+    transport._client = fake
+    transport._connected = True
+
+    asyncio.run(transport.send(b"payload"))
+
+    assert fake.writes == [(fallback, b"payload", False)]
+
+
 def test_direct_ble_transport_fails_before_ambiguous_write() -> None:
     """Missing expected service/characteristic pairs fail before writing."""
     fake = FakeBleakClient()

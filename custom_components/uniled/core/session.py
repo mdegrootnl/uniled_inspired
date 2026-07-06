@@ -120,6 +120,25 @@ class DeviceSession:
             ),
         )
 
+    async def set_rgb2_color(
+        self,
+        red: int,
+        green: int,
+        blue: int,
+        *,
+        channel: int = 0,
+    ) -> CommandResult:
+        """Send a secondary/matrix RGB color command."""
+        return await self._dispatch(
+            CommandKind.RGB2_COLOR,
+            lambda: self.protocol.build_rgb2_color(
+                red,
+                green,
+                blue,
+                channel=channel,
+            ),
+        )
+
     async def set_dynamic_rgb_color(
         self,
         red: int,
@@ -423,6 +442,60 @@ class DeviceSession:
             lambda: self.protocol.build_chip_order(value, channel=channel),
         )
 
+    async def set_chip_type(
+        self,
+        value: int,
+        *,
+        channel: int = 0,
+    ) -> CommandResult:
+        """Send a chip-type command."""
+        return await self._dispatch(
+            CommandKind.CHIP_TYPE,
+            lambda: self.protocol.build_chip_type(value, channel=channel),
+        )
+
+    async def set_segment_count(
+        self,
+        segments: int,
+        pixels: int | None = None,
+        *,
+        channel: int = 0,
+    ) -> CommandResult:
+        """Send a segment-count configuration command."""
+        if pixels is None:
+            pixels = _state_diagnostic_int(self.state, "segment_pixels")
+        return await self._dispatch(
+            CommandKind.SEGMENT_COUNT,
+            lambda: self.protocol.build_segment_count(
+                segments,
+                pixels,
+                channel=channel,
+            ),
+        )
+
+    async def set_segment_pixels(
+        self,
+        pixels: int,
+        *,
+        segment_count: int | None = None,
+        channel: int = 0,
+    ) -> CommandResult:
+        """Send a segment-pixel configuration command."""
+        if (
+            segment_count is None
+            and self.state is not None
+            and isinstance(self.state.diagnostics.get("segment_count"), int)
+        ):
+            segment_count = _state_diagnostic_int(self.state, "segment_count")
+        return await self._dispatch(
+            CommandKind.SEGMENT_PIXELS,
+            lambda: self.protocol.build_segment_pixels(
+                pixels,
+                segment_count=segment_count,
+                channel=channel,
+            ),
+        )
+
     async def set_scene(
         self,
         scene: int,
@@ -493,3 +566,12 @@ def _as_payloads(payload: bytes | tuple[bytes, ...]) -> tuple[bytes, ...]:
     if isinstance(payload, bytes):
         return (payload,)
     return tuple(payload)
+
+
+def _state_diagnostic_int(state: DeviceState | None, key: str) -> int:
+    if state is None:
+        raise ProtocolCommandError(f"{key} is required before this command")
+    value = state.diagnostics.get(key)
+    if not isinstance(value, int):
+        raise ProtocolCommandError(f"{key} is required before this command")
+    return value

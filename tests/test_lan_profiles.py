@@ -13,6 +13,7 @@ from custom_components.uniled.core.transports import (
     describe_lan_profile,
     lan_profile_for_model,
     parse_spnet_discovery_response,
+    sptech_legacy_model_name_for_code,
 )
 
 
@@ -33,16 +34,92 @@ def test_custom_5xx_lan_profiles_preserve_apk_network_info_limits() -> None:
         assert profile.command_protocol_known is False
         assert profile.discovery_confirmed is False
         assert profile.requires_manual_host is True
+        assert [
+            (candidate.code, candidate.code_hex, candidate.model_name)
+            for candidate in profile.sptech_legacy_model_codes
+        ] == [
+            (0x4E, "0x4e", "SP530E"),
+            (0x56, "0x56", "SP538E"),
+            (0x57, "0x57", "SP539E"),
+            (0x63, "0x63", "SP548E"),
+            (0x64, "0x64", "SP549E"),
+            (0x69, "0x69", "SP548E"),
+        ]
+        assert [
+            candidate.code
+            for candidate in profile.sptech_legacy_configuration_codes
+        ] == [
+            0x06,
+            0x08,
+            0x81,
+            0x83,
+            0x85,
+            0x87,
+            0x8A,
+            0x82,
+            0x84,
+            0x8D,
+            0x86,
+            0x88,
+            0x8B,
+            0x8E,
+            0x89,
+            0x8C,
+        ]
+        assert [
+            (candidate.name, candidate.command_id_hex, candidate.category)
+            for candidate in profile.sptech_legacy_command_ids
+        ] == [
+            ("STATUS_QUERY", "0x02", "read_only_query"),
+            ("ONOFF_OPTIONS", "0x08", "configuration"),
+            ("COEXISTENCE", "0x0a", "configuration"),
+            ("ON_POWER", "0x0b", "configuration"),
+            ("POWER", "0x50", "control"),
+            ("BRIGHTNESS", "0x51", "control"),
+            ("STATIC_COLOR", "0x52", "control"),
+            ("LIGHT_MODE", "0x53", "control"),
+            ("EFFECT_SPEED", "0x54", "control"),
+            ("EFFECT_LENGTH", "0x55", "control"),
+            ("EFFECT_DIRECTION", "0x56", "control"),
+            ("EFFECT_COLOR", "0x57", "control"),
+            ("EFFECT_LOOP", "0x58", "control"),
+            ("AUDIO_INPUT", "0x59", "control"),
+            ("AUDIO_GAIN", "0x5a", "control"),
+            ("EFFECT_PLAY", "0x5d", "control"),
+            ("EFFECT_CCT", "0x60", "control"),
+            ("STATIC_CCT", "0x61", "control"),
+            ("LIGHT_TYPE", "0x6a", "configuration"),
+            ("CHIP_ORDER", "0x6b", "configuration"),
+        ]
+        assert [
+            (candidate.chunk_type, candidate.chunk_type_hex, candidate.label)
+            for candidate in profile.sptech_legacy_status_chunks
+        ] == [
+            (1, "0x01", "settings/firmware/light type"),
+            (2, "0x02", "device mode/status/settings"),
+            (3, "0x03", "extended device status/settings"),
+            (4, "0x04", "timer"),
+            (5, "0x05", "music strip/matrix layout"),
+            (6, "0x06", "network information"),
+            (7, "0x07", "fun switch"),
+            (10, "0x0a", "unknown firmware/status block"),
+        ]
         assert describe_lan_profile(profile) == (
             "banlanx_custom_5xx; manual_host; command_protocol_pending; "
             "network_info=37; max_data_length=185; discovery_plugins=5; "
             "network_setup_routes=1; network_setup_prompts=7; "
             "cloud_setup_prompts=2; bonsoir_nsd_methods=5; "
+            "bonsoir_events=10; service_fields=7; service_normalization=5; "
             "service_type_flow=6; txt_query_flow=6; raw_socket_hints=8; "
-            "discovery_status=3; discovery_gaps=3; "
+            "discovery_status=3; discovery_gaps=4; "
             "mdns=224.0.0.251:5353; spnet=udp/6454; "
-            "sptech_candidate=tcp/8587"
+            "sptech_candidate=tcp/8587; sptech_legacy_codes=6; "
+            "sptech_legacy_configs=16; sptech_legacy_commands=20; "
+            "sptech_legacy_chunks=8"
         )
+
+    assert sptech_legacy_model_name_for_code(0x63) == "SP548E"
+    assert sptech_legacy_model_name_for_code(0x00) is None
 
 
 def test_sp541e_lan_profile_preserves_live_spnet_evidence() -> None:
@@ -95,14 +172,36 @@ def test_sp541e_lan_profile_preserves_live_spnet_evidence() -> None:
             "session owns the socket"
         ),
     )
+    assert len(profile.sptech_legacy_model_codes) == 6
+    assert len(profile.sptech_legacy_configuration_codes) == 16
+    assert len(profile.sptech_legacy_command_ids) == 20
+    assert len(profile.sptech_legacy_status_chunks) == 8
+    assert profile.sptech_legacy_model_code_evidence == (
+        (
+            "Old UniLED dev_v3 and 3.0.10-beta.11 map SP530E to "
+            "SPTech LAN code 0x4e"
+        ),
+        (
+            "Old UniLED dev_v3 and 3.0.10-beta.11 map "
+            "SP538E/SP548E/SP539E/SP549E to SPTech LAN model codes"
+        ),
+        (
+            "The old mapping proves recognition/configuration hints only; "
+            "non-SP541E LAN writes remain disabled until response frames are "
+            "proven"
+        ),
+    )
     assert describe_lan_profile(profile) == (
         "banlanx_custom_5xx; discovery_ready; command_protocol_known; "
         "max_data_length=185; discovery_plugins=5; network_setup_routes=1; "
         "network_setup_prompts=7; cloud_setup_prompts=2; "
-        "bonsoir_nsd_methods=5; service_type_flow=6; txt_query_flow=6; "
-        "raw_socket_hints=8; discovery_status=3; discovery_gaps=3; "
+        "bonsoir_nsd_methods=5; bonsoir_events=10; service_fields=7; "
+        "service_normalization=5; service_type_flow=6; txt_query_flow=6; "
+        "raw_socket_hints=8; discovery_status=3; discovery_gaps=4; "
         "mdns=224.0.0.251:5353; spnet=udp/6454; "
-        "sptech_candidate=tcp/8587"
+        "sptech_candidate=tcp/8587; sptech_legacy_codes=6; "
+        "sptech_legacy_configs=16; sptech_legacy_commands=20; "
+        "sptech_legacy_chunks=8"
     )
 
 
@@ -158,6 +257,10 @@ def test_network_family_lan_profiles_remain_protocol_pending() -> None:
     assert sp802_profile.command_protocol_known is False
     assert sp802_profile.requires_manual_host is True
     assert sp802_profile.network_setup_guide_assets == ()
+    assert sp802_profile.sptech_legacy_model_codes == ()
+    assert sp802_profile.sptech_legacy_configuration_codes == ()
+    assert sp802_profile.sptech_legacy_command_ids == ()
+    assert sp802_profile.sptech_legacy_status_chunks == ()
 
     sp801 = catalog.resolve_name("SP801E")
     assert sp801 is not None
@@ -172,13 +275,18 @@ def test_network_family_lan_profiles_remain_protocol_pending() -> None:
         "packages/module_home/assets/images/net_config_guide/sp801e_ble.png",
         "packages/module_home/assets/images/net_config_guide/sp801e_ap.png",
     )
+    assert sp801_profile.sptech_legacy_model_codes == ()
+    assert sp801_profile.sptech_legacy_configuration_codes == ()
+    assert sp801_profile.sptech_legacy_command_ids == ()
+    assert sp801_profile.sptech_legacy_status_chunks == ()
     assert describe_lan_profile(sp801_profile) == (
         "banlanx_network; manual_host; command_protocol_pending; "
         "discovery_plugins=5; network_setup_routes=1; "
         "network_setup_guides=3; network_setup_prompts=7; "
         "cloud_setup_prompts=2; bonsoir_nsd_methods=5; "
+        "bonsoir_events=10; service_fields=7; service_normalization=5; "
         "service_type_flow=6; txt_query_flow=6; raw_socket_hints=8; "
-        "discovery_status=3; discovery_gaps=3; mdns=224.0.0.251:5353"
+        "discovery_status=3; discovery_gaps=4; mdns=224.0.0.251:5353"
     )
 
 
@@ -272,6 +380,37 @@ def test_lan_profiles_track_apk_host_network_methods() -> None:
         "NsdManager.stopServiceDiscovery",
         "NsdManager.unregisterService",
     )
+    assert profile.bonsoir_discovery_events == (
+        "discoveryStarted",
+        "discoveryServiceFound",
+        "discoveryServiceResolved",
+        "discoveryServiceResolveFailed",
+        "discoveryServiceLost",
+        "discoveryStopped",
+        "discoveryUndiscoveredServiceResolveFailed",
+        "discoveryTxtResolved",
+        "discoveryTxtResolveFailed",
+        "discoveryError",
+    )
+    assert profile.bonsoir_service_event_fields == (
+        "id",
+        "service",
+        "service.name",
+        "service.type",
+        "service.port",
+        "service.host",
+        "service.attributes",
+    )
+    assert profile.bonsoir_service_normalization_hints == (
+        (
+            "Trailing-dot Android NSD service types are trimmed before "
+            "lookup/emission"
+        ),
+        "Resolved host values are emitted as getHostAddress() strings when present",
+        "NSD TXT byte values are decoded as UTF-8 strings",
+        "Null TXT values are normalized to empty strings",
+        "Android NSD resolveService calls are serialized through a plugin queue",
+    )
     assert profile.bonsoir_service_type_flow_hints == (
         "discovery.initialize stores the Dart session type as the NSD service type",
         "discovery.start passes that service type to NsdManager.discoverServices",
@@ -305,6 +444,10 @@ def test_lan_profiles_track_apk_host_network_methods() -> None:
             "Decompiled Bonsoir plugin shows service type is supplied by "
             "Dart, but the concrete BanlanX DNS-SD service type was not "
             "recovered"
+        ),
+        (
+            "Blutter/static string searches found multicast/raw datagram "
+            "anchors but no concrete _tcp/_udp DNS-SD service type"
         ),
         "No model-specific TXT attribute schema or discovery response was recovered",
         (
@@ -381,6 +524,9 @@ def test_lan_capable_models_get_lan_profile_diagnostics() -> None:
             "lan_bonsoir_method_count": "methods",
             "lan_bonsoir_argument_count": "arguments",
             "lan_bonsoir_nsd_method_count": "methods",
+            "lan_bonsoir_discovery_event_count": "events",
+            "lan_bonsoir_service_event_field_count": "fields",
+            "lan_bonsoir_service_normalization_hint_count": "hints",
             "lan_bonsoir_service_type_flow_hint_count": "hints",
             "lan_bonsoir_txt_query_flow_hint_count": "hints",
             "lan_discovery_gap_count": "gaps",
@@ -401,6 +547,31 @@ def test_lan_capable_models_get_lan_profile_diagnostics() -> None:
             )
             assert diagnostic.implemented, (name, key)
             assert diagnostic.unit == unit, (name, key)
+
+    custom = catalog.resolve_name("SP547E")
+    assert custom is not None
+    custom_plan = plan_for_model(custom)
+    assert (
+        custom_plan.feature("lan_sptech_legacy_model_code_count").unit
+        == "codes"
+    )
+    assert (
+        custom_plan.feature("lan_sptech_legacy_configuration_code_count").unit
+        == "codes"
+    )
+    assert (
+        custom_plan.feature("lan_sptech_legacy_command_id_count").unit
+        == "commands"
+    )
+    assert (
+        custom_plan.feature("lan_sptech_legacy_status_chunk_count").unit
+        == "chunks"
+    )
+    network = catalog.resolve_name("SP802E")
+    assert network is not None
+    assert not plan_for_model(network).has_feature(
+        "lan_sptech_legacy_model_code_count"
+    )
 
 
 def test_sp801e_gets_network_setup_guide_asset_diagnostic() -> None:

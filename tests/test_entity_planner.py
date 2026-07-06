@@ -100,26 +100,78 @@ def test_ble_models_get_apk_bridge_evidence_diagnostics() -> None:
             assert not plan.has_feature("ble_profile"), model.name
             assert not plan.has_feature("ble_uuid_binding_status"), model.name
             assert not plan.has_feature("ble_known_service_uuid_count"), model.name
+            assert not plan.has_feature("ble_known_service_uuids"), model.name
+            assert not plan.has_feature("ble_known_write_uuid"), model.name
+            assert not plan.has_feature("ble_known_notify_uuid"), model.name
             assert not plan.has_feature("ble_uuid_pool_count"), model.name
+            assert not plan.has_feature("ble_apk_uuid_pool"), model.name
             assert not plan.has_feature("ble_uuid_inventory_count"), model.name
             assert not plan.has_feature("ble_unbound_uuid_candidate_count"), model.name
+            assert not plan.has_feature("ble_unbound_uuid_candidates"), model.name
             assert not plan.has_feature("ble_legacy_uuid_candidate_count"), model.name
+            assert not plan.has_feature("ble_legacy_uuid_candidates"), model.name
+            assert not plan.has_feature("ble_scan_result_field_count"), model.name
+            assert not plan.has_feature("ble_service_result_field_count"), model.name
+            assert not plan.has_feature(
+                "ble_characteristic_result_field_count"
+            ), model.name
+            assert not plan.has_feature("ble_rssi_result_field_count"), model.name
+            assert not plan.has_feature("ble_mtu_result_field_count"), model.name
+            assert not plan.has_feature(
+                "ble_adapter_state_result_field_count"
+            ), model.name
+            assert not plan.has_feature(
+                "ble_notification_event_field_count"
+            ), model.name
+            assert not plan.has_feature("ble_connection_event_field_count"), model.name
+            assert not plan.has_feature(
+                "ble_device_found_event_field_count"
+            ), model.name
+            assert not plan.has_feature("ble_descriptor_uuid_count"), model.name
+            assert not plan.has_feature(
+                "ble_boolean_event_channel_count"
+            ), model.name
+            assert not plan.has_feature("ble_plugin_event_hint_count"), model.name
+            assert not plan.has_feature("ble_plugin_error_code_count"), model.name
+            assert not plan.has_feature("ble_issue_advertisement_count"), model.name
+            assert not plan.has_feature("ble_issue_advertisements"), model.name
             continue
 
         for key, unit in {
             "ble_profile": None,
             "ble_uuid_binding_status": None,
             "ble_known_service_uuid_count": "uuids",
+            "ble_known_service_uuids": None,
+            "ble_known_write_uuid": None,
+            "ble_known_notify_uuid": None,
             "ble_uuid_pool_count": "uuids",
+            "ble_apk_uuid_pool": None,
             "ble_uuid_inventory_count": "uuids",
             "ble_unbound_uuid_candidate_count": "uuids",
+            "ble_unbound_uuid_candidates": None,
             "ble_legacy_uuid_candidate_count": "uuids",
+            "ble_legacy_uuid_candidates": None,
             "ble_plugin_method_count": "methods",
             "ble_plugin_argument_count": "arguments",
             "ble_plugin_result_field_count": "fields",
+            "ble_scan_result_field_count": "fields",
+            "ble_service_result_field_count": "fields",
+            "ble_characteristic_result_field_count": "fields",
+            "ble_rssi_result_field_count": "fields",
+            "ble_mtu_result_field_count": "fields",
+            "ble_adapter_state_result_field_count": "fields",
+            "ble_notification_event_field_count": "fields",
+            "ble_connection_event_field_count": "fields",
+            "ble_device_found_event_field_count": "fields",
+            "ble_descriptor_uuid_count": "uuids",
+            "ble_boolean_event_channel_count": "channels",
+            "ble_plugin_event_hint_count": "hints",
             "ble_plugin_contract_hint_count": "hints",
+            "ble_plugin_error_code_count": "codes",
             "ble_plugin_channel_count": "channels",
             "ble_protocol_gap_count": "gaps",
+            "ble_issue_advertisement_count": "adverts",
+            "ble_issue_advertisements": None,
         }.items():
             feature = plan.feature(key)
             assert feature.platform is PlatformKind.SENSOR, (model.name, key)
@@ -296,6 +348,30 @@ def test_legacy_command_controls_are_planned_with_safe_limits() -> None:
     assert sp602_scenes[0].key == "scene_0"
     assert sp602_scenes[-1].key == "scene_8"
 
+    sp107 = catalog.resolve_name("SP107E")
+    assert sp107 is not None
+    sp107_plan = plan_for_model(sp107)
+    assert sp107_plan.feature("chip_type").entity_category is EntityCategoryKind.CONFIG
+    assert sp107_plan.feature("chip_type").options[:3] == (
+        "SM16703",
+        "TM1804",
+        "UCS1903",
+    )
+    assert sp107_plan.feature("chip_type").options[-1] == "P9412"
+    assert sp107_plan.feature("segment_count").maximum == 64
+    assert sp107_plan.feature("segment_pixels").maximum == 150
+    assert sp107_plan.feature("segment_pixels").unit == "px"
+
+    sp110 = catalog.resolve_name("SP110E")
+    assert sp110 is not None
+    sp110_plan = plan_for_model(sp110)
+    assert sp110_plan.feature("chip_type").options == sp107_plan.feature(
+        "chip_type"
+    ).options
+    assert not sp110_plan.has_feature("segment_count")
+    assert sp110_plan.feature("segment_pixels").maximum == 1024
+    assert sp110_plan.feature("segment_pixels").unit == "px"
+
     sp603 = catalog.resolve_name("SP603E")
     assert sp603 is not None
     sp603_plan = plan_for_model(sp603)
@@ -412,6 +488,25 @@ def test_legacy_command_controls_are_planned_with_safe_limits() -> None:
     assert sp630_plan.has_feature("effect_play")
     assert sp630_plan.has_feature("coexistence")
 
+    sp548 = catalog.resolve_name("SP548E")
+    assert sp548 is not None
+    sp548_plan = plan_for_model(sp548)
+    sp548_effects = sp548_plan.feature("effect").options
+    assert not sp548_plan.has_feature("light_type")
+    assert "Custom Solid - Firework" in sp548_effects
+    assert "Custom Gradient - Spin" in sp548_effects
+    assert "Custom Gradient" in sp548_plan.feature("light_mode").options
+    assert sp548_plan.feature("chip_order").options[:3] == ("RGB", "RBG", "GRB")
+
+    sp539 = catalog.resolve_name("SP539E")
+    assert sp539 is not None
+    sp539_plan = plan_for_model(sp539)
+    assert not sp539_plan.has_feature("light_type")
+    assert "Custom Solid - Firework" in sp539_plan.feature("effect").options
+    assert "Custom Gradient - Spin" in sp539_plan.feature("effect").options
+    assert "Custom Gradient" in sp539_plan.feature("light_mode").options
+    assert sp539_plan.feature("chip_order").options[0] == "RGBW"
+
     sp631 = catalog.resolve_name("SP631E")
     assert sp631 is not None
     sp631_plan = plan_for_model(sp631)
@@ -453,7 +548,7 @@ def test_legacy_command_controls_are_planned_with_safe_limits() -> None:
         "Static Color",
         "Dynamic Color",
         "Sound - Color",
-        "Custom",
+        "Custom Solid",
     )
     assert sp638_plan.feature("chip_order").options == (
         "RGB",
@@ -564,8 +659,10 @@ def test_sp630e_surface_profile_creates_apk_diagnostics() -> None:
         "sp630e_remote_hint_count": "hints",
         "sp630e_motor_hint_count": "hints",
         "sp630e_app_method_count": "methods",
+        "sp630e_app_command_id_count": "ids",
         "sp630e_data_model_hint_count": "hints",
         "sp630e_native_lfx_hint_count": "hints",
+        "sp630e_native_export_detail_count": "anchors",
         "sp630e_catalog_hint_count": "hints",
         "sp630e_protocol_gap_count": "gaps",
         "sp630e_apk_asset_evidence_count": "assets",
@@ -621,6 +718,7 @@ def test_rg4_mesh_accessory_profile_creates_apk_diagnostics() -> None:
         "mesh_provisioning_hint_count": "hints",
         "mesh_provisioning_state_count": "states",
         "mesh_sig_mesh_uuid_hint_count": "uuids",
+        "mesh_app_command_id_count": "ids",
         "mesh_control_blocker_count": "blockers",
         "mesh_apk_asset_evidence_count": "assets",
         "mesh_apk_package_asset_count": "assets",
@@ -650,6 +748,7 @@ def test_rg4_mesh_accessory_profile_creates_apk_diagnostics() -> None:
     assert scene_plan.feature("mesh_route_count").unit == "routes"
     assert scene_plan.feature("mesh_provisioning_hint_count").unit == "hints"
     assert scene_plan.feature("mesh_sig_mesh_uuid_hint_count").unit == "uuids"
+    assert scene_plan.feature("mesh_app_command_id_count").unit == "ids"
     assert scene_plan.feature("mesh_control_blocker_count").unit == "blockers"
     assert scene_plan.feature("mesh_apk_package_asset_count").unit == "assets"
     assert scene_plan.feature("mesh_apk_string_evidence_count").unit == "strings"
@@ -743,6 +842,7 @@ def test_network_family_uses_apk_profile_evidence() -> None:
         "network_regular_lfx_effect_asset_count": "assets",
         "network_lfx_gif_asset_count": "assets",
         "network_app_method_count": "methods",
+        "network_app_command_id_count": "ids",
         "network_workflow_hint_count": "workflows",
         "network_raw_string_hint_count": "strings",
         "network_import_constraint_count": "constraints",
@@ -755,6 +855,7 @@ def test_network_family_uses_apk_profile_evidence() -> None:
         "network_native_matrix_mode_hint_count": "hints",
         "network_native_pixel_helper_hint_count": "helpers",
         "network_native_export_hint_count": "hints",
+        "network_native_export_detail_count": "anchors",
         "network_protocol_gap_count": "gaps",
         "network_command_blocker_count": "blockers",
         "network_apk_asset_evidence_count": "assets",
@@ -926,6 +1027,7 @@ def test_scene_families_get_scene_plans() -> None:
             "scene_lfx_route_count": "routes",
             "scene_timer_route_count": "routes",
             "scene_app_method_count": "methods",
+            "scene_app_command_id_count": "ids",
             "scene_storage_hint_count": "hints",
             "scene_recent_action_count": "actions",
             "scene_favorite_action_count": "actions",
@@ -1138,6 +1240,7 @@ def test_car_light_family_uses_apk_profile_evidence() -> None:
             "car_light_setup_requirement_count": "requirements",
             "car_light_setup_flow_hint_count": "hints",
             "car_light_setup_key_hint_count": "hints",
+            "car_light_app_command_id_count": "ids",
             "car_light_setup_dependency_count": "dependencies",
             "car_light_required_setup_dependency_count": "dependencies",
             "car_light_ordered_setup_model_count": "models",
@@ -1249,6 +1352,7 @@ def test_fish_tank_family_uses_apk_profile_evidence() -> None:
         "fish_tank_timer_hint_count": "hints",
         "fish_tank_timer_string_hint_count": "strings",
         "fish_tank_app_method_count": "methods",
+        "fish_tank_app_command_id_count": "ids",
         "fish_tank_data_model_hint_count": "hints",
         "fish_tank_raw_string_hint_count": "strings",
         "fish_tank_brightness_string_hint_count": "strings",

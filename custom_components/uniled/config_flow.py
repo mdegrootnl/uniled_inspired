@@ -276,9 +276,43 @@ class UniLEDConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             return abort
         await self.async_set_unique_id(setup.unique_id, raise_on_progress=False)
         self._abort_if_unique_id_configured()
+        if setup_entry_requires_discovery_confirmation(setup):
+            self._pending_lan_confirmation_setup = setup
+            return await self.async_step_discovery_confirm()
         return self.async_create_entry(
             title=setup.title,
             data=setup.data,
+        )
+
+    async def async_step_discovery_confirm(
+        self,
+        user_input: dict[str, Any] | None = None,
+    ) -> FlowResult:
+        """Confirm diagnostic-only LAN discovery before entry creation."""
+        setup = getattr(self, "_pending_lan_confirmation_setup", None)
+        if setup is None:
+            return self.async_abort(reason="unknown_model")
+
+        if user_input is not None:
+            if abort := await self._async_abort_if_setup_unique_id_configured(setup):
+                return abort
+            return self.async_create_entry(
+                title=setup.title,
+                data=setup.data,
+            )
+
+        return self.async_show_form(
+            step_id="discovery_confirm",
+            data_schema=vol.Schema({}),
+            description_placeholders={
+                "model": str(setup.data.get(CONF_MODEL, "")),
+                "host": str(setup.data.get(CONF_HOST, "")),
+                "discovery_source": str(setup.data.get(CONF_DISCOVERY_SOURCE, "")),
+                "discovery_match": str(setup.data.get(CONF_DISCOVERY_MATCH, "")),
+                "discovery_confidence": str(
+                    setup.data.get(CONF_DISCOVERY_CONFIDENCE, "")
+                ),
+            },
         )
 
     async def async_step_zengge_cloud(

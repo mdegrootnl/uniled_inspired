@@ -26,9 +26,11 @@ from custom_components.uniled.const import (
     CONF_MODEL,
     CONF_MODEL_ID,
     CONF_TRANSPORT,
+    DISCOVERY_CONFIDENCE_DISCOVERED_ONLY,
     DISCOVERY_CONFIDENCE_PROTOCOL_PROVEN,
     DISCOVERY_CONFIDENCE_VERIFIED,
     DISCOVERY_MATCH_SAFE_SUFFIX,
+    DISCOVERY_MATCH_SPNET_LEGACY_MODEL_CODE,
     DISCOVERY_MATCH_SPNET_MODEL_ID,
     DISCOVERY_SOURCE_BLUETOOTH,
     DISCOVERY_SOURCE_LAN,
@@ -36,6 +38,7 @@ from custom_components.uniled.const import (
     TRANSPORT_LAN,
 )
 from custom_components.uniled.core import (
+    ApkCommandIdHint,
     BanlanX6xxProtocol,
     BanlanXCustom5xxProtocol,
     TransportError,
@@ -43,18 +46,25 @@ from custom_components.uniled.core import (
     default_catalog,
     protocol_for_model,
 )
+from custom_components.uniled.core.car_lights import CAR_LIGHT_APP_COMMAND_ID_HINTS
+from custom_components.uniled.core.fish_tank import FISH_TANK_APP_COMMAND_ID_HINTS
 from custom_components.uniled.core.protocols import (
     ZenggeNodeContext,
     make_pair_packet,
     parse_zengge_notification_block,
 )
 from custom_components.uniled.core.scene import (
+    SCENE_APP_COMMAND_ID_HINTS,
     SCENE_MODE_EFFECTS,
     SCENE_NATIVE_CODE_ANCHORS,
     SCENE_NATIVE_PERSISTENCE_EXPORTS,
 )
+from custom_components.uniled.core.sp630e import SP630E_APP_COMMAND_ID_HINTS
 from custom_components.uniled.core.state import ChannelState
-from custom_components.uniled.core.transports.mesh import SIG_MESH_UUID_HINTS
+from custom_components.uniled.core.transports.mesh import (
+    MESH_APP_COMMAND_ID_HINTS,
+    SIG_MESH_UUID_HINTS,
+)
 from custom_components.uniled.runtime import (
     RuntimeSetupError,
     UniLEDRuntime,
@@ -106,6 +116,22 @@ from custom_components.uniled.setup_data import (
     lan_setup_entry_data_from_spnet_response,
     manual_setup_entry_data,
 )
+
+
+def app_command_id_hint_dicts(
+    hints: tuple[ApkCommandIdHint, ...],
+) -> list[dict[str, object]]:
+    """Return the diagnostics shape for app-command enum evidence."""
+    return [
+        {
+            "name": hint.name,
+            "ordinal": hint.ordinal,
+            "command_id": hint.command_id,
+            "command_id_hex": hint.command_id_hex,
+            "source": hint.source,
+        }
+        for hint in hints
+    ]
 
 
 @dataclass(slots=True)
@@ -362,9 +388,17 @@ def test_runtime_exposes_discovery_provenance_diagnostics() -> None:
         ),
         source="192.0.2.92",
     )
+    legacy_lan_setup = lan_setup_entry_data_from_spnet_response(
+        catalog,
+        bytes.fromhex(
+            "53704e65740000210000000000010000106300542024111f99065350353438450000"
+        ),
+        source="192.0.2.99",
+    )
 
     ble_runtime = build_runtime(ble_setup.data)
     lan_runtime = build_runtime(lan_setup.data)
+    legacy_lan_runtime = build_runtime(legacy_lan_setup.data)
     manual_runtime = build_runtime(
         {
             CONF_MODEL: "SP601E",
@@ -397,6 +431,22 @@ def test_runtime_exposes_discovery_provenance_diagnostics() -> None:
     assert (
         lan_runtime.diagnostic_value("discovery_confidence")
         == DISCOVERY_CONFIDENCE_VERIFIED
+    )
+    assert (
+        legacy_lan_runtime.diagnostic_value("discovery_source")
+        == DISCOVERY_SOURCE_LAN
+    )
+    assert (
+        legacy_lan_runtime.diagnostic_value("discovery_match")
+        == DISCOVERY_MATCH_SPNET_LEGACY_MODEL_CODE
+    )
+    assert (
+        legacy_lan_runtime.diagnostic_value("discovery_confidence")
+        == DISCOVERY_CONFIDENCE_DISCOVERED_ONLY
+    )
+    assert (
+        legacy_lan_runtime.diagnostic_value("runtime_transport_state")
+        == "diagnostic_only"
     )
 
     assert manual_runtime.diagnostic_value("discovery_source") is None
@@ -435,6 +485,130 @@ def test_setup_helper_attaches_normal_ble_transport_session() -> None:
     assert runtime.mesh_transport_ready is False
     assert runtime.diagnostic_value("runtime_transport_state") == "command_session"
     assert runtime.transport.__class__.__name__ == "UniLEDBLETransport"
+
+
+def test_setup_helper_sp630e_creates_command_light_not_rssi_only() -> None:
+    """Regression for old UniLED #121: SP630E must not load as RSSI-only."""
+    runtime = build_runtime(
+        {
+            CONF_MODEL: "SP630E",
+            CONF_ADDRESS: "5A:22:3D:BB:02:9E",
+        }
+    )
+
+    kind = _attach_runtime_transports(
+        None,
+        dict(runtime.entry_data),
+        runtime,
+        notification_callback=lambda data: None,
+        mesh_notification_callback=lambda data: None,
+    )
+
+    light_keys = [feature.key for feature in command_light_features(runtime)]
+    sensor_keys = set(implemented_sensor_keys(runtime))
+
+    assert kind == "ble"
+    assert runtime.session_ready is True
+    assert runtime.diagnostic_value("runtime_transport_state") == "command_session"
+    assert runtime.diagnostic_value("ble_rssi_result_field_count") == 1
+    assert "ble_rssi_result_field_count" in sensor_keys
+    assert light_keys == ["main_light"]
+
+    asyncio.run(runtime.async_close())
+
+
+def test_setup_helper_sp107e_exposes_color_and_effect_controls() -> None:
+    """Regression for old UniLED #127: SP107E exposes color and effects."""
+    runtime = build_runtime(
+        {
+            CONF_MODEL: "SP107E",
+            CONF_ADDRESS: "35:53:1A:05:98:9E",
+        }
+    )
+
+    kind = _attach_runtime_transports(
+        None,
+        dict(runtime.entry_data),
+        runtime,
+        notification_callback=lambda data: None,
+        mesh_notification_callback=lambda data: None,
+    )
+
+    assert kind == "ble"
+    assert runtime.session_ready is True
+    assert [feature.key for feature in command_light_features(runtime)] == [
+        "main_light"
+    ]
+    assert light_supported_color_modes(runtime) == ("rgb",)
+    assert {"effect", "light_mode", "chip_type"} <= {
+        feature.key for feature in command_select_features(runtime)
+    }
+    assert {"effect_speed", "audio_sensitivity", "segment_count", "segment_pixels"} <= {
+        feature.key for feature in command_number_features(runtime)
+    }
+    assert len(select_options(runtime, "effect")) == 229
+    assert select_options(runtime, "effect")[:2] == ("Solid", "Dynamic FX 1")
+    assert select_options(runtime, "light_mode") == (
+        "Single FX",
+        "Cycle Dynamic FX's",
+        "Cycle Strip FX's",
+        "Cycle Matrix FX's",
+    )
+    assert select_options(runtime, "chip_type")[:3] == (
+        "SM16703",
+        "TM1804",
+        "UCS1903",
+    )
+    assert select_options(runtime, "chip_type")[-1] == "P9412"
+    assert command_control_available(runtime, "chip_type")
+    assert not command_control_available(runtime, "segment_count")
+    assert not command_control_available(runtime, "segment_pixels")
+
+    runtime.state.diagnostics.update(
+        {
+            "chip_type": 0x05,
+            "segment_count": 4,
+            "segment_pixels": 5,
+        }
+    )
+
+    assert control_value(runtime, "chip_type") == "SK6812"
+    assert control_value(runtime, "segment_count") == 4
+    assert control_value(runtime, "segment_pixels") == 5
+    assert command_control_available(runtime, "segment_count")
+    assert command_control_available(runtime, "segment_pixels")
+
+    asyncio.run(runtime.async_close())
+
+    runtime = build_runtime(
+        {
+            CONF_MODEL: "SP110E",
+            CONF_ADDRESS: "35:53:1A:05:98:9E",
+        }
+    )
+
+    kind = _attach_runtime_transports(
+        None,
+        dict(runtime.entry_data),
+        runtime,
+        notification_callback=lambda data: None,
+        mesh_notification_callback=lambda data: None,
+    )
+
+    assert kind == "ble"
+    assert runtime.session_ready is True
+    assert "chip_type" in {
+        feature.key for feature in command_select_features(runtime)
+    }
+    assert "segment_pixels" in {
+        feature.key for feature in command_number_features(runtime)
+    }
+    assert "segment_count" not in {
+        feature.key for feature in command_number_features(runtime)
+    }
+    assert command_control_available(runtime, "segment_pixels")
+
+    asyncio.run(runtime.async_close())
 
 
 def test_setup_helper_attaches_apk_inferred_ble_command_sessions() -> None:
@@ -764,6 +938,18 @@ def test_setup_helper_attaches_sp541e_lan_command_session() -> None:
     assert runtime.diagnostic_value("lan_profile").startswith(
         "banlanx_custom_5xx; discovery_ready; command_protocol_known"
     )
+    assert runtime.diagnostic_value("lan_sptech_legacy_model_code_count") == 6
+    assert (
+        runtime.diagnostic_value("lan_sptech_legacy_configuration_code_count")
+        == 16
+    )
+    assert "lan_sptech_legacy_model_code_count" in implemented_sensor_keys(
+        runtime
+    )
+    assert (
+        "lan_sptech_legacy_configuration_code_count"
+        in implemented_sensor_keys(runtime)
+    )
     assert runtime.transport.__class__.__name__ == "UniLEDLANTransport"
     assert runtime.protocol.__class__.__name__ == "SPTechLANProtocol"
     assert runtime.state.diagnostics["lan_transport_ready"] is True
@@ -900,13 +1086,32 @@ def test_implemented_sensor_keys_are_catalog_diagnostics() -> None:
     assert "ble_profile" in keys
     assert "ble_uuid_binding_status" in keys
     assert "ble_known_service_uuid_count" in keys
+    assert "ble_known_service_uuids" in keys
+    assert "ble_known_write_uuid" in keys
+    assert "ble_known_notify_uuid" in keys
     assert "ble_uuid_pool_count" in keys
+    assert "ble_apk_uuid_pool" in keys
     assert "ble_unbound_uuid_candidate_count" in keys
+    assert "ble_unbound_uuid_candidates" in keys
     assert "ble_legacy_uuid_candidate_count" in keys
+    assert "ble_legacy_uuid_candidates" in keys
     assert "ble_plugin_method_count" in keys
     assert "ble_plugin_argument_count" in keys
     assert "ble_plugin_result_field_count" in keys
+    assert "ble_scan_result_field_count" in keys
+    assert "ble_service_result_field_count" in keys
+    assert "ble_characteristic_result_field_count" in keys
+    assert "ble_rssi_result_field_count" in keys
+    assert "ble_mtu_result_field_count" in keys
+    assert "ble_adapter_state_result_field_count" in keys
+    assert "ble_notification_event_field_count" in keys
+    assert "ble_connection_event_field_count" in keys
+    assert "ble_device_found_event_field_count" in keys
+    assert "ble_descriptor_uuid_count" in keys
+    assert "ble_boolean_event_channel_count" in keys
+    assert "ble_plugin_event_hint_count" in keys
     assert "ble_plugin_contract_hint_count" in keys
+    assert "ble_plugin_error_code_count" in keys
     assert "ble_plugin_channel_count" in keys
     assert "ble_protocol_gap_count" in keys
     assert "custom_effect_slot" in keys
@@ -1082,11 +1287,11 @@ def test_legacy_uniled_parity_profile_exposes_ported_old_command_surface() -> No
         ),
         "SP107E": (
             "legacy_led_chord; old_uniled=custom_components/uniled/lib/ble/"
-            "led_chord.py; commands=11; parsers=4; stubbed=4; gaps=1"
+            "led_chord.py; commands=15; parsers=4; stubbed=0; gaps=0"
         ),
         "SP110E": (
             "legacy_led_hue; old_uniled=custom_components/uniled/lib/ble/"
-            "led_hue.py; commands=10; parsers=4; stubbed=2; gaps=1"
+            "led_hue.py; commands=12; parsers=4; stubbed=0; gaps=0"
         ),
     }
 
@@ -1183,9 +1388,9 @@ def test_sp630e_surface_profile_runtime_diagnostics() -> None:
     assert runtime.diagnostic_value("sp630e_profile") == (
         "banlanx_custom_5xx; package=packages/sp630e; surfaces=23; "
         "routes=16; favorite_limits=4; timer_limit=5; music_assets=19; "
-        "network_hints=12; remote_hints=7; motor_hints=6; methods=8; "
-        "data=8; native_lfx=27; gaps=7; package_assets=217; "
-        "legacy_ble_protocol_known"
+        "network_hints=12; remote_hints=7; motor_hints=6; methods=35; "
+        "app_command_ids=35; data=8; native_lfx=27; native_export_details=7; "
+        "gaps=7; package_assets=217; legacy_ble_protocol_known"
     )
     assert runtime.diagnostic_value("sp630e_route_count") == 16
     assert runtime.diagnostic_value("sp630e_control_surface_count") == 23
@@ -1196,16 +1401,20 @@ def test_sp630e_surface_profile_runtime_diagnostics() -> None:
     assert runtime.diagnostic_value("sp630e_network_hint_count") == 12
     assert runtime.diagnostic_value("sp630e_remote_hint_count") == 7
     assert runtime.diagnostic_value("sp630e_motor_hint_count") == 6
-    assert runtime.diagnostic_value("sp630e_app_method_count") == 8
+    assert runtime.diagnostic_value("sp630e_app_method_count") == 35
+    assert runtime.diagnostic_value("sp630e_app_command_id_count") == 35
     assert runtime.diagnostic_value("sp630e_data_model_hint_count") == 8
     assert runtime.diagnostic_value("sp630e_native_lfx_hint_count") == 27
+    assert runtime.diagnostic_value("sp630e_native_export_detail_count") == 7
     assert runtime.diagnostic_value("sp630e_protocol_gap_count") == 7
     assert runtime.diagnostic_value("sp630e_apk_asset_evidence_count") == 46
     assert runtime.diagnostic_value("sp630e_apk_package_asset_count") == 217
     assert runtime.diagnostic_value("sp630e_apk_string_evidence_count") == 10
     assert "sp630e_profile" in implemented_sensor_keys(runtime)
     assert "sp630e_timer_limit" in implemented_sensor_keys(runtime)
+    assert "sp630e_app_command_id_count" in implemented_sensor_keys(runtime)
     assert "sp630e_native_lfx_hint_count" in implemented_sensor_keys(runtime)
+    assert "sp630e_native_export_detail_count" in implemented_sensor_keys(runtime)
 
     diagnostics = runtime_diagnostics(runtime)["model"]["sp630e_profile"]
     assert diagnostics["package"] == "packages/sp630e"
@@ -1218,8 +1427,23 @@ def test_sp630e_surface_profile_runtime_diagnostics() -> None:
         "powered off, all timers will be deleted."
     ) in diagnostics["timer_hints"]
     assert "favoriteLightingEffectIds" in diagnostics["data_model_hints"]
+    assert diagnostics["app_command_id_hints"] == app_command_id_hint_dicts(
+        SP630E_APP_COMMAND_ID_HINTS
+    )
     assert "liblfx.so" in diagnostics["native_lfx_hints"]
     assert "Music_VuMeter" in diagnostics["native_lfx_hints"]
+    assert diagnostics["native_export_detail_anchors"][0] == {
+        "name": "pwmEffect",
+        "address": 0x00005435,
+        "address_hex": "0x00005435",
+        "size": 612,
+    }
+    assert diagnostics["native_export_detail_anchors"][-1] == {
+        "name": "curPWMVals",
+        "address": 0x0000B6ED,
+        "address_hex": "0x0000b6ed",
+        "size": 7,
+    }
     assert any("remote" in hint for hint in diagnostics["remote_hints"])
     assert any("not proven" in gap for gap in diagnostics["protocol_gap_hints"])
     assert any("liblfx.so" in gap for gap in diagnostics["protocol_gap_hints"])
@@ -1457,6 +1681,26 @@ def test_legacy_set_state_service_uses_direct_session_commands() -> None:
     assert state.effect_length == 7
     assert state.effect_direction is False
     assert len(transport.sent) == 5
+
+
+def test_legacy_set_state_service_sends_led_chord_rgb2_color() -> None:
+    """SP107E exposes old UniLED's matrix-column RGB command as a service field."""
+    runtime = build_runtime({CONF_MODEL: "SP107E", CONF_DEVICE_ID: "bench"})
+    transport = RecordingTransport()
+    runtime.attach_transport(transport)
+
+    changed = asyncio.run(
+        async_apply_legacy_set_state_service(
+            runtime,
+            {"rgb2_color": (1, 2, 3)},
+        )
+    )
+
+    state = channel_state(runtime)
+    assert changed is True
+    assert transport.sent == [(bytes.fromhex("01 02 03 10"), False)]
+    assert state.extra["rgb2"] == (1, 2, 3)
+    assert runtime.state.available is True
 
 
 def test_legacy_set_state_service_fans_out_sp601_aggregate_light_only() -> None:
@@ -1970,6 +2214,20 @@ def test_sp6xx_light_color_modes_follow_light_type_and_coexistence() -> None:
     assert light_color_mode(runtime) == "brightness"
 
 
+def test_light_color_modes_never_mix_brightness_with_richer_modes() -> None:
+    """Regression for old UniLED HA failures on {'brightness', 'rgb'} modes."""
+    runtime = build_runtime({CONF_MODEL: "SP530E", CONF_DEVICE_ID: "bench"})
+    runtime.attach_transport(RecordingTransport())
+    runtime.state.diagnostics["light_type"] = 0x06
+
+    modes = light_supported_color_modes(runtime)
+
+    assert modes == ("rgb",)
+    assert "brightness" not in modes
+    assert "onoff" not in modes
+    assert light_color_mode(runtime) == "rgb"
+
+
 def test_banlanx_v23_light_color_modes_follow_rgbw_profile() -> None:
     """V2/V3 RGBW models expose legacy RGB plus white modes."""
     runtime = build_runtime({CONF_MODEL: "SP617E", CONF_DEVICE_ID: "bench"})
@@ -2372,6 +2630,18 @@ def test_sp6xx_dynamic_select_availability_waits_for_light_type_status() -> None
     assert command_control_available(fixed_runtime, "chip_order")
     assert command_control_available(fixed_runtime, "light_mode")
 
+    fixed_sptech = build_runtime({CONF_MODEL: "SP548E", CONF_DEVICE_ID: "bench"})
+    fixed_sptech.attach_transport(RecordingTransport())
+    fixed_sptech_keys = {
+        feature.key for feature in command_select_features(fixed_sptech)
+    }
+
+    assert {"chip_order", "effect", "light_mode"} <= fixed_sptech_keys
+    assert "light_type" not in fixed_sptech_keys
+    assert command_control_available(fixed_sptech, "effect")
+    assert command_control_available(fixed_sptech, "chip_order")
+    assert command_control_available(fixed_sptech, "light_mode")
+
 
 def test_sp6xx_effect_parameter_state_clears_after_select_changes() -> None:
     """Optimistic SP6xx select state clears parameters unsupported by new effect."""
@@ -2525,7 +2795,7 @@ def test_sp6xx_light_mode_select_uses_light_type_default_effects() -> None:
         "Static Color",
         "Dynamic Color",
         "Sound - Color",
-        "Custom",
+        "Custom Solid",
     )
     assert select_command_value(runtime, "light_mode", "Static Color") == 0x01
 
@@ -2578,15 +2848,71 @@ def test_sp6xx_dynamic_light_mode_select_waits_for_light_type() -> None:
         "Static Color",
         "Dynamic Color",
         "Sound - Color",
-        "Custom",
+        "Custom Solid",
+        "Custom Gradient",
     )
     assert light_mode_command_values(runtime, 0x03) == (0x03, 0x05)
+    assert light_mode_command_values(runtime, 0x08) == (0x08, 0x05)
 
     apply_select_command_state(runtime, "light_mode", "Static Color")
 
     assert control_value(runtime, "light_mode") == "Static Color"
     assert control_value(runtime, "effect") == "Static Color - Solid"
     assert channel_state(runtime).effect_number == 0x01
+
+
+def test_custom_5xx_sptech_net_effect_overlay_is_model_scoped() -> None:
+    """Old-UniLED SPTech NET extras do not leak into generic SP630E profiles."""
+    sp548 = build_runtime({CONF_MODEL: "SP548E", CONF_DEVICE_ID: "bench"})
+    sp548.attach_transport(RecordingTransport())
+
+    sp548_effects = select_options(sp548, "effect")
+
+    assert "light_type" not in {
+        feature.key for feature in command_select_features(sp548)
+    }
+    assert "Custom Gradient" in select_options(sp548, "light_mode")
+    assert "Custom Solid - Firework" in sp548_effects
+    assert "Custom Gradient - Spin" in sp548_effects
+    assert effect_command_value(sp548, "Custom Solid - Firework") == (0x07, 0x13)
+    assert effect_command_value(sp548, "Custom Gradient - Spin") == (0x08, 0x04)
+
+    sp539 = build_runtime({CONF_MODEL: "SP539E", CONF_DEVICE_ID: "bench"})
+    sp539.attach_transport(RecordingTransport())
+
+    assert "Custom Solid - Firework" in select_options(sp539, "effect")
+    assert "Custom Gradient - Spin" in select_options(sp539, "effect")
+
+    sp530 = build_runtime({CONF_MODEL: "SP530E", CONF_DEVICE_ID: "bench"})
+    sp530.attach_transport(RecordingTransport())
+
+    assert len(select_options(sp530, "light_type")) == 14
+
+    sp530.state.diagnostics["light_type"] = 0x06
+
+    assert "Custom Gradient" not in select_options(sp530, "light_mode")
+    assert "Custom Solid - Firework" not in select_options(sp530, "effect")
+    assert "Custom Gradient - Spin" not in select_options(sp530, "effect")
+
+    sp530.state.diagnostics["light_type"] = 0x86
+
+    assert "Custom Gradient" in select_options(sp530, "light_mode")
+    assert "Custom Solid - Firework" in select_options(sp530, "effect")
+    assert "Custom Gradient - Spin" in select_options(sp530, "effect")
+
+    sp630 = build_runtime({CONF_MODEL: "SP630E", CONF_DEVICE_ID: "bench"})
+    sp630.attach_transport(RecordingTransport())
+    sp630.state.diagnostics["light_type"] = 0x06
+
+    assert "Custom Gradient" not in select_options(sp630, "light_mode")
+    assert "Custom Solid - Firework" not in select_options(sp630, "effect")
+    assert "Custom Gradient - Spin" not in select_options(sp630, "effect")
+
+    sp630.state.diagnostics["light_type"] = 0x86
+
+    assert "Custom Gradient" in select_options(sp630, "light_mode")
+    assert "Custom Gradient - Spin" in select_options(sp630, "effect")
+    assert "Custom Solid - Firework" not in select_options(sp630, "effect")
 
 
 def test_apply_sp6xx_light_type_and_chip_order_state_updates_runtime() -> None:
@@ -2674,6 +3000,33 @@ def test_apply_select_command_state_uses_legacy_option_maps() -> None:
     assert runtime.state.channels[0].effect_number == 0xDA
     assert runtime.state.channels[0].effect_type == "Sound"
     assert runtime.state.channels[0].effect_loop is True
+
+    runtime = build_runtime({CONF_MODEL: "SP107E", CONF_DEVICE_ID: "bench"})
+    runtime.attach_transport(RecordingTransport())
+
+    assert select_command_value(runtime, "chip_type", "WS2811") == 3
+
+    apply_select_command_state(runtime, "chip_type", "WS2811")
+    apply_number_command_state(runtime, "segment_count", 4)
+    apply_number_command_state(runtime, "segment_pixels", 5)
+
+    assert control_value(runtime, "chip_type") == "WS2811"
+    assert control_value(runtime, "segment_count") == 4
+    assert control_value(runtime, "segment_pixels") == 5
+    assert runtime.state.diagnostics["chip_type"] == 3
+    assert runtime.state.diagnostics["segment_count"] == 4
+    assert runtime.state.diagnostics["segment_pixels"] == 5
+
+    runtime = build_runtime({CONF_MODEL: "SP110E", CONF_DEVICE_ID: "bench"})
+    runtime.attach_transport(RecordingTransport())
+
+    apply_select_command_state(runtime, "chip_type", "TM1814")
+    apply_number_command_state(runtime, "segment_pixels", 300)
+
+    assert control_value(runtime, "chip_type") == "TM1814"
+    assert control_value(runtime, "segment_pixels") == 300
+    assert runtime.state.diagnostics["chip_type"] == 0x17
+    assert runtime.state.diagnostics["segment_pixels"] == 300
 
     runtime = build_runtime({CONF_MODEL: "SP617E", CONF_DEVICE_ID: "bench"})
     runtime.attach_transport(RecordingTransport())
@@ -2951,6 +3304,43 @@ def test_runtime_diagnostics_redacts_entry_identifiers() -> None:
             "NsdManager.stopServiceDiscovery",
             "NsdManager.unregisterService",
         ],
+        "bonsoir_discovery_events": [
+            "discoveryStarted",
+            "discoveryServiceFound",
+            "discoveryServiceResolved",
+            "discoveryServiceResolveFailed",
+            "discoveryServiceLost",
+            "discoveryStopped",
+            "discoveryUndiscoveredServiceResolveFailed",
+            "discoveryTxtResolved",
+            "discoveryTxtResolveFailed",
+            "discoveryError",
+        ],
+        "bonsoir_service_event_fields": [
+            "id",
+            "service",
+            "service.name",
+            "service.type",
+            "service.port",
+            "service.host",
+            "service.attributes",
+        ],
+        "bonsoir_service_normalization_hints": [
+            (
+                "Trailing-dot Android NSD service types are trimmed before "
+                "lookup/emission"
+            ),
+            (
+                "Resolved host values are emitted as getHostAddress() strings "
+                "when present"
+            ),
+            "NSD TXT byte values are decoded as UTF-8 strings",
+            "Null TXT values are normalized to empty strings",
+            (
+                "Android NSD resolveService calls are serialized through a "
+                "plugin queue"
+            ),
+        ],
         "bonsoir_service_type_flow_hints": [
             (
                 "discovery.initialize stores the Dart session type as the NSD "
@@ -2998,6 +3388,10 @@ def test_runtime_diagnostics_redacts_entry_identifiers() -> None:
                 "recovered"
             ),
             (
+                "Blutter/static string searches found multicast/raw datagram "
+                "anchors but no concrete _tcp/_udp DNS-SD service type"
+            ),
+            (
                 "No model-specific TXT attribute schema or discovery response "
                 "was recovered"
             ),
@@ -3043,9 +3437,10 @@ def test_runtime_diagnostics_redacts_entry_identifiers() -> None:
         "banlanx_network; manual_host; command_protocol_pending; "
         "network_info=9; discovery_plugins=5; network_setup_routes=1; "
         "network_setup_prompts=7; cloud_setup_prompts=2; "
-        "bonsoir_nsd_methods=5; service_type_flow=6; txt_query_flow=6; "
+        "bonsoir_nsd_methods=5; bonsoir_events=10; service_fields=7; "
+        "service_normalization=5; service_type_flow=6; txt_query_flow=6; "
         "raw_socket_hints=8; "
-        "discovery_status=3; discovery_gaps=3; mdns=224.0.0.251:5353"
+        "discovery_status=3; discovery_gaps=4; mdns=224.0.0.251:5353"
     )
     assert runtime.diagnostic_value("lan_host_network_method_count") == 8
     assert runtime.diagnostic_value("lan_host_setup_mode") == "manual_host"
@@ -3058,12 +3453,20 @@ def test_runtime_diagnostics_redacts_entry_identifiers() -> None:
     assert runtime.diagnostic_value("lan_bonsoir_method_count") == 6
     assert runtime.diagnostic_value("lan_bonsoir_argument_count") == 5
     assert runtime.diagnostic_value("lan_bonsoir_nsd_method_count") == 5
+    assert runtime.diagnostic_value("lan_bonsoir_discovery_event_count") == 10
+    assert runtime.diagnostic_value("lan_bonsoir_service_event_field_count") == 7
+    assert (
+        runtime.diagnostic_value(
+            "lan_bonsoir_service_normalization_hint_count"
+        )
+        == 5
+    )
     assert (
         runtime.diagnostic_value("lan_bonsoir_service_type_flow_hint_count")
         == 6
     )
     assert runtime.diagnostic_value("lan_bonsoir_txt_query_flow_hint_count") == 6
-    assert runtime.diagnostic_value("lan_discovery_gap_count") == 3
+    assert runtime.diagnostic_value("lan_discovery_gap_count") == 4
     assert runtime.diagnostic_value("lan_raw_socket_hint_count") == 8
     assert runtime.diagnostic_value("lan_discovery_status_hint_count") == 3
     assert runtime.diagnostic_value("lan_udp_socket_timeout_ms") == 8000
@@ -3086,6 +3489,14 @@ def test_runtime_diagnostics_redacts_entry_identifiers() -> None:
     assert "lan_bonsoir_method_count" in implemented_sensor_keys(runtime)
     assert "lan_bonsoir_argument_count" in implemented_sensor_keys(runtime)
     assert "lan_bonsoir_nsd_method_count" in implemented_sensor_keys(runtime)
+    assert "lan_bonsoir_discovery_event_count" in implemented_sensor_keys(runtime)
+    assert "lan_bonsoir_service_event_field_count" in implemented_sensor_keys(
+        runtime
+    )
+    assert (
+        "lan_bonsoir_service_normalization_hint_count"
+        in implemented_sensor_keys(runtime)
+    )
     assert (
         "lan_bonsoir_service_type_flow_hint_count"
         in implemented_sensor_keys(runtime)
@@ -3135,6 +3546,14 @@ def test_runtime_diagnostics_redacts_cloud_credentials() -> None:
     assert ble_only.diagnostic_value("lan_network_setup_prompt_count") is None
     assert ble_only.diagnostic_value("lan_raw_socket_hint_count") is None
     assert ble_only.diagnostic_value("lan_discovery_status_hint_count") is None
+    assert ble_only.diagnostic_value("lan_bonsoir_discovery_event_count") is None
+    assert ble_only.diagnostic_value("lan_bonsoir_service_event_field_count") is None
+    assert (
+        ble_only.diagnostic_value(
+            "lan_bonsoir_service_normalization_hint_count"
+        )
+        is None
+    )
     assert (
         ble_only.diagnostic_value("lan_bonsoir_txt_query_flow_hint_count")
         is None
@@ -3146,6 +3565,18 @@ def test_runtime_diagnostics_redacts_cloud_credentials() -> None:
     assert "lan_network_setup_prompt_count" not in implemented_sensor_keys(ble_only)
     assert "lan_raw_socket_hint_count" not in implemented_sensor_keys(ble_only)
     assert "lan_discovery_status_hint_count" not in implemented_sensor_keys(ble_only)
+    assert (
+        "lan_bonsoir_discovery_event_count"
+        not in implemented_sensor_keys(ble_only)
+    )
+    assert (
+        "lan_bonsoir_service_event_field_count"
+        not in implemented_sensor_keys(ble_only)
+    )
+    assert (
+        "lan_bonsoir_service_normalization_hint_count"
+        not in implemented_sensor_keys(ble_only)
+    )
     assert "lan_bonsoir_txt_query_flow_hint_count" not in implemented_sensor_keys(
         ble_only
     )
@@ -3290,6 +3721,200 @@ def test_network_info_diagnostic_uses_catalog_code_until_query_supported() -> No
     assert no_network_info.diagnostic_value("network_info") is None
 
 
+def test_custom_5xx_lan_diagnostics_expose_legacy_sptech_codes() -> None:
+    """Custom 5xx diagnostics preserve old-UniLED SPTech model aliases."""
+    runtime = build_runtime({CONF_MODEL: "SP547E", CONF_DEVICE_ID: "bench"})
+
+    profile = runtime_diagnostics(runtime)["model"]["lan_profile"]
+
+    assert profile["sptech_legacy_model_codes"] == [
+        {
+            "code": 0x4E,
+            "code_hex": "0x4e",
+            "model_name": "SP530E",
+            "source": (
+                "monty68/uniled origin/dev_v3 and 3.0.10-beta.11 "
+                "custom_components/uniled/lib/net/sp53x_54xe.py"
+            ),
+        },
+        {
+            "code": 0x56,
+            "code_hex": "0x56",
+            "model_name": "SP538E",
+            "source": (
+                "monty68/uniled origin/dev_v3 and 3.0.10-beta.11 "
+                "custom_components/uniled/lib/net/sp53x_54xe.py"
+            ),
+        },
+        {
+            "code": 0x57,
+            "code_hex": "0x57",
+            "model_name": "SP539E",
+            "source": (
+                "monty68/uniled origin/dev_v3 and 3.0.10-beta.11 "
+                "custom_components/uniled/lib/net/sp53x_54xe.py"
+            ),
+        },
+        {
+            "code": 0x63,
+            "code_hex": "0x63",
+            "model_name": "SP548E",
+            "source": (
+                "monty68/uniled origin/dev_v3 and 3.0.10-beta.11 "
+                "custom_components/uniled/lib/net/sp53x_54xe.py"
+            ),
+        },
+        {
+            "code": 0x64,
+            "code_hex": "0x64",
+            "model_name": "SP549E",
+            "source": (
+                "monty68/uniled origin/dev_v3 and 3.0.10-beta.11 "
+                "custom_components/uniled/lib/net/sp53x_54xe.py"
+            ),
+        },
+        {
+            "code": 0x69,
+            "code_hex": "0x69",
+            "model_name": "SP548E",
+            "source": (
+                "monty68/uniled origin/dev_v3 and 3.0.10-beta.11 "
+                "custom_components/uniled/lib/net/sp53x_54xe.py"
+            ),
+        },
+    ]
+    assert len(profile["sptech_legacy_configuration_codes"]) == 16
+    assert profile["sptech_legacy_configuration_codes"][0] == {
+        "code": 0x06,
+        "code_hex": "0x06",
+        "label": "SPI - RGB",
+        "model_names": ["SP538E", "SP548E"],
+        "source": (
+            "monty68/uniled origin/dev_v3 and 3.0.10-beta.11 "
+            "custom_components/uniled/lib/net/sp53x_54xe.py"
+        ),
+    }
+    assert profile["sptech_legacy_configuration_codes"][-1] == {
+        "code": 0x8C,
+        "code_hex": "0x8c",
+        "label": "SPI - RGB + 2 CH PWM",
+        "model_names": ["SP530E"],
+        "source": (
+            "monty68/uniled origin/dev_v3 and 3.0.10-beta.11 "
+            "custom_components/uniled/lib/net/sp53x_54xe.py"
+        ),
+    }
+    assert profile["sptech_legacy_model_code_evidence"][-1] == (
+        "The old mapping proves recognition/configuration hints only; "
+        "non-SP541E LAN writes remain disabled until response frames are proven"
+    )
+    assert profile["sptech_legacy_command_ids"][0] == {
+        "name": "STATUS_QUERY",
+        "command_id": 0x02,
+        "command_id_hex": "0x02",
+        "category": "read_only_query",
+        "source": (
+            "monty68/uniled origin/dev_v3 and 3.0.10-beta.11 "
+            "custom_components/uniled/lib/sptech_model.py"
+        ),
+    }
+    assert profile["sptech_legacy_command_ids"][-1] == {
+        "name": "CHIP_ORDER",
+        "command_id": 0x6B,
+        "command_id_hex": "0x6b",
+        "category": "configuration",
+        "source": (
+            "monty68/uniled origin/dev_v3 and 3.0.10-beta.11 "
+            "custom_components/uniled/lib/sptech_model.py"
+        ),
+    }
+    assert profile["sptech_legacy_status_chunks"] == [
+        {
+            "chunk_type": 1,
+            "chunk_type_hex": "0x01",
+            "label": "settings/firmware/light type",
+            "source": (
+                "monty68/uniled origin/dev_v3 and 3.0.10-beta.11 "
+                "custom_components/uniled/lib/sptech_model.py"
+            ),
+        },
+        {
+            "chunk_type": 2,
+            "chunk_type_hex": "0x02",
+            "label": "device mode/status/settings",
+            "source": (
+                "monty68/uniled origin/dev_v3 and 3.0.10-beta.11 "
+                "custom_components/uniled/lib/sptech_model.py"
+            ),
+        },
+        {
+            "chunk_type": 3,
+            "chunk_type_hex": "0x03",
+            "label": "extended device status/settings",
+            "source": (
+                "monty68/uniled origin/dev_v3 and 3.0.10-beta.11 "
+                "custom_components/uniled/lib/sptech_model.py"
+            ),
+        },
+        {
+            "chunk_type": 4,
+            "chunk_type_hex": "0x04",
+            "label": "timer",
+            "source": (
+                "monty68/uniled origin/dev_v3 and 3.0.10-beta.11 "
+                "custom_components/uniled/lib/sptech_model.py"
+            ),
+        },
+        {
+            "chunk_type": 5,
+            "chunk_type_hex": "0x05",
+            "label": "music strip/matrix layout",
+            "source": (
+                "monty68/uniled origin/dev_v3 and 3.0.10-beta.11 "
+                "custom_components/uniled/lib/sptech_model.py"
+            ),
+        },
+        {
+            "chunk_type": 6,
+            "chunk_type_hex": "0x06",
+            "label": "network information",
+            "source": (
+                "monty68/uniled origin/dev_v3 and 3.0.10-beta.11 "
+                "custom_components/uniled/lib/sptech_model.py"
+            ),
+        },
+        {
+            "chunk_type": 7,
+            "chunk_type_hex": "0x07",
+            "label": "fun switch",
+            "source": (
+                "monty68/uniled origin/dev_v3 and 3.0.10-beta.11 "
+                "custom_components/uniled/lib/sptech_model.py"
+            ),
+        },
+        {
+            "chunk_type": 10,
+            "chunk_type_hex": "0x0a",
+            "label": "unknown firmware/status block",
+            "source": (
+                "monty68/uniled origin/dev_v3 and 3.0.10-beta.11 "
+                "custom_components/uniled/lib/sptech_model.py"
+            ),
+        },
+    ]
+    assert profile["sptech_legacy_protocol_evidence"][-1] == (
+        "These command IDs and chunk labels are diagnostics only until each "
+        "model's LAN response and write behavior is proven"
+    )
+    assert runtime.diagnostic_value("lan_sptech_legacy_model_code_count") == 6
+    assert (
+        runtime.diagnostic_value("lan_sptech_legacy_configuration_code_count")
+        == 16
+    )
+    assert runtime.diagnostic_value("lan_sptech_legacy_command_id_count") == 20
+    assert runtime.diagnostic_value("lan_sptech_legacy_status_chunk_count") == 8
+
+
 def test_max_pixel_channels_diagnostic_uses_catalog_limit() -> None:
     """Pixel-channel limits are diagnostic facts until write frames are proven."""
     runtime = build_runtime({CONF_MODEL: "SP660E", CONF_DEVICE_ID: "scene"})
@@ -3413,13 +4038,94 @@ def test_runtime_diagnostics_exposes_ble_evidence_profiles() -> None:
         "serviceData",
         "manufacturerData",
         "uuid",
+        "isPrimary",
+        "supportWrite",
+        "supportWriteNoResponse",
+        "supportRead",
+        "supportNotify",
+        "supportIndicate",
+        "value",
+    ]
+    assert profile["scan_result_fields"] == [
+        "id",
+        "name",
+        "rssi",
+        "serviceData",
+        "manufacturerData",
+    ]
+    assert profile["service_result_fields"] == [
+        "uuid",
+        "isPrimary",
+    ]
+    assert profile["characteristic_result_fields"] == [
+        "uuid",
         "supportWrite",
         "supportWriteNoResponse",
         "supportRead",
         "supportNotify",
         "supportIndicate",
     ]
-    assert len(profile["plugin_contract_hints"]) == 6
+    assert profile["rssi_result_fields"] == [
+        "rssi",
+    ]
+    assert profile["mtu_result_fields"] == [
+        "value",
+    ]
+    assert profile["adapter_state_result_fields"] == [
+        "available",
+        "discovering",
+    ]
+    assert profile["notification_event_fields"] == [
+        "deviceId",
+        "serviceUuid",
+        "characteristicUuid",
+        "value",
+    ]
+    assert profile["connection_event_fields"] == [
+        "deviceId",
+        "connected",
+    ]
+    assert profile["device_found_event_fields"] == [
+        "id",
+        "name",
+        "rssi",
+        "serviceData",
+        "manufacturerData",
+    ]
+    assert profile["descriptor_uuids"] == [
+        "00002902-0000-1000-8000-00805f9b34fb",
+    ]
+    assert profile["boolean_event_channels"] == [
+        "com.spled.plugins/flutter_ble/bluetooth_adapter_state_changed",
+        "com.spled.plugins/flutter_ble/bluetooth_device_discovery_state_changed",
+    ]
+    assert len(profile["plugin_event_hints"]) == 3
+    assert profile["plugin_event_hints"][0] == {
+        "channel": "com.spled.plugins/flutter_ble/bluetooth_device_found",
+        "fields": [
+            "id",
+            "name",
+            "rssi",
+            "serviceData",
+            "manufacturerData",
+        ],
+        "behavior": (
+            "emits discovered BLE devices with address, display name, RSSI, "
+            "service data, and manufacturer data"
+        ),
+        "evidence": "p189r2/C2252k.java builds the bluetooth_device_found map",
+    }
+    assert profile["plugin_event_hints"][1]["fields"] == [
+        "deviceId",
+        "connected",
+    ]
+    assert profile["plugin_event_hints"][2]["fields"] == [
+        "deviceId",
+        "serviceUuid",
+        "characteristicUuid",
+        "value",
+    ]
+    assert len(profile["plugin_contract_hints"]) == 9
     assert profile["plugin_contract_hints"][0] == {
         "method": "getBleDeviceCharacteristics",
         "required_arguments": ["serviceUuid"],
@@ -3442,12 +4148,63 @@ def test_runtime_diagnostics_exposes_ble_evidence_profiles() -> None:
     assert profile["plugin_contract_hints"][5]["default_arguments"] == [
         "characteristicWriteType=None"
     ]
+    assert profile["plugin_contract_hints"][6] == {
+        "method": "startBluetoothDevicesDiscovery",
+        "required_arguments": [],
+        "default_arguments": [
+            "interval=0",
+            "clearPreDiscoveredDevices=False",
+            "aliveTime=10000",
+        ],
+        "behavior": (
+            "starts Android BLE scanning, optionally filters by service UUIDs, "
+            "clears or refreshes cached discoveries, and uses report delay "
+            "only when interval is positive and batching is supported"
+        ),
+        "error_code": "10000/10001",
+        "evidence": (
+            "p185q2/C2233g.java applies discovery defaults and "
+            "p180p2/C2198h.java builds scan filters/report delay"
+        ),
+    }
+    assert profile["plugin_contract_hints"][7]["method"] == (
+        "stopBluetoothDevicesDiscovery"
+    )
+    assert profile["plugin_contract_hints"][8]["method"] == "getBluetoothDevices"
+    assert len(profile["plugin_error_hints"]) == 10
+    assert profile["plugin_error_hints"][0] == {
+        "code": "10000",
+        "meaning": "Bluetooth adapter is not opened/enabled",
+        "trigger": (
+            "BLE operations are attempted before openBluetoothAdapter succeeds"
+        ),
+        "evidence": (
+            "p180p2/C2200j.java, p185q2/C2229c.java, and "
+            "p185q2/C2233g.java raise 10000 before BLE dispatch"
+        ),
+    }
+    assert profile["plugin_error_hints"][7]["code"] == "10008"
+    assert "notification-enable failures" in profile["plugin_error_hints"][7][
+        "trigger"
+    ]
+    assert profile["plugin_error_hints"][9] == {
+        "code": "10013",
+        "meaning": "Required method argument is missing",
+        "trigger": "deviceId, serviceUuid, characteristicUuid, or value is null",
+        "evidence": "p185q2/C2229c.java validates required arguments with 10013",
+    }
     assert len(profile["protocol_gap_hints"]) == 3
+    assert profile["issue_advertisements"] == []
     assert runtime.diagnostic_value("ble_profile") == (
         "banlanx_scene_ui; command_profile_pending; apk_uuid_pool=5; "
         "uuid_inventory=5; unbound_uuid_candidates=3; legacy_uuid_candidates=2; "
-        "plugin_methods=14; arguments=12; result_fields=11; plugin_contracts=6; "
-        "channels=6; gaps=3"
+        "plugin_methods=14; arguments=12; result_fields=13; "
+        "scan_result_fields=5; service_result_fields=2; "
+        "characteristic_result_fields=6; rssi_result_fields=1; "
+        "mtu_result_fields=1; adapter_state_fields=2; notification_fields=4; "
+        "connection_fields=2; device_found_fields=5; descriptors=1; "
+        "boolean_events=2; event_contracts=3; plugin_contracts=9; "
+        "error_codes=10; channels=6; gaps=3; issue_adverts=0"
     )
     assert runtime.diagnostic_value("ble_uuid_binding_status") == (
         "binding=pending; services=0; write=pending; notify=pending; "
@@ -3456,27 +4213,77 @@ def test_runtime_diagnostics_exposes_ble_evidence_profiles() -> None:
     assert "ble_profile" in implemented_sensor_keys(runtime)
     assert "ble_uuid_binding_status" in implemented_sensor_keys(runtime)
     assert runtime.diagnostic_value("ble_known_service_uuid_count") == 0
+    assert runtime.diagnostic_value("ble_known_service_uuids") == "none"
+    assert runtime.diagnostic_value("ble_known_write_uuid") == "pending"
+    assert runtime.diagnostic_value("ble_known_notify_uuid") == "pending"
     assert runtime.diagnostic_value("ble_uuid_pool_count") == 5
+    assert runtime.diagnostic_value("ble_apk_uuid_pool") == (
+        "0000ff12-0000-1000-8000-00805f9b34fb, "
+        "0000ff14-0000-1000-8000-00805f9b34fb, "
+        "0000ff15-0000-1000-8000-00805f9b34fb, "
+        "0000ffe0-0000-1000-8000-00805f9b34fb, "
+        "0000ffe1-0000-1000-8000-00805f9b34fb"
+    )
     assert runtime.diagnostic_value("ble_uuid_inventory_count") == 5
     assert runtime.diagnostic_value("ble_unbound_uuid_candidate_count") == 3
+    assert runtime.diagnostic_value("ble_unbound_uuid_candidates") == (
+        "ff12, ff14, ff15"
+    )
     assert runtime.diagnostic_value("ble_legacy_uuid_candidate_count") == 2
+    assert runtime.diagnostic_value("ble_legacy_uuid_candidates") == "ffe0, ffe1"
     assert runtime.diagnostic_value("ble_plugin_method_count") == 14
     assert runtime.diagnostic_value("ble_plugin_argument_count") == 12
-    assert runtime.diagnostic_value("ble_plugin_result_field_count") == 11
-    assert runtime.diagnostic_value("ble_plugin_contract_hint_count") == 6
+    assert runtime.diagnostic_value("ble_plugin_result_field_count") == 13
+    assert runtime.diagnostic_value("ble_scan_result_field_count") == 5
+    assert runtime.diagnostic_value("ble_service_result_field_count") == 2
+    assert runtime.diagnostic_value("ble_characteristic_result_field_count") == 6
+    assert runtime.diagnostic_value("ble_rssi_result_field_count") == 1
+    assert runtime.diagnostic_value("ble_mtu_result_field_count") == 1
+    assert runtime.diagnostic_value("ble_adapter_state_result_field_count") == 2
+    assert runtime.diagnostic_value("ble_notification_event_field_count") == 4
+    assert runtime.diagnostic_value("ble_connection_event_field_count") == 2
+    assert runtime.diagnostic_value("ble_device_found_event_field_count") == 5
+    assert runtime.diagnostic_value("ble_descriptor_uuid_count") == 1
+    assert runtime.diagnostic_value("ble_boolean_event_channel_count") == 2
+    assert runtime.diagnostic_value("ble_plugin_event_hint_count") == 3
+    assert runtime.diagnostic_value("ble_plugin_contract_hint_count") == 9
+    assert runtime.diagnostic_value("ble_plugin_error_code_count") == 10
     assert runtime.diagnostic_value("ble_plugin_channel_count") == 6
     assert runtime.diagnostic_value("ble_protocol_gap_count") == 3
+    assert runtime.diagnostic_value("ble_issue_advertisement_count") == 0
+    assert runtime.diagnostic_value("ble_issue_advertisements") == "none"
     assert "ble_uuid_pool_count" in implemented_sensor_keys(runtime)
     assert "ble_uuid_inventory_count" in implemented_sensor_keys(runtime)
     assert "ble_known_service_uuid_count" in implemented_sensor_keys(runtime)
+    assert "ble_known_service_uuids" in implemented_sensor_keys(runtime)
+    assert "ble_known_write_uuid" in implemented_sensor_keys(runtime)
+    assert "ble_known_notify_uuid" in implemented_sensor_keys(runtime)
+    assert "ble_apk_uuid_pool" in implemented_sensor_keys(runtime)
     assert "ble_unbound_uuid_candidate_count" in implemented_sensor_keys(runtime)
+    assert "ble_unbound_uuid_candidates" in implemented_sensor_keys(runtime)
     assert "ble_legacy_uuid_candidate_count" in implemented_sensor_keys(runtime)
+    assert "ble_legacy_uuid_candidates" in implemented_sensor_keys(runtime)
     assert "ble_plugin_method_count" in implemented_sensor_keys(runtime)
     assert "ble_plugin_argument_count" in implemented_sensor_keys(runtime)
     assert "ble_plugin_result_field_count" in implemented_sensor_keys(runtime)
+    assert "ble_scan_result_field_count" in implemented_sensor_keys(runtime)
+    assert "ble_service_result_field_count" in implemented_sensor_keys(runtime)
+    assert "ble_characteristic_result_field_count" in implemented_sensor_keys(runtime)
+    assert "ble_rssi_result_field_count" in implemented_sensor_keys(runtime)
+    assert "ble_mtu_result_field_count" in implemented_sensor_keys(runtime)
+    assert "ble_adapter_state_result_field_count" in implemented_sensor_keys(runtime)
+    assert "ble_notification_event_field_count" in implemented_sensor_keys(runtime)
+    assert "ble_connection_event_field_count" in implemented_sensor_keys(runtime)
+    assert "ble_device_found_event_field_count" in implemented_sensor_keys(runtime)
+    assert "ble_descriptor_uuid_count" in implemented_sensor_keys(runtime)
+    assert "ble_boolean_event_channel_count" in implemented_sensor_keys(runtime)
+    assert "ble_plugin_event_hint_count" in implemented_sensor_keys(runtime)
     assert "ble_plugin_contract_hint_count" in implemented_sensor_keys(runtime)
+    assert "ble_plugin_error_code_count" in implemented_sensor_keys(runtime)
     assert "ble_plugin_channel_count" in implemented_sensor_keys(runtime)
     assert "ble_protocol_gap_count" in implemented_sensor_keys(runtime)
+    assert "ble_issue_advertisement_count" in implemented_sensor_keys(runtime)
+    assert "ble_issue_advertisements" in implemented_sensor_keys(runtime)
 
     known = build_runtime({CONF_MODEL: "SP601E", CONF_DEVICE_ID: "strip"})
     known_profile = runtime_diagnostics(known)["model"]["ble_profile"]
@@ -3496,24 +4303,64 @@ def test_runtime_diagnostics_exposes_ble_evidence_profiles() -> None:
         "banlanx_601; command_profile_known; services=1; "
         "write_uuid_known; apk_uuid_pool=5; uuid_inventory=5; "
         "unbound_uuid_candidates=3; legacy_uuid_candidates=2; "
-        "plugin_methods=14; arguments=12; result_fields=11; plugin_contracts=6; "
-        "channels=6; gaps=3"
+        "plugin_methods=14; arguments=12; result_fields=13; "
+        "scan_result_fields=5; service_result_fields=2; "
+        "characteristic_result_fields=6; rssi_result_fields=1; "
+        "mtu_result_fields=1; adapter_state_fields=2; notification_fields=4; "
+        "connection_fields=2; device_found_fields=5; descriptors=1; "
+        "boolean_events=2; event_contracts=3; plugin_contracts=9; "
+        "error_codes=10; channels=6; gaps=3; issue_adverts=0"
     )
     assert known.diagnostic_value("ble_uuid_binding_status") == (
         "binding=known; services=1; write=known; notify=known; "
         "unbound_candidates=3; legacy_candidates=2"
     )
     assert known.diagnostic_value("ble_known_service_uuid_count") == 1
+    assert known.diagnostic_value("ble_known_service_uuids") == (
+        "0000ffe0-0000-1000-8000-00805f9b34fb"
+    )
+    assert known.diagnostic_value("ble_known_write_uuid") == (
+        "0000ffe1-0000-1000-8000-00805f9b34fb"
+    )
+    assert known.diagnostic_value("ble_known_notify_uuid") == (
+        "0000ffe1-0000-1000-8000-00805f9b34fb"
+    )
     assert known.diagnostic_value("ble_uuid_pool_count") == 5
+    assert known.diagnostic_value("ble_apk_uuid_pool") == (
+        "0000ff12-0000-1000-8000-00805f9b34fb, "
+        "0000ff14-0000-1000-8000-00805f9b34fb, "
+        "0000ff15-0000-1000-8000-00805f9b34fb, "
+        "0000ffe0-0000-1000-8000-00805f9b34fb, "
+        "0000ffe1-0000-1000-8000-00805f9b34fb"
+    )
     assert known.diagnostic_value("ble_uuid_inventory_count") == 5
     assert known.diagnostic_value("ble_unbound_uuid_candidate_count") == 3
+    assert known.diagnostic_value("ble_unbound_uuid_candidates") == (
+        "ff12, ff14, ff15"
+    )
     assert known.diagnostic_value("ble_legacy_uuid_candidate_count") == 2
+    assert known.diagnostic_value("ble_legacy_uuid_candidates") == "ffe0, ffe1"
     assert known.diagnostic_value("ble_plugin_method_count") == 14
     assert known.diagnostic_value("ble_plugin_argument_count") == 12
-    assert known.diagnostic_value("ble_plugin_result_field_count") == 11
-    assert known.diagnostic_value("ble_plugin_contract_hint_count") == 6
+    assert known.diagnostic_value("ble_plugin_result_field_count") == 13
+    assert known.diagnostic_value("ble_scan_result_field_count") == 5
+    assert known.diagnostic_value("ble_service_result_field_count") == 2
+    assert known.diagnostic_value("ble_characteristic_result_field_count") == 6
+    assert known.diagnostic_value("ble_rssi_result_field_count") == 1
+    assert known.diagnostic_value("ble_mtu_result_field_count") == 1
+    assert known.diagnostic_value("ble_adapter_state_result_field_count") == 2
+    assert known.diagnostic_value("ble_notification_event_field_count") == 4
+    assert known.diagnostic_value("ble_connection_event_field_count") == 2
+    assert known.diagnostic_value("ble_device_found_event_field_count") == 5
+    assert known.diagnostic_value("ble_descriptor_uuid_count") == 1
+    assert known.diagnostic_value("ble_boolean_event_channel_count") == 2
+    assert known.diagnostic_value("ble_plugin_event_hint_count") == 3
+    assert known.diagnostic_value("ble_plugin_contract_hint_count") == 9
+    assert known.diagnostic_value("ble_plugin_error_code_count") == 10
     assert known.diagnostic_value("ble_plugin_channel_count") == 6
     assert known.diagnostic_value("ble_protocol_gap_count") == 3
+    assert known.diagnostic_value("ble_issue_advertisement_count") == 0
+    assert known.diagnostic_value("ble_issue_advertisements") == "none"
 
     mesh = build_runtime({CONF_MODEL: "RG4", CONF_DEVICE_ID: "mesh"})
 
@@ -3521,16 +4368,143 @@ def test_runtime_diagnostics_exposes_ble_evidence_profiles() -> None:
     assert mesh.diagnostic_value("ble_profile") is None
     assert mesh.diagnostic_value("ble_uuid_binding_status") is None
     assert mesh.diagnostic_value("ble_known_service_uuid_count") is None
+    assert mesh.diagnostic_value("ble_known_service_uuids") is None
+    assert mesh.diagnostic_value("ble_known_write_uuid") is None
+    assert mesh.diagnostic_value("ble_known_notify_uuid") is None
     assert mesh.diagnostic_value("ble_uuid_pool_count") is None
+    assert mesh.diagnostic_value("ble_apk_uuid_pool") is None
     assert mesh.diagnostic_value("ble_uuid_inventory_count") is None
     assert mesh.diagnostic_value("ble_unbound_uuid_candidate_count") is None
+    assert mesh.diagnostic_value("ble_unbound_uuid_candidates") is None
     assert mesh.diagnostic_value("ble_legacy_uuid_candidate_count") is None
+    assert mesh.diagnostic_value("ble_legacy_uuid_candidates") is None
+    assert mesh.diagnostic_value("ble_scan_result_field_count") is None
+    assert mesh.diagnostic_value("ble_service_result_field_count") is None
+    assert mesh.diagnostic_value("ble_characteristic_result_field_count") is None
+    assert mesh.diagnostic_value("ble_rssi_result_field_count") is None
+    assert mesh.diagnostic_value("ble_mtu_result_field_count") is None
+    assert mesh.diagnostic_value("ble_adapter_state_result_field_count") is None
+    assert mesh.diagnostic_value("ble_notification_event_field_count") is None
+    assert mesh.diagnostic_value("ble_connection_event_field_count") is None
+    assert mesh.diagnostic_value("ble_device_found_event_field_count") is None
+    assert mesh.diagnostic_value("ble_descriptor_uuid_count") is None
+    assert mesh.diagnostic_value("ble_boolean_event_channel_count") is None
+    assert mesh.diagnostic_value("ble_plugin_event_hint_count") is None
+    assert mesh.diagnostic_value("ble_plugin_error_code_count") is None
+    assert mesh.diagnostic_value("ble_issue_advertisement_count") is None
+    assert mesh.diagnostic_value("ble_issue_advertisements") is None
     assert "ble_uuid_binding_status" not in implemented_sensor_keys(mesh)
     assert "ble_known_service_uuid_count" not in implemented_sensor_keys(mesh)
+    assert "ble_known_service_uuids" not in implemented_sensor_keys(mesh)
+    assert "ble_known_write_uuid" not in implemented_sensor_keys(mesh)
+    assert "ble_known_notify_uuid" not in implemented_sensor_keys(mesh)
     assert "ble_uuid_pool_count" not in implemented_sensor_keys(mesh)
+    assert "ble_apk_uuid_pool" not in implemented_sensor_keys(mesh)
     assert "ble_uuid_inventory_count" not in implemented_sensor_keys(mesh)
     assert "ble_unbound_uuid_candidate_count" not in implemented_sensor_keys(mesh)
+    assert "ble_unbound_uuid_candidates" not in implemented_sensor_keys(mesh)
     assert "ble_legacy_uuid_candidate_count" not in implemented_sensor_keys(mesh)
+    assert "ble_legacy_uuid_candidates" not in implemented_sensor_keys(mesh)
+    assert "ble_scan_result_field_count" not in implemented_sensor_keys(mesh)
+    assert "ble_service_result_field_count" not in implemented_sensor_keys(mesh)
+    assert "ble_characteristic_result_field_count" not in implemented_sensor_keys(mesh)
+    assert "ble_rssi_result_field_count" not in implemented_sensor_keys(mesh)
+    assert "ble_mtu_result_field_count" not in implemented_sensor_keys(mesh)
+    assert "ble_adapter_state_result_field_count" not in implemented_sensor_keys(mesh)
+    assert "ble_notification_event_field_count" not in implemented_sensor_keys(mesh)
+    assert "ble_connection_event_field_count" not in implemented_sensor_keys(mesh)
+    assert "ble_device_found_event_field_count" not in implemented_sensor_keys(mesh)
+    assert "ble_descriptor_uuid_count" not in implemented_sensor_keys(mesh)
+    assert "ble_boolean_event_channel_count" not in implemented_sensor_keys(mesh)
+    assert "ble_plugin_event_hint_count" not in implemented_sensor_keys(mesh)
+    assert "ble_plugin_error_code_count" not in implemented_sensor_keys(mesh)
+    assert "ble_issue_advertisement_count" not in implemented_sensor_keys(mesh)
+    assert "ble_issue_advertisements" not in implemented_sensor_keys(mesh)
+
+
+def test_ble_issue_advertisement_diagnostics_pin_old_issue_logs() -> None:
+    """Old issue advertisement logs are visible as per-model BLE evidence."""
+    cases = {
+        "SP63AE": (
+            "#45",
+            None,
+            20563,
+            "29 10 32 00 00 00 1a a6",
+            "0000e0ff-0000-1000-8000-00805f9b34fb",
+        ),
+        "SP617E": (
+            "#57",
+            None,
+            20563,
+            "17 11 41 00 00 00 26 19",
+            "0000e0ff-0000-1000-8000-00805f9b34fb",
+        ),
+        "SP621E": (
+            "#60",
+            None,
+            20563,
+            "0d 00 ff 23 06 03 21 f3",
+            "0000e0ff-0000-1000-8000-00805f9b34fb",
+        ),
+        "SP642E": (
+            "#78",
+            None,
+            20563,
+            "4a 10 35 00 00 00 15 f5",
+            "0000e0ff-0000-1000-8000-00805f9b34fb",
+        ),
+        "SP110E": (
+            "#69",
+            None,
+            65535,
+            "10 00 0c 91",
+            "0000ffe0-0000-1000-8000-00805f9b34fb",
+        ),
+        "SP538E": (
+            "#120",
+            0x56,
+            20563,
+            "56 f0 90 e5 b1 34 d0 9e",
+            "0000ffe1-0000-1000-8000-00805f9b34fb",
+        ),
+        "SP548E": (
+            "#120",
+            0x63,
+            20563,
+            "63 f0 bc 17 d6 be 0d bc",
+            "0000ffe1-0000-1000-8000-00805f9b34fb",
+        ),
+    }
+
+    for model_name, expected in cases.items():
+        issue, model_id, manufacturer_id, payload, service_uuid = expected
+        runtime = build_runtime({CONF_MODEL: model_name, CONF_DEVICE_ID: "bench"})
+        profile = runtime_diagnostics(runtime)["model"]["ble_profile"]
+        expected_advertisement = {
+            "issue": issue,
+            "model_name": model_name,
+            "manufacturer_id": manufacturer_id,
+            "manufacturer_payload_hex": payload,
+            "service_uuid": service_uuid,
+            "evidence": f"{model_name} old-UniLED issue {issue} advertisement log",
+        }
+        if model_id is not None:
+            expected_advertisement["model_id"] = model_id
+
+        assert runtime.diagnostic_value("ble_issue_advertisement_count") == 1
+        assert runtime.diagnostic_value("ble_issue_advertisements") == (
+            f"{issue}:{model_name}:{payload}"
+        )
+        assert "issue_adverts=1" in runtime.diagnostic_value("ble_profile")
+        assert profile["issue_advertisements"] == [expected_advertisement]
+
+    duplicate_variant = build_runtime(
+        {CONF_MODEL: "SP548E", CONF_MODEL_ID: 148, CONF_DEVICE_ID: "bench"}
+    )
+
+    assert duplicate_variant.diagnostic_value("ble_issue_advertisement_count") == 0
+    assert duplicate_variant.diagnostic_value("ble_issue_advertisements") == "none"
+    assert "issue_adverts=0" in duplicate_variant.diagnostic_value("ble_profile")
 
 
 def test_runtime_diagnostics_exposes_banlanx_cloud_profile() -> None:
@@ -3937,6 +4911,7 @@ def test_runtime_diagnostics_exposes_network_profiles() -> None:
             "packages/sp802e/assets/gifs/cs_3.gif",
         ],
         "app_method_hints": [
+            "getNetworkInfo",
             "setLedPanelLayout",
             "setLfxMode",
             "setLfxSpeed",
@@ -3955,6 +4930,141 @@ def test_runtime_diagnostics_exposes_network_profiles() -> None:
             "setMatrixMusicColColor",
             "setMatrixMusicColColorType",
             "setMatrixMusicColGradientColor",
+        ],
+        "app_command_id_hints": [
+            {
+                "name": "getNetworkInfo",
+                "ordinal": 90,
+                "command_id": 146,
+                "command_id_hex": "0x92",
+                "source": "blutter_hj_enum",
+            },
+            {
+                "name": "setLedPanelLayout",
+                "ordinal": 77,
+                "command_id": 126,
+                "command_id_hex": "0x7e",
+                "source": "blutter_hj_enum",
+            },
+            {
+                "name": "setLfxMode",
+                "ordinal": 41,
+                "command_id": 83,
+                "command_id_hex": "0x53",
+                "source": "blutter_hj_enum",
+            },
+            {
+                "name": "setLfxSpeed",
+                "ordinal": 42,
+                "command_id": 84,
+                "command_id_hex": "0x54",
+                "source": "blutter_hj_enum",
+            },
+            {
+                "name": "setLfxPixelCount",
+                "ordinal": 43,
+                "command_id": 85,
+                "command_id_hex": "0x55",
+                "source": "blutter_hj_enum",
+            },
+            {
+                "name": "setLfxLoopMode",
+                "ordinal": 46,
+                "command_id": 88,
+                "command_id_hex": "0x58",
+                "source": "blutter_hj_enum",
+            },
+            {
+                "name": "setLfxColor",
+                "ordinal": 45,
+                "command_id": 87,
+                "command_id_hex": "0x57",
+                "source": "blutter_hj_enum",
+            },
+            {
+                "name": "setLfxColorTemp",
+                "ordinal": 54,
+                "command_id": 96,
+                "command_id_hex": "0x60",
+                "source": "blutter_hj_enum",
+            },
+            {
+                "name": "setLfxGradient",
+                "ordinal": 88,
+                "command_id": 144,
+                "command_id_hex": "0x90",
+                "source": "blutter_hj_enum",
+            },
+            {
+                "name": "setLfxDir",
+                "ordinal": 44,
+                "command_id": 86,
+                "command_id_hex": "0x56",
+                "source": "blutter_hj_enum",
+            },
+            {
+                "name": "setOnOffLfx",
+                "ordinal": 7,
+                "command_id": 8,
+                "command_id_hex": "0x08",
+                "source": "blutter_hj_enum",
+            },
+            {
+                "name": "setBrightness",
+                "ordinal": 39,
+                "command_id": 81,
+                "command_id_hex": "0x51",
+                "source": "blutter_hj_enum",
+            },
+            {
+                "name": "setSensitivity",
+                "ordinal": 48,
+                "command_id": 90,
+                "command_id_hex": "0x5a",
+                "source": "blutter_hj_enum",
+            },
+            {
+                "name": "setSoundSource",
+                "ordinal": 47,
+                "command_id": 89,
+                "command_id_hex": "0x59",
+                "source": "blutter_hj_enum",
+            },
+            {
+                "name": "setMatrixMusicMode",
+                "ordinal": 83,
+                "command_id": 132,
+                "command_id_hex": "0x84",
+                "source": "blutter_hj_enum",
+            },
+            {
+                "name": "setMatrixMusicDotColor",
+                "ordinal": 84,
+                "command_id": 133,
+                "command_id_hex": "0x85",
+                "source": "blutter_hj_enum",
+            },
+            {
+                "name": "setMatrixMusicColColor",
+                "ordinal": 86,
+                "command_id": 135,
+                "command_id_hex": "0x87",
+                "source": "blutter_hj_enum",
+            },
+            {
+                "name": "setMatrixMusicColColorType",
+                "ordinal": 85,
+                "command_id": 134,
+                "command_id_hex": "0x86",
+                "source": "blutter_hj_enum",
+            },
+            {
+                "name": "setMatrixMusicColGradientColor",
+                "ordinal": 87,
+                "command_id": 136,
+                "command_id_hex": "0x88",
+                "source": "blutter_hj_enum",
+            },
         ],
         "workflow_hints": [
             "SP802E reuses the shared /device/lfx creation routes",
@@ -4149,6 +5259,44 @@ def test_runtime_diagnostics_exposes_network_profiles() -> None:
                 "envelopes, local socket frames, or status parser offsets"
             ),
         ],
+        "native_export_detail_anchors": [
+            {
+                "name": "set_effect_params",
+                "address": 0x0000A4DD,
+                "address_hex": "0x0000a4dd",
+                "size": 26,
+            },
+            {
+                "name": "setup_matrix_layout",
+                "address": 0x000039FD,
+                "address_hex": "0x000039fd",
+                "size": 92,
+            },
+            {
+                "name": "render_frame",
+                "address": 0x00003ABD,
+                "address_hex": "0x00003abd",
+                "size": 188,
+            },
+            {
+                "name": "get_frame_data",
+                "address": 0x00003B79,
+                "address_hex": "0x00003b79",
+                "size": 6,
+            },
+            {
+                "name": "sysMatrixW",
+                "address": 0x0000E089,
+                "address_hex": "0x0000e089",
+                "size": 1,
+            },
+            {
+                "name": "sysMatrixH",
+                "address": 0x0000E08A,
+                "address_hex": "0x0000e08a",
+                "size": 1,
+            },
+        ],
         "command_protocol_known": False,
         "package_asset_count": 81,
         "apk_asset_evidence": [
@@ -4202,8 +5350,8 @@ def test_runtime_diagnostics_exposes_network_profiles() -> None:
                 "/sp802e/settings, and /sp802e/edit_led_layout"
             ),
             (
-                "Native strings expose LFX setter names including "
-                "setLfxMode, setLfxSpeed, and setLedPanelLayout"
+                "Native strings expose getNetworkInfo and LFX setter names "
+                "including setLfxMode, setLfxSpeed, and setLedPanelLayout"
             ),
             "Native library exports expose libwled_lfx.so matrix/LFX symbols",
             (
@@ -4238,12 +5386,13 @@ def test_runtime_diagnostics_exposes_network_profiles() -> None:
     assert runtime.diagnostic_value("network_profile") == (
         "banlanx_network; package=packages/sp802e; "
         "surfaces=12; modes=7; lfx_gifs=30; lfx_effects=20; "
-        "matrix_music_controls=5; panel_layout; methods=18; native_hints=16; "
+        "matrix_music_controls=5; panel_layout; methods=19; "
+        "app_command_ids=19; native_hints=16; "
         "native_frames=9; native_lfx_params=8; native_effect_generators=11; "
         "native_matrix_modes=8; native_pixel_helpers=9; native_exports=8; "
-        "workflows=4; raw_strings=15; constraints=2; catalog=7; transport=4; "
-        "gaps=6; blockers=7; package_assets=81; command_protocol_pending; "
-        "routes=3"
+        "native_export_details=6; workflows=4; raw_strings=15; constraints=2; "
+        "catalog=7; transport=4; gaps=6; blockers=7; package_assets=81; "
+        "command_protocol_pending; routes=3"
     )
     assert runtime.diagnostic_value("network_surface_count") == 12
     assert runtime.diagnostic_value("network_content_mode_count") == 7
@@ -4256,7 +5405,8 @@ def test_runtime_diagnostics_exposes_network_profiles() -> None:
     assert runtime.diagnostic_value("network_route_count") == 3
     assert runtime.diagnostic_value("network_regular_lfx_effect_asset_count") == 20
     assert runtime.diagnostic_value("network_lfx_gif_asset_count") == 30
-    assert runtime.diagnostic_value("network_app_method_count") == 18
+    assert runtime.diagnostic_value("network_app_method_count") == 19
+    assert runtime.diagnostic_value("network_app_command_id_count") == 19
     assert runtime.diagnostic_value("network_workflow_hint_count") == 4
     assert runtime.diagnostic_value("network_raw_string_hint_count") == 15
     assert runtime.diagnostic_value("network_import_constraint_count") == 2
@@ -4272,6 +5422,7 @@ def test_runtime_diagnostics_exposes_network_profiles() -> None:
     assert runtime.diagnostic_value("network_native_matrix_mode_hint_count") == 8
     assert runtime.diagnostic_value("network_native_pixel_helper_hint_count") == 9
     assert runtime.diagnostic_value("network_native_export_hint_count") == 8
+    assert runtime.diagnostic_value("network_native_export_detail_count") == 6
     assert runtime.diagnostic_value("network_protocol_gap_count") == 6
     assert runtime.diagnostic_value("network_command_blocker_count") == 7
     assert runtime.diagnostic_value("network_apk_asset_evidence_count") == 43
@@ -4292,6 +5443,7 @@ def test_runtime_diagnostics_exposes_network_profiles() -> None:
     )
     assert "network_lfx_gif_asset_count" in implemented_sensor_keys(runtime)
     assert "network_app_method_count" in implemented_sensor_keys(runtime)
+    assert "network_app_command_id_count" in implemented_sensor_keys(runtime)
     assert "network_workflow_hint_count" in implemented_sensor_keys(runtime)
     assert "network_raw_string_hint_count" in implemented_sensor_keys(runtime)
     assert "network_import_constraint_count" in implemented_sensor_keys(runtime)
@@ -4308,6 +5460,7 @@ def test_runtime_diagnostics_exposes_network_profiles() -> None:
         runtime
     )
     assert "network_native_export_hint_count" in implemented_sensor_keys(runtime)
+    assert "network_native_export_detail_count" in implemented_sensor_keys(runtime)
     assert "network_protocol_gap_count" in implemented_sensor_keys(runtime)
     assert "network_command_blocker_count" in implemented_sensor_keys(runtime)
     assert "network_apk_asset_evidence_count" in implemented_sensor_keys(runtime)
@@ -4319,7 +5472,8 @@ def test_runtime_diagnostics_exposes_network_profiles() -> None:
     assert sp801.diagnostic_value("network_profile") == (
         "banlanx_network; package=packages/module_sp801e; "
         "surfaces=11; modes=7; artnet; artnet_fields=4; port_fields=6; "
-        "playlist_actions=4; panel_layout; methods=7; workflows=4; "
+        "playlist_actions=4; panel_layout; methods=7; app_command_ids=7; "
+        "workflows=4; "
         "raw_strings=16; constraints=4; catalog=6; "
         "transport=3; gaps=6; blockers=7; package_assets=143; "
         "command_protocol_pending; routes=1"
@@ -4336,6 +5490,7 @@ def test_runtime_diagnostics_exposes_network_profiles() -> None:
     assert sp801.diagnostic_value("network_regular_lfx_effect_asset_count") == 0
     assert sp801.diagnostic_value("network_lfx_gif_asset_count") == 0
     assert sp801.diagnostic_value("network_app_method_count") == 7
+    assert sp801.diagnostic_value("network_app_command_id_count") == 7
     assert sp801.diagnostic_value("network_workflow_hint_count") == 4
     assert sp801.diagnostic_value("network_raw_string_hint_count") == 16
     assert sp801.diagnostic_value("network_import_constraint_count") == 4
@@ -4350,6 +5505,7 @@ def test_runtime_diagnostics_exposes_network_profiles() -> None:
     assert sp801.diagnostic_value("network_native_matrix_mode_hint_count") == 0
     assert sp801.diagnostic_value("network_native_pixel_helper_hint_count") == 0
     assert sp801.diagnostic_value("network_native_export_hint_count") == 0
+    assert sp801.diagnostic_value("network_native_export_detail_count") == 0
     assert sp801.diagnostic_value("network_protocol_gap_count") == 6
     assert sp801.diagnostic_value("network_command_blocker_count") == 7
     assert sp801.diagnostic_value("network_apk_asset_evidence_count") == 21
@@ -4358,6 +5514,7 @@ def test_runtime_diagnostics_exposes_network_profiles() -> None:
     sp801_profile = runtime_diagnostics(sp801)["model"]["network_profile"]
     assert sp801_profile["supports_artnet"] is True
     assert sp801_profile["supports_lfx"] is False
+    assert sp801_profile["native_export_detail_anchors"] == []
     assert sp801_profile["package_asset_count"] == 143
     assert sp801_profile["route_hints"] == ["/sp801e"]
     assert sp801_profile["artnet_fields"] == [
@@ -4393,6 +5550,57 @@ def test_runtime_diagnostics_exposes_network_profiles() -> None:
         "addPlaylist",
         "updatePlaylist",
         "removePlaylist",
+    ]
+    assert sp801_profile["app_command_id_hints"] == [
+        {
+            "name": "getNetworkInfo",
+            "ordinal": 90,
+            "command_id": 146,
+            "command_id_hex": "0x92",
+            "source": "blutter_hj_enum",
+        },
+        {
+            "name": "getArtNetConfig",
+            "ordinal": 23,
+            "command_id": 33,
+            "command_id_hex": "0x21",
+            "source": "blutter_hj_enum",
+        },
+        {
+            "name": "setArtNetConfig",
+            "ordinal": 24,
+            "command_id": 34,
+            "command_id_hex": "0x22",
+            "source": "blutter_hj_enum",
+        },
+        {
+            "name": "getPlaylistList",
+            "ordinal": 72,
+            "command_id": 119,
+            "command_id_hex": "0x77",
+            "source": "blutter_hj_enum",
+        },
+        {
+            "name": "addPlaylist",
+            "ordinal": 70,
+            "command_id": 117,
+            "command_id_hex": "0x75",
+            "source": "blutter_hj_enum",
+        },
+        {
+            "name": "updatePlaylist",
+            "ordinal": 71,
+            "command_id": 118,
+            "command_id_hex": "0x76",
+            "source": "blutter_hj_enum",
+        },
+        {
+            "name": "removePlaylist",
+            "ordinal": 74,
+            "command_id": 121,
+            "command_id_hex": "0x79",
+            "source": "blutter_hj_enum",
+        },
     ]
     assert sp801_profile["raw_string_hints"] == [
         "portActions: [",
@@ -4450,9 +5658,11 @@ def test_runtime_diagnostics_exposes_network_profiles() -> None:
 
     non_network = build_runtime({CONF_MODEL: "SP630E", CONF_DEVICE_ID: "bench"})
     assert non_network.diagnostic_value("network_app_method_count") is None
+    assert non_network.diagnostic_value("network_app_command_id_count") is None
     assert non_network.diagnostic_value("network_artnet_field_count") is None
     assert non_network.diagnostic_value("network_command_blocker_count") is None
     assert "network_app_method_count" not in implemented_sensor_keys(non_network)
+    assert "network_app_command_id_count" not in implemented_sensor_keys(non_network)
     assert "network_artnet_field_count" not in implemented_sensor_keys(non_network)
     assert "network_command_blocker_count" not in implemented_sensor_keys(
         non_network
@@ -4504,6 +5714,9 @@ def test_runtime_diagnostics_exposes_mesh_profile_for_rg4() -> None:
             "old-UniLED default level=100",
         ],
         "sig_mesh_uuid_hints": list(SIG_MESH_UUID_HINTS),
+        "app_command_id_hints": app_command_id_hint_dicts(
+            MESH_APP_COMMAND_ID_HINTS
+        ),
         "control_gap_hints": [
             "Old UniLED exposed Zengge nodes as light/sensor features only",
             (
@@ -4599,14 +5812,16 @@ def test_runtime_diagnostics_exposes_mesh_profile_for_rg4() -> None:
         "zengge_mesh; telink_zengge; core_protocol_known; "
         "pairing_required; old_uniled_protocol_known; "
         "service=00010203-0405-0607-0809-0a0b0c0d1910; effects=20; "
-        "commands=8; effect_fields=7; sig_mesh_uuids=6; gaps=4; "
-        "blockers=4; routes=2; provisioning=11; provisioning_states=9; "
-        "package_assets=9; apk_assets=9; apk_strings=8"
+        "commands=8; effect_fields=7; sig_mesh_uuids=6; "
+        "app_command_ids=12; gaps=4; blockers=4; routes=2; "
+        "provisioning=11; provisioning_states=9; package_assets=9; "
+        "apk_assets=9; apk_strings=8"
     )
     assert runtime.diagnostic_value("mesh_route_count") == 2
     assert runtime.diagnostic_value("mesh_provisioning_hint_count") == 11
     assert runtime.diagnostic_value("mesh_provisioning_state_count") == 9
     assert runtime.diagnostic_value("mesh_sig_mesh_uuid_hint_count") == 6
+    assert runtime.diagnostic_value("mesh_app_command_id_count") == 12
     assert runtime.diagnostic_value("mesh_control_blocker_count") == 4
     assert runtime.diagnostic_value("mesh_apk_asset_evidence_count") == 9
     assert runtime.diagnostic_value("mesh_apk_package_asset_count") == 9
@@ -4631,6 +5846,7 @@ def test_runtime_diagnostics_exposes_mesh_profile_for_rg4() -> None:
     assert "mesh_bridge_seen" in implemented_sensor_keys(runtime)
     assert "mesh_provisioning_state_count" in implemented_sensor_keys(runtime)
     assert "mesh_sig_mesh_uuid_hint_count" in implemented_sensor_keys(runtime)
+    assert "mesh_app_command_id_count" in implemented_sensor_keys(runtime)
     assert "mesh_control_blocker_count" in implemented_sensor_keys(runtime)
 
 
@@ -4721,6 +5937,9 @@ def test_runtime_diagnostics_exposes_scene_profiles() -> None:
             "setWhiteLightCoexistWithRGB",
             "setLedPanelLayout",
         ],
+        "app_command_id_hints": app_command_id_hint_dicts(
+            SCENE_APP_COMMAND_ID_HINTS
+        ),
         "storage_hints": [
             "scene_ui:scene_light_info",
             "scene_ui:effect_multi_colors",
@@ -5107,6 +6326,7 @@ def test_runtime_diagnostics_exposes_scene_profiles() -> None:
             {
                 "name": name,
                 "value": value,
+                "value_hex": f"0x{value:08x}",
                 "size": size,
                 "sha256": sha256,
                 "first16": first16,
@@ -5268,8 +6488,8 @@ def test_runtime_diagnostics_exposes_scene_profiles() -> None:
     assert runtime.diagnostic_value("scene_profile") == (
         "banlanx_scene_ui; package=packages/scene_ui; "
         "presets=5; surfaces=14; mode_icons=80; mode_effects=80; "
-        "lfx_routes=8; timer_routes=2; methods=19; storage=9; "
-        "recent_actions=3; "
+        "lfx_routes=8; timer_routes=2; methods=19; "
+        "app_command_ids=25; storage=9; recent_actions=3; "
         "favorite_actions=2; timer_actions=2; diy_actions=2; "
         "white_brightness=4; raw_strings=12; lfx_data=13; "
         "lfx_frame_fields=16; native_handlers=38; "
@@ -5295,6 +6515,7 @@ def test_runtime_diagnostics_exposes_scene_profiles() -> None:
     assert runtime.diagnostic_value("scene_lfx_route_count") == 8
     assert runtime.diagnostic_value("scene_timer_route_count") == 2
     assert runtime.diagnostic_value("scene_app_method_count") == 19
+    assert runtime.diagnostic_value("scene_app_command_id_count") == 25
     assert runtime.diagnostic_value("scene_storage_hint_count") == 9
     assert runtime.diagnostic_value("scene_recent_action_count") == 3
     assert runtime.diagnostic_value("scene_favorite_action_count") == 2
@@ -5342,6 +6563,7 @@ def test_runtime_diagnostics_exposes_scene_profiles() -> None:
     assert "scene_lfx_route_count" in implemented_sensor_keys(runtime)
     assert "scene_timer_route_count" in implemented_sensor_keys(runtime)
     assert "scene_app_method_count" in implemented_sensor_keys(runtime)
+    assert "scene_app_command_id_count" in implemented_sensor_keys(runtime)
     assert "scene_storage_hint_count" in implemented_sensor_keys(runtime)
     assert "scene_recent_action_count" in implemented_sensor_keys(runtime)
     assert "scene_favorite_action_count" in implemented_sensor_keys(runtime)
@@ -5397,6 +6619,7 @@ def test_runtime_diagnostics_exposes_scene_profiles() -> None:
     assert mesh_runtime.diagnostic_value("scene_mode_effect_count") == 80
     assert mesh_runtime.diagnostic_value("scene_recent_action_count") == 3
     assert mesh_runtime.diagnostic_value("scene_timer_route_count") == 2
+    assert mesh_runtime.diagnostic_value("scene_app_command_id_count") == 25
     assert mesh_runtime.diagnostic_value("scene_favorite_action_count") == 2
     assert mesh_runtime.diagnostic_value("scene_timer_action_count") == 2
     assert mesh_runtime.diagnostic_value("scene_lfx_data_model_hint_count") == 13
@@ -5437,13 +6660,14 @@ def test_runtime_diagnostics_exposes_scene_profiles() -> None:
     assert mesh_runtime.diagnostic_value("scene_apk_string_evidence_count") == 22
     assert mesh_runtime.diagnostic_value("mesh_profile") == (
         "banlanx_scene_mesh; banlanx_scene_mesh; core_protocol_pending; "
-        "sig_mesh_uuids=6; gaps=3; blockers=4; routes=1; provisioning=3; "
-        "package_assets=204; apk_strings=4"
+        "sig_mesh_uuids=6; app_command_ids=12; gaps=3; blockers=4; "
+        "routes=1; provisioning=3; package_assets=204; apk_strings=4"
     )
     assert mesh_runtime.diagnostic_value("mesh_route_count") == 1
     assert mesh_runtime.diagnostic_value("mesh_provisioning_hint_count") == 3
     assert mesh_runtime.diagnostic_value("mesh_provisioning_state_count") is None
     assert mesh_runtime.diagnostic_value("mesh_sig_mesh_uuid_hint_count") == 6
+    assert mesh_runtime.diagnostic_value("mesh_app_command_id_count") == 12
     assert mesh_runtime.diagnostic_value("mesh_control_blocker_count") == 4
     assert mesh_runtime.diagnostic_value("mesh_apk_package_asset_count") == 204
     assert mesh_runtime.diagnostic_value("mesh_apk_string_evidence_count") == 4
@@ -5452,6 +6676,9 @@ def test_runtime_diagnostics_exposes_scene_profiles() -> None:
     ]
     assert mesh_transport_profile["sig_mesh_uuid_hints"] == list(
         SIG_MESH_UUID_HINTS
+    )
+    assert mesh_transport_profile["app_command_id_hints"] == (
+        app_command_id_hint_dicts(MESH_APP_COMMAND_ID_HINTS)
     )
     assert mesh_transport_profile["control_blockers"] == [
         "scene_mesh_provisioning_frame_pending",
@@ -5505,6 +6732,7 @@ def test_runtime_diagnostics_exposes_scene_profiles() -> None:
     assert non_scene.diagnostic_value("scene_recent_action_count") is None
     assert non_scene.diagnostic_value("scene_lfx_data_model_hint_count") is None
     assert non_scene.diagnostic_value("scene_lfx_frame_field_hint_count") is None
+    assert non_scene.diagnostic_value("scene_app_command_id_count") is None
     assert non_scene.diagnostic_value("scene_command_blocker_count") is None
     assert "scene_native_handler_count" not in implemented_sensor_keys(non_scene)
     assert "scene_native_paired_api_count" not in implemented_sensor_keys(
@@ -5525,6 +6753,7 @@ def test_runtime_diagnostics_exposes_scene_profiles() -> None:
     assert "scene_lfx_frame_field_hint_count" not in implemented_sensor_keys(
         non_scene
     )
+    assert "scene_app_command_id_count" not in implemented_sensor_keys(non_scene)
     assert "scene_native_state_export_count" not in implemented_sensor_keys(
         non_scene
     )
@@ -5798,6 +7027,9 @@ def test_runtime_diagnostics_exposes_car_light_profile() -> None:
                 'discovery page and connect the device installed in "'
             ),
         ],
+        "app_command_id_hints": app_command_id_hint_dicts(
+            CAR_LIGHT_APP_COMMAND_ID_HINTS
+        ),
         "model_role": {
             "role": "interior_controller",
             "setup_stage": "interior_before_chassis",
@@ -6017,7 +7249,8 @@ def test_runtime_diagnostics_exposes_car_light_profile() -> None:
         "password_entries=8; password_policies=6; password_resets=4; "
         "trigger_storage=7; trigger_actions=2; requirements=5; "
         "required_controller=none; setup_stage=interior_before_chassis; "
-        "setup_flows=2; setup_keys=5; role_hints=8; setup_dependencies=4; "
+        "setup_flows=2; setup_keys=5; app_command_ids=3; "
+        "role_hints=8; setup_dependencies=4; "
         "required_dependencies=1; ordered_models=2; "
         "model_dependency=precedes_chassis_when_both_present; "
         "catalog=6; gaps=4; "
@@ -6055,6 +7288,7 @@ def test_runtime_diagnostics_exposes_car_light_profile() -> None:
     assert runtime.diagnostic_value("car_light_setup_requirement_count") == 5
     assert runtime.diagnostic_value("car_light_setup_flow_hint_count") == 2
     assert runtime.diagnostic_value("car_light_setup_key_hint_count") == 5
+    assert runtime.diagnostic_value("car_light_app_command_id_count") == 3
     assert runtime.diagnostic_value("car_light_model_role_hint_count") == 8
     assert runtime.diagnostic_value("car_light_protocol_gap_count") == 4
     assert runtime.diagnostic_value("car_light_command_blocker_count") == 6
@@ -6094,6 +7328,7 @@ def test_runtime_diagnostics_exposes_car_light_profile() -> None:
     assert "car_light_setup_requirement_count" in implemented_sensor_keys(runtime)
     assert "car_light_setup_flow_hint_count" in implemented_sensor_keys(runtime)
     assert "car_light_setup_key_hint_count" in implemented_sensor_keys(runtime)
+    assert "car_light_app_command_id_count" in implemented_sensor_keys(runtime)
     assert "car_light_model_role_hint_count" in implemented_sensor_keys(runtime)
     assert "car_light_protocol_gap_count" in implemented_sensor_keys(runtime)
     assert "car_light_command_blocker_count" in implemented_sensor_keys(runtime)
@@ -6168,6 +7403,7 @@ def test_runtime_diagnostics_exposes_car_light_profile() -> None:
     assert non_car.diagnostic_value("car_light_subdevice_filter_count") is None
     assert non_car.diagnostic_value("car_light_setup_flow_hint_count") is None
     assert non_car.diagnostic_value("car_light_setup_key_hint_count") is None
+    assert non_car.diagnostic_value("car_light_app_command_id_count") is None
     assert non_car.diagnostic_value("car_light_model_role_hint_count") is None
     assert non_car.diagnostic_value("car_light_command_blocker_count") is None
     assert "car_light_route_count" not in implemented_sensor_keys(non_car)
@@ -6176,6 +7412,7 @@ def test_runtime_diagnostics_exposes_car_light_profile() -> None:
     assert "car_light_required_setup_dependency_count" not in implemented_sensor_keys(
         non_car
     )
+    assert "car_light_app_command_id_count" not in implemented_sensor_keys(non_car)
     assert "car_light_ordered_setup_model_count" not in implemented_sensor_keys(
         non_car
     )
@@ -6404,14 +7641,20 @@ def test_runtime_diagnostics_exposes_fish_tank_profile() -> None:
         "app_method_hints": [
             "getNetworkInfo",
             "setBrightness",
+            "setLfxMode",
             "setLfxColor",
             "setLfxColorTemp",
+            "setLfxLoopMode",
             "setLfxSpeed",
             "setSolidColor",
             "setSolidColorTemp",
             "saveFavoriteEffectList",
             "updateFavoriteLfxList",
+            "favoriteLfx",
         ],
+        "app_command_id_hints": app_command_id_hint_dicts(
+            FISH_TANK_APP_COMMAND_ID_HINTS
+        ),
         "data_model_hints": [
             "FavoriteLightingEffectApiService",
             "FavEffectNameEntity",
@@ -6572,8 +7815,8 @@ def test_runtime_diagnostics_exposes_fish_tank_profile() -> None:
         "favorite_loop_hints=5; favorite_loop_actions=2; "
         "firmware_prompts=1; "
         "timer_limit=5; timers=5; timer_strings=10; timer_actions=2; "
-        "methods=9; data=8; favorite_services=1; favorite_storage=5; "
-        "timer_storage=4; brightness_state=3; raw_strings=19; "
+        "methods=12; app_command_ids=14; data=8; favorite_services=1; "
+        "favorite_storage=5; timer_storage=4; brightness_state=3; raw_strings=19; "
         "brightness_strings=5; gaps=5; blockers=7; package_assets=30; "
         "command_protocol_pending; routes=6"
     )
@@ -6603,7 +7846,8 @@ def test_runtime_diagnostics_exposes_fish_tank_profile() -> None:
     assert runtime.diagnostic_value("fish_tank_timer_action_count") == 2
     assert runtime.diagnostic_value("fish_tank_timer_hint_count") == 8
     assert runtime.diagnostic_value("fish_tank_timer_string_hint_count") == 10
-    assert runtime.diagnostic_value("fish_tank_app_method_count") == 9
+    assert runtime.diagnostic_value("fish_tank_app_method_count") == 12
+    assert runtime.diagnostic_value("fish_tank_app_command_id_count") == 14
     assert runtime.diagnostic_value("fish_tank_data_model_hint_count") == 8
     assert runtime.diagnostic_value("fish_tank_favorite_service_hint_count") == 1
     assert runtime.diagnostic_value("fish_tank_favorite_storage_hint_count") == 5
@@ -6648,6 +7892,7 @@ def test_runtime_diagnostics_exposes_fish_tank_profile() -> None:
     assert "fish_tank_timer_hint_count" in implemented_sensor_keys(runtime)
     assert "fish_tank_timer_string_hint_count" in implemented_sensor_keys(runtime)
     assert "fish_tank_app_method_count" in implemented_sensor_keys(runtime)
+    assert "fish_tank_app_command_id_count" in implemented_sensor_keys(runtime)
     assert "fish_tank_data_model_hint_count" in implemented_sensor_keys(runtime)
     assert "fish_tank_favorite_service_hint_count" in implemented_sensor_keys(runtime)
     assert "fish_tank_favorite_storage_hint_count" in implemented_sensor_keys(runtime)
@@ -6677,6 +7922,7 @@ def test_runtime_diagnostics_exposes_fish_tank_profile() -> None:
     assert non_fish.diagnostic_value("fish_tank_timer_storage_hint_count") is None
     assert non_fish.diagnostic_value("fish_tank_brightness_state_hint_count") is None
     assert non_fish.diagnostic_value("fish_tank_timer_string_hint_count") is None
+    assert non_fish.diagnostic_value("fish_tank_app_command_id_count") is None
     assert non_fish.diagnostic_value("fish_tank_brightness_string_hint_count") is None
     assert non_fish.diagnostic_value("fish_tank_command_blocker_count") is None
     assert "fish_tank_route_count" not in implemented_sensor_keys(non_fish)
@@ -6702,6 +7948,7 @@ def test_runtime_diagnostics_exposes_fish_tank_profile() -> None:
     assert "fish_tank_timer_string_hint_count" not in implemented_sensor_keys(
         non_fish
     )
+    assert "fish_tank_app_command_id_count" not in implemented_sensor_keys(non_fish)
     assert "fish_tank_brightness_string_hint_count" not in implemented_sensor_keys(
         non_fish
     )
@@ -6929,6 +8176,19 @@ def test_zengge_mesh_light_modes_follow_node_wiring_and_status() -> None:
         "white",
     )
     assert light_color_mode(runtime, channel=0x44) == "white"
+
+    state.extra["supported_color_modes"] = ("brightness", "rgb")
+    state.extra["color_mode"] = "brightness"
+
+    assert light_supported_color_modes(runtime, channel=0x44) == ("rgb",)
+    assert light_color_mode(runtime, channel=0x44) == "rgb"
+
+    state.extra["supported_color_modes"] = ("bogus",)
+
+    assert light_supported_color_modes(runtime, channel=0x44) == (
+        "rgb",
+        "color_temp",
+    )
 
 
 def test_zengge_mesh_runtime_uses_cloud_node_metadata() -> None:

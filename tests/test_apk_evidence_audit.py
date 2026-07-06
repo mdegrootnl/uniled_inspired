@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
@@ -12,6 +13,7 @@ from custom_components.uniled.core.apk_assets import (
     apk_asset_package_profile_for_key,
     apk_asset_package_profiles,
 )
+from custom_components.uniled.core.apk_commands import BANLANX_APP_COMMAND_ID_HINTS
 from custom_components.uniled.core.car_lights import (
     CAR_LIGHT_MODEL_ROLE_HINTS,
     CAR_LIGHT_SETUP_DEPENDENCIES,
@@ -45,6 +47,9 @@ from custom_components.uniled.core.sp630e import (
     SP630E_NATIVE_EXPORT_SYMBOLS,
 )
 from custom_components.uniled.core.transports.ble import (
+    APK_BLE_DESCRIPTOR_UUIDS,
+    APK_BLE_NOTIFICATION_EVENT_FIELDS,
+    APK_BLE_NOTIFICATION_STRING_HINTS,
     APK_BLE_PLUGIN_CONTRACT_STRING_HINTS,
     APK_BLE_UUID_INVENTORY,
     APK_BLE_UUID_STRING_HINTS,
@@ -58,11 +63,15 @@ from scripts.audit_apk_evidence import (
     SP802E_NATIVE_DYNSYM_COUNT,
     STRING_EVIDENCE_SPECS,
     audit_analysis_dir,
+    audit_blutter_app_command_ids,
+    audit_bundled_catalog_source,
     audit_scene_native_code_anchor_values,
     audit_scene_native_export_symbols,
     audit_sp630e_native_export_symbols,
     audit_sp802e_native_export_symbols,
+    parse_blutter_app_command_ids,
 )
+from scripts.generate_catalog import catalog_rows_from_csv
 
 
 def _full_profile_assets(spec_index: int) -> tuple[str, ...]:
@@ -100,6 +109,38 @@ def _full_inventory_assets(profile_key: str) -> tuple[str, ...]:
             for index in range(filler_count)
         ),
     )
+
+
+def _write_catalog_source_fixture(root: Path) -> tuple[Path, Path]:
+    analysis_dir = root / "analysis"
+    analysis_dir.mkdir()
+    source_path = analysis_dir / "model_catalog.csv"
+    source_path.write_text(
+        "\n".join(
+            (
+                (
+                    "model,parent,name,friendlyName,image,homeUri,connectCaps,"
+                    "specFunctions,colorCap,extra"
+                ),
+                "1,,SP601E,SP601E,,/sp601e,1,17,1,",
+                "6,,TEST,TEST,,/test,5,0,1,",
+            )
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    catalog_path = root / "models.json"
+    catalog_path.write_text(
+        json.dumps(
+            catalog_rows_from_csv(source_path),
+            ensure_ascii=False,
+            indent=2,
+            sort_keys=True,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    return analysis_dir, catalog_path
 
 
 def _write_analysis_dir(root: Path) -> None:
@@ -148,6 +189,28 @@ def _write_analysis_dir(root: Path) -> None:
     (root / "liblfx.interesting.txt").write_text("", encoding="utf-8")
     (root / "model_catalog.pretty.json").write_text("[]", encoding="utf-8")
     (root / "model_catalog.raw.json").write_text("[]", encoding="utf-8")
+
+
+def _blutter_objs_text(*, mutate_get_network_info: bool = False) -> str:
+    rows: list[str] = []
+    for index, hint in enumerate(BANLANX_APP_COMMAND_ID_HINTS):
+        command_id = hint.command_id
+        if mutate_get_network_info and hint.name == "getNetworkInfo":
+            command_id = 0x93
+        rows.append(
+            "\n".join(
+                (
+                    f"Obj!HJ@{0xb00000 + index:x} : {{",
+                    "  Super!_Enum : {",
+                    f"    off_8: int(0x{hint.ordinal:x}),",
+                    f'    off_10: "{hint.name}"',
+                    "  },",
+                    f"  off_14: int(0x{command_id:x})",
+                    "}",
+                )
+            )
+        )
+    return "\n\n".join(rows)
 
 
 def _scene_native_symbol_map() -> dict[str, tuple[int, int]]:
@@ -207,6 +270,48 @@ def test_cloud_endpoint_inventory_is_backed_by_audited_apk_strings() -> None:
         for endpoint in BANLANX_CLOUD_ENDPOINT_INVENTORY
     )
     assert len(BANLANX_CLOUD_AUDITED_STRING_HINTS) == 97
+
+
+def test_parse_blutter_app_command_ids_reads_hj_enum_rows() -> None:
+    """Blutter HJ enum rows expose ordinal and app-command ID fields."""
+    recovered = parse_blutter_app_command_ids(_blutter_objs_text())
+
+    assert len(recovered) == 82
+    assert recovered["getNetworkInfo"] == (90, 0x92)
+    assert recovered["getArtNetConfig"] == (23, 0x21)
+    assert recovered["setArtNetConfig"] == (24, 0x22)
+    assert recovered["setLfxMode"] == (41, 0x53)
+    assert recovered["setLedPanelLayout"] == (77, 0x7E)
+
+
+def test_blutter_app_command_id_audit_accepts_matching_objs() -> None:
+    """Checked-in command IDs match a representative Blutter objs.txt dump."""
+    with TemporaryDirectory() as temp_dir:
+        blutter_dir = Path(temp_dir)
+        (blutter_dir / "objs.txt").write_text(
+            _blutter_objs_text(),
+            encoding="utf-8",
+        )
+
+        assert audit_blutter_app_command_ids(blutter_dir) == []
+
+
+def test_blutter_app_command_id_audit_reports_changed_id() -> None:
+    """Command-ID drift in Blutter output is reported explicitly."""
+    with TemporaryDirectory() as temp_dir:
+        blutter_dir = Path(temp_dir)
+        (blutter_dir / "objs.txt").write_text(
+            _blutter_objs_text(mutate_get_network_info=True),
+            encoding="utf-8",
+        )
+
+        failures = audit_blutter_app_command_ids(blutter_dir)
+
+    assert len(failures) == 1
+    assert failures[0].name == "blutter_app_command_ids"
+    assert "getNetworkInfo" in failures[0].message
+    assert "(90, 147)" in failures[0].message
+    assert "(90, 146)" in failures[0].message
 
 
 def test_car_light_setup_dependencies_are_backed_by_role_hints() -> None:
@@ -294,6 +399,31 @@ def test_ble_plugin_contract_strings_are_backed_by_apk_strings() -> None:
     assert len(contract_spec.curated_strings) == 7
 
 
+def test_ble_notification_contract_strings_are_backed_by_apk_strings() -> None:
+    """BLE notification callback and descriptor anchors stay audited evidence."""
+    notification_spec = next(
+        spec
+        for spec in STRING_EVIDENCE_SPECS
+        if spec.name == "ble_notification_contract"
+    )
+
+    assert APK_BLE_NOTIFICATION_EVENT_FIELDS == (
+        "deviceId",
+        "serviceUuid",
+        "characteristicUuid",
+        "value",
+    )
+    assert APK_BLE_DESCRIPTOR_UUIDS == (
+        "00002902-0000-1000-8000-00805f9b34fb",
+    )
+    assert APK_BLE_NOTIFICATION_STRING_HINTS == (
+        "com.spled.plugins/flutter_ble/ble_characteristic_value_changed",
+        *APK_BLE_NOTIFICATION_EVENT_FIELDS,
+    )
+    assert notification_spec.curated_strings == APK_BLE_NOTIFICATION_STRING_HINTS
+    assert len(notification_spec.curated_strings) == 5
+
+
 def _scene_native_code_anchor_map() -> dict[
     str,
     tuple[int, int, bool, str, str, str, str],
@@ -326,10 +456,31 @@ def _sp630e_native_symbol_map() -> dict[str, tuple[int, int]]:
 
 def test_apk_evidence_audit_accepts_matching_analysis_artifacts() -> None:
     with TemporaryDirectory() as temp_dir:
-        analysis_dir = Path(temp_dir)
+        analysis_dir, catalog_path = _write_catalog_source_fixture(Path(temp_dir))
         _write_analysis_dir(analysis_dir)
 
-        assert audit_analysis_dir(analysis_dir) == []
+        assert audit_analysis_dir(analysis_dir, catalog_path=catalog_path) == []
+
+
+def test_bundled_catalog_source_audit_accepts_generated_catalog() -> None:
+    with TemporaryDirectory() as temp_dir:
+        analysis_dir, catalog_path = _write_catalog_source_fixture(Path(temp_dir))
+
+        assert audit_bundled_catalog_source(analysis_dir, catalog_path) == []
+
+
+def test_bundled_catalog_source_audit_reports_changed_row() -> None:
+    with TemporaryDirectory() as temp_dir:
+        analysis_dir, catalog_path = _write_catalog_source_fixture(Path(temp_dir))
+        rows = json.loads(catalog_path.read_text(encoding="utf-8"))
+        rows[0]["connect_caps"] = 3
+        catalog_path.write_text(json.dumps(rows), encoding="utf-8")
+
+        failures = audit_bundled_catalog_source(analysis_dir, catalog_path)
+
+    assert len(failures) == 1
+    assert failures[0].name == "catalog_source"
+    assert "1:SP601E fields=connect_caps" in failures[0].message
 
 
 def test_scene_native_export_audit_accepts_matching_symbols() -> None:

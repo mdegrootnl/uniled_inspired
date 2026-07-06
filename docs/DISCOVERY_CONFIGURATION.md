@@ -59,8 +59,9 @@ The audit currently finds 51 old BLE model names, zero old NET model names, 49
 BanlanX APK overlap names, and the old `lib/zng` Zengge mesh implementation.
 The two remaining old BLE names, `SP107E` and `SP110E`, are cataloged as
 separate `/legacy/uniled/...` rows. They resolve through BLE autodiscovery with
-the old `ffe0`/`ffe1` UUID binding and use `protocol_proven` confidence because
-their LED Chord/LED Hue command builders and status parsers are ported from old
+the old `ffe0`/`ffe1` UUID binding; SP107E also accepts the issue #111
+`ffb0`/`ffb1` fallback. They use `protocol_proven` confidence because their
+LED Chord/LED Hue command builders and status parsers are ported from old
 UniLED. The old Zengge mesh implementation maps to the APK `RG4` row through
 the `zengge_mesh` profile; exact RG4 names and Telink manufacturer-data
 discoveries also use `protocol_proven` confidence while still exposing only the
@@ -74,20 +75,26 @@ is proven.
 The resolver should score evidence in this order:
 
 1. Existing config-entry unique ID or migrated legacy identity.
-2. Exact BLE local name or safe suffixed local name such as `SP601E_AABB`.
-3. Exact LAN discovery model ID where the discovery packet is proven, such as
+2. BanlanX BLE manufacturer data where byte `0` maps to a user-facing APK model
+   ID and the resolved model has BLE transport.
+3. Exact BLE local name or safe suffixed local name such as `SP601E_AABB`.
+4. Exact LAN discovery model ID where the discovery packet is proven, such as
    SPNet model byte `0x5c` at payload offset `3` for SP541E.
-4. Mesh UUID/manufacturer data decoded by a proven mesh parser.
-5. Manual user-selected model.
-6. Weak prefixes such as `SP5*` only as a config-flow wake-up filter.
+5. Mesh UUID/manufacturer data decoded by a proven mesh parser.
+6. Manual user-selected model.
+7. Weak prefixes such as `SP5*` only as a config-flow wake-up filter.
 
 Broad manifest matchers must never create entities directly. They only wake the
 config flow; catalog transport validation and protocol confidence decide what
-is created.
+is created. The manifest therefore includes bounded local-name patterns plus
+BanlanX manufacturer-data wake-up matchers for IDs `20563` (`0x5053`) and
+`5053`; name-less advertisements still have to resolve through the setup-data
+model-ID gate before any entry is created.
 
 Current Bluetooth setup stores discovery provenance in each discovery-created
 entry: `discovery_source=bluetooth`, `discovery_match` (`exact_label`,
-`safe_suffix`, or `telink_mesh`), and `discovery_confidence`
+`safe_suffix`, `banlanx_manufacturer_data`, or `telink_mesh`), and
+`discovery_confidence`
 (`protocol_proven` for old-UniLED/protocol-backed families and RG4/Zengge mesh,
 `discovered_only` for catalog-only unported models). The Home Assistant
 Bluetooth flow auto-creates entries only for `protocol_proven` matches;
@@ -99,8 +106,22 @@ the same setup-data helper that the tests use, including `name`/`local_name`,
 address, manufacturer data, and connectability fields. Tests now exercise all
 51 old-UniLED BLE names through both exact and safe-suffixed Home
 Assistant-shaped discovery objects, the two legacy-only `SP107E`/`SP110E` rows
-as guarded legacy catalog entries, and RG4/Zengge mesh through exact-name and
-Telink manufacturer-data discovery.
+as guarded legacy catalog entries including the issue #111 SP107E
+`manufacturer_id=21301`, `1a 05 98 9e`, and `ffb0` service advertisement,
+the issue #69 SP110E `manufacturer_id=65535`, `10 00 0c 91`, and `ffe0`
+service advertisement,
+SP611E issue #105 `10 00 ...` manufacturer data plus `e0ff` service evidence,
+SP613E/SP542E/SP548E BanlanX manufacturer-data model-ID discovery including
+the SP613E `09 10` payload and SP548E `0x94` duplicate variant, the issue #122
+SP608E `05 01 ...` payload with `ffb0` service evidence, issue-reported
+SP538E/SP548E `f0` payloads (`56 f0 ...` and `63 f0 ...`), and RG4/Zengge
+mesh through exact-name and Telink manufacturer-data discovery. BLE diagnostics
+also expose per-model old-UniLED issue advertisement evidence when we have exact
+logs, including issue #45 `SP63AE` (`29 10 ...`/`e0ff`), issue #57 `SP617E`
+(`17 11 ...`/`e0ff`), issue #60 `SP621E` (`0d 00 ...`/`e0ff`), issue #69
+`SP110E` (`10 00 ...`/`ffe0`), and issue #78 `SP642E`
+(`4a 10 ...`/`e0ff`), plus the model-ID-pinned issue #120
+`SP538E`/`SP548E` `f0` payloads that advertise `ffe1`.
 New direct-BLE entries keep the `ble:<address>` unique-ID shape, but the config
 flow also checks old UniLED's raw-address BLE unique IDs before entry creation.
 That lets migrated old UniLED BLE entries block duplicate manual or discovered
@@ -119,9 +140,19 @@ Current LAN setup can also store provenance for the proven SP541E SPNet path:
 `discovery_confidence=verified`, exposed through the same diagnostic sensors.
 The helper accepts the recovered SPNet response prefix plus model byte `0x5c`
 at payload offset `3` only when a source host is available and the resolved
-model is the command-proven SP541E/SPTech LAN path; other LAN families remain
+model is the command-proven SP541E/SPTech LAN path; old-UniLED SPTech
+model-code aliases for custom 5xx models are accepted only as
+confirmation-required `discovered_only` diagnostic entries. Issue #115 also
+backs confirmation-required custom 5xx catalog-model recognition for SPNet
+model-code packets such as `SP525E` model code `113`, but these entries remain
+diagnostic-only on LAN. The same setup-data path also accepts structured SPNet
+summaries with `model_code`, `mac_address`, `local_name`, and `ip_address`
+fields, which turns old-UniLED issue #91/#123 `SP548E` model-code `148`
+reports into confirmation-required `spnet_catalog_model_id` diagnostic entries
+without requiring the reporter's raw UDP packet. Other LAN families remain
 manual-host or diagnostic-only until their own discovery and command contracts
-are proven. Home Assistant startup now launches one SPNet UDP discovery pass to
+are proven.
+Home Assistant startup now launches one SPNet UDP discovery pass to
 limited broadcast plus locally derived `/24` directed broadcasts, then feeds
 matching responses into the normal
 discovery config-flow source. The startup pass is single-flight: an in-progress
@@ -132,8 +163,19 @@ MAC at payload offsets `5..10` and an `SP541E` name, so LAN discovery uses the
 MAC as the legacy-compatible bare config-entry unique ID when present.
 MAC-shaped LAN device IDs are also checked as case-insensitive duplicate
 blockers before entry creation, so casing differences in migrated entries do
-not create extra SP541E rows. Unrelated packets and non-SP541E model bytes are
-still rejected by the setup-data guard.
+not create extra SP541E rows. Unrelated packets, unknown model bytes, and
+unsupported LAN families are still rejected by the setup-data guard.
+
+Old UniLED `origin/dev_v3` and tag `3.0.10-beta.11` provide SPTech LAN
+model-code aliases for custom 5xx recognition diagnostics (`0x4e` SP530E,
+`0x56` SP538E, `0x57` SP539E, `0x63`/`0x69` SP548E, `0x64` SP549E) plus 16
+configuration-code hints. Diagnostics also retain the old shared SPTech
+command-ID and response-chunk inventory. These aliases and protocol hints are
+exposed in diagnostics only and require confirmation before config-entry
+creation; they do not relax the SP541E-only command guard.
+SPNet catalog model-ID diagnostics are likewise recognition-only: packet model
+ID and optional device name must agree with the APK catalog row before a
+confirmation-required entry can be created.
 
 ## Probe Rules
 

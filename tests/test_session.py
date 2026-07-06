@@ -14,10 +14,13 @@ from custom_components.uniled.core import (
     BanlanXCustom5xxProtocol,
     CommandKind,
     DeviceSession,
+    LegacyLEDChordProtocol,
+    LegacyLEDHueProtocol,
     ProtocolCommandError,
     SPTechLANProtocol,
 )
 from custom_components.uniled.runtime import RuntimeSetupError, build_runtime
+from tests.test_state_parsers import _custom_5xx_sptech_issue_67_payload
 
 
 @dataclass(slots=True)
@@ -285,6 +288,80 @@ def test_session_dispatches_select_commands_to_transport() -> None:
     ]
 
 
+def test_session_dispatches_legacy_led_config_commands_to_transport() -> None:
+    """Legacy LED Chord/Hue config builders dispatch through sessions."""
+    transport = RecordingTransport()
+    chord_protocol = LegacyLEDChordProtocol()
+    chord = DeviceSession(chord_protocol, transport)
+    chord.state = chord_protocol.parse_status(
+        bytes(
+            [
+                1,
+                2,
+                3,
+                4,
+                5,
+                0xB5,
+                0,
+                0,
+                0,
+                6,
+                100,
+                20,
+                0,
+                10,
+                20,
+                30,
+                40,
+                50,
+                60,
+                70,
+                80,
+                90,
+                100,
+                110,
+                120,
+                15,
+            ]
+        )
+    )
+
+    rgb2 = asyncio.run(chord.set_rgb2_color(1, 2, 3))
+    chip_type = asyncio.run(chord.set_chip_type(4))
+    segment_count = asyncio.run(chord.set_segment_count(6))
+    segment_pixels = asyncio.run(chord.set_segment_pixels(7))
+
+    assert rgb2.kind is CommandKind.RGB2_COLOR
+    assert rgb2.payloads == (bytes.fromhex("01 02 03 10"),)
+    assert chip_type.kind is CommandKind.CHIP_TYPE
+    assert chip_type.payloads == (bytes.fromhex("04 00 00 05"),)
+    assert segment_count.kind is CommandKind.SEGMENT_COUNT
+    assert segment_count.payloads == (bytes.fromhex("06 05 00 06"),)
+    assert segment_pixels.kind is CommandKind.SEGMENT_PIXELS
+    assert segment_pixels.payloads == (bytes.fromhex("04 07 00 06"),)
+    assert transport.sent == [
+        (bytes.fromhex("01 02 03 10"), False),
+        (bytes.fromhex("04 00 00 05"), False),
+        (bytes.fromhex("06 05 00 06"), False),
+        (bytes.fromhex("04 07 00 06"), False),
+    ]
+
+    transport = RecordingTransport()
+    hue = DeviceSession(LegacyLEDHueProtocol(), transport)
+
+    hue_chip_type = asyncio.run(hue.set_chip_type(4))
+    hue_segment_pixels = asyncio.run(hue.set_segment_pixels(300))
+
+    assert hue_chip_type.kind is CommandKind.CHIP_TYPE
+    assert hue_chip_type.payloads == (bytes.fromhex("04 00 00 1c"),)
+    assert hue_segment_pixels.kind is CommandKind.SEGMENT_PIXELS
+    assert hue_segment_pixels.payloads == (bytes.fromhex("01 2c 00 2d"),)
+    assert transport.sent == [
+        (bytes.fromhex("04 00 00 1c"), False),
+        (bytes.fromhex("01 2c 00 2d"), False),
+    ]
+
+
 def test_session_dispatches_sp6xx_advanced_commands_to_transport() -> None:
     """High-level SP6xx advanced commands become old UniLED wire payloads."""
     transport = RecordingTransport()
@@ -429,6 +506,28 @@ def test_session_applies_segmented_notifications_to_state() -> None:
     assert session.state is state
     assert state.channels[1].rgb == (255, 0, 0)
     assert state.channels[2].rgb == (0, 255, 0)
+
+
+def test_session_applies_custom_5xx_issue_67_fragments_to_state() -> None:
+    """SP530E issue #67-style BLE fragments refresh custom 5xx state."""
+    payload = _custom_5xx_sptech_issue_67_payload()
+    fragments = (
+        bytes([0x53, 0x02, 0x00, len(payload), 0x00, 14]) + payload[:14],
+        bytes([0x53, 0x02, 0x00, len(payload), 0x01, 14]) + payload[14:28],
+        bytes([0x53, 0x02, 0x00, len(payload), 0x02, len(payload[28:])])
+        + payload[28:],
+    )
+    session = DeviceSession(BanlanXCustom5xxProtocol(), RecordingTransport())
+
+    assert session.apply_notification(fragments[0]) is None
+    assert session.apply_notification(fragments[1]) is None
+    state = session.apply_notification(fragments[2])
+
+    assert state is not None
+    assert session.state is state
+    assert state.firmware == "V2.0.08"
+    assert state.diagnostics["chunk_types"] == (1, 3)
+    assert state.channels[0].cold_white == 0x50
 
 
 def test_runtime_attach_transport_creates_session() -> None:

@@ -43,7 +43,10 @@ DISCOVERY_CONFIDENCE_VERIFIED: Final = "verified"
 
 DISCOVERY_MATCH_EXACT_LABEL: Final = "exact_label"
 DISCOVERY_MATCH_SAFE_SUFFIX: Final = "safe_suffix"
+DISCOVERY_MATCH_BANLANX_MANUFACTURER_DATA: Final = "banlanx_manufacturer_data"
 DISCOVERY_MATCH_SPNET_MODEL_ID: Final = "spnet_model_id"
+DISCOVERY_MATCH_SPNET_CATALOG_MODEL_ID: Final = "spnet_catalog_model_id"
+DISCOVERY_MATCH_SPNET_LEGACY_MODEL_CODE: Final = "spnet_legacy_model_code"
 DISCOVERY_MATCH_TELINK_MESH: Final = "telink_mesh"
 
 DISCOVERY_SOURCE_BLUETOOTH: Final = "bluetooth"

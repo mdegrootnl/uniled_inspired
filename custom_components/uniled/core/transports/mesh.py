@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 from dataclasses import dataclass
 
+from ..apk_commands import ApkCommandIdHint, apk_command_id_hints_for_names
 from ..catalog import CatalogModel, ProtocolFamily, TransportKind
 from ..scene import SCENE_PACKAGE, SCENE_PACKAGE_ASSET_COUNT
 
@@ -162,6 +163,23 @@ RG4_PROVISIONING_STATE_HINTS = (
     "provisioningComplete",
     "provisioningFailed",
 )
+MESH_APP_COMMAND_ID_NAMES = (
+    "getCompositionData",
+    "configProvisoner",
+    "configZoneKeyAddrMapping",
+    "getMeshNodeUnicastAddress",
+    "identify",
+    "bindGroup",
+    "unbindGroup",
+    "subscribeSubgroup",
+    "opUnsubscribeSubgroup",
+    "saveGroupConfig",
+    "assignFrameSyncMaster",
+    "toggleMasterSlaveHeartbeat",
+)
+MESH_APP_COMMAND_ID_HINTS = apk_command_id_hints_for_names(
+    MESH_APP_COMMAND_ID_NAMES
+)
 RG4_APK_ASSET_EVIDENCE = (
     f"{RG4_ACCESSORIES_PACKAGE}/assets/icons/ble_mesh_provisioning.png",
     f"{RG4_ACCESSORIES_PACKAGE}/assets/icons/mesh_group.png",
@@ -245,6 +263,7 @@ class BLEMeshProfile:
     command_names: tuple[str, ...] = ()
     effect_command_fields: tuple[str, ...] = ()
     sig_mesh_uuid_hints: tuple[str, ...] = ()
+    app_command_id_hints: tuple[ApkCommandIdHint, ...] = ()
     control_gap_hints: tuple[str, ...] = ()
     control_blockers: tuple[str, ...] = ()
     route_hints: tuple[str, ...] = ()
@@ -295,6 +314,7 @@ def mesh_profile_for_model(model: CatalogModel) -> BLEMeshProfile | None:
             command_names=ZENGGE_COMMAND_NAMES,
             effect_command_fields=ZENGGE_EFFECT_COMMAND_FIELDS,
             sig_mesh_uuid_hints=SIG_MESH_UUID_HINTS,
+            app_command_id_hints=MESH_APP_COMMAND_ID_HINTS,
             control_gap_hints=ZENGGE_CONTROL_GAP_HINTS,
             control_blockers=ZENGGE_CONTROL_BLOCKERS,
             route_hints=RG4_ROUTE_HINTS,
@@ -313,6 +333,7 @@ def mesh_profile_for_model(model: CatalogModel) -> BLEMeshProfile | None:
             route_hints=SCENE_MESH_ROUTE_HINTS,
             provisioning_hints=SCENE_MESH_PROVISIONING_HINTS,
             sig_mesh_uuid_hints=SIG_MESH_UUID_HINTS,
+            app_command_id_hints=MESH_APP_COMMAND_ID_HINTS,
             control_gap_hints=SCENE_MESH_CONTROL_GAP_HINTS,
             control_blockers=SCENE_MESH_CONTROL_BLOCKERS,
             package_asset_count=SCENE_PACKAGE_ASSET_COUNT,
@@ -365,6 +386,8 @@ def describe_mesh_profile(profile: BLEMeshProfile | None) -> str | None:
         parts.append(f"effect_fields={len(profile.effect_command_fields)}")
     if profile.sig_mesh_uuid_hints:
         parts.append(f"sig_mesh_uuids={len(profile.sig_mesh_uuid_hints)}")
+    if profile.app_command_id_hints:
+        parts.append(f"app_command_ids={len(profile.app_command_id_hints)}")
     if profile.control_gap_hints:
         parts.append(f"gaps={len(profile.control_gap_hints)}")
     if profile.control_blockers:

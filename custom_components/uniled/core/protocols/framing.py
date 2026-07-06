@@ -203,3 +203,98 @@ class DirectStatusAssembler:
 
     def reset(self) -> None:
         """Direct packets have no buffered state."""
+
+
+@dataclass(slots=True)
+class Custom5xxStatusAssembler:
+    """Assemble SP53x/SP54x BLE fragments while preserving direct SP6xx frames."""
+
+    family: str
+    _packet_number: int | None = field(default=None, init=False)
+    _message_length: int | None = field(default=None, init=False)
+    _buffer: bytearray = field(default_factory=bytearray, init=False)
+
+    def feed(self, data: bytes) -> bytes | None:
+        """Feed one custom 5xx notification packet."""
+        packet = bytes(data)
+        if not _looks_like_custom_5xx_fragment(packet):
+            self.reset()
+            return packet
+
+        message_length = packet[3]
+        packet_number = packet[4]
+        payload_length = packet[5]
+        payload = packet[6:]
+        if len(payload) != payload_length:
+            self._fail(f"expected payload length {payload_length}, got {len(payload)}")
+
+        if packet_number == 0:
+            self.reset()
+            return self._start(packet_number, message_length, payload)
+        return self._append(packet_number, message_length, payload)
+
+    def reset(self) -> None:
+        """Discard any buffered partial payload."""
+        self._packet_number = None
+        self._message_length = None
+        self._buffer.clear()
+
+    def _start(
+        self, packet_number: int, message_length: int, payload: bytes
+    ) -> bytes | None:
+        if len(payload) > message_length:
+            self._fail(
+                f"payload length {len(payload)} exceeds message length "
+                f"{message_length}"
+            )
+        if len(payload) == message_length:
+            return payload
+        self._packet_number = packet_number
+        self._message_length = message_length
+        self._buffer.extend(payload)
+        return None
+
+    def _append(
+        self, packet_number: int, message_length: int, payload: bytes
+    ) -> bytes | None:
+        if self._packet_number is None or self._message_length is None:
+            self._fail("continuation packet without an initial packet")
+        if packet_number != self._packet_number + 1:
+            self._fail(
+                f"expected packet {self._packet_number + 1}, got {packet_number}"
+            )
+        if message_length != self._message_length:
+            self._fail(
+                f"expected message length {self._message_length}, "
+                f"got {message_length}"
+            )
+
+        self._buffer.extend(payload)
+        if len(self._buffer) > self._message_length:
+            self._fail(
+                f"assembled payload length {len(self._buffer)} exceeds "
+                f"message length {self._message_length}"
+            )
+        if len(self._buffer) < self._message_length:
+            self._packet_number = packet_number
+            return None
+
+        result = bytes(self._buffer)
+        self.reset()
+        return result
+
+    def _fail(self, message: str) -> None:
+        self.reset()
+        raise ParseNotificationError(f"{self.family} notification: {message}")
+
+
+def _looks_like_custom_5xx_fragment(packet: bytes) -> bool:
+    """Return whether a packet uses the SP530E issue #67 fragment envelope."""
+    return (
+        len(packet) >= 6
+        and packet[0] == 0x53
+        and packet[1] == 0x02
+        and packet[2] == 0x00
+        and packet[3] > packet[5]
+        and len(packet) == 6 + packet[5]
+    )

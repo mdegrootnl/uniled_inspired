@@ -57,6 +57,12 @@ set_state:
       description: RGB color.
       selector:
         color_rgb:
+    rgb2_color:
+      name: Matrix column color
+      description: LED Chord secondary matrix-column RGB color.
+      advanced: true
+      selector:
+        color_rgb:
     rgbw_color:
       name: RGBW color
       description: Four-item RGBW list with values from 0 to 255.

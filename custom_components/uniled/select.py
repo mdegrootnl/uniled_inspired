@@ -210,6 +210,8 @@ class UniLEDCommandSelect(CoordinatorEntity[UniLEDCoordinator], SelectEntity):
             )
         elif self._feature.key == "chip_order":
             await session.set_chip_order(raw_value, channel=self._feature.channel)
+        elif self._feature.key == "chip_type":
+            await session.set_chip_type(raw_value, channel=self._feature.channel)
         elif self._feature.key == "onoff_effect":
             effect, speed, pixels = onoff_command_values(runtime, effect=raw_value)
             await session.set_onoff_config(

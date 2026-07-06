@@ -12,6 +12,7 @@ class CommandKind(StrEnum):
     POWER = "power"
     BRIGHTNESS = "brightness"
     RGB_COLOR = "rgb_color"
+    RGB2_COLOR = "rgb2_color"
     DYNAMIC_RGB_COLOR = "dynamic_rgb_color"
     RGBW_COLOR = "rgbw_color"
     RGBWW_COLOR = "rgbww_color"
@@ -31,7 +32,10 @@ class CommandKind(StrEnum):
     ON_POWER = "on_power"
     EFFECT_PLAY = "effect_play"
     LIGHT_TYPE = "light_type"
+    CHIP_TYPE = "chip_type"
     CHIP_ORDER = "chip_order"
+    SEGMENT_COUNT = "segment_count"
+    SEGMENT_PIXELS = "segment_pixels"
     SCENE = "scene"
 
 

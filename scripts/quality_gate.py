@@ -106,6 +106,7 @@ LEGACY_SET_STATE_FIELDS = (
     "effect_play",
     "sensitivity",
     "rgb_color",
+    "rgb2_color",
     "rgbw_color",
     "rgbww_color",
     "white",
@@ -379,6 +380,7 @@ def _validate_bluetooth_matchers(manifest: dict[str, object]) -> None:
     assert isinstance(bluetooth, list)
 
     local_names: list[str] = []
+    manufacturer_ids: set[int] = set()
     for matcher in bluetooth:
         _require(isinstance(matcher, dict), "bluetooth matcher must be an object")
         assert isinstance(matcher, dict)
@@ -394,9 +396,17 @@ def _validate_bluetooth_matchers(manifest: dict[str, object]) -> None:
                 not _has_pattern(local_name[:3]),
                 f"local_name matcher {local_name!r} has wildcard in first 3 chars",
             )
+        manufacturer_id = matcher.get("manufacturer_id")
+        if isinstance(manufacturer_id, int):
+            manufacturer_ids.add(manufacturer_id)
 
     for required in ("SP1*", "SP3*", "SP5*", "SP6*", "SP7*", "RG4"):
         _require(required in local_names, f"missing bluetooth matcher {required}")
+    for required in (0x5053, 5053):
+        _require(
+            required in manufacturer_ids,
+            f"missing BanlanX manufacturer-data matcher {required}",
+        )
 
 
 def _validate_catalog_bluetooth_manifest_coverage(

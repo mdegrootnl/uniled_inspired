@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from .apk_commands import ApkCommandIdHint, apk_command_id_hints_for_names
 from .catalog import CatalogModel, ProtocolFamily
 
 SP630E_PACKAGE = "packages/sp630e"
@@ -131,14 +132,45 @@ SP630E_MOTOR_HINTS = (
 )
 
 SP630E_APP_METHOD_HINTS = (
-    "saveDiyLfx",
-    "updateFavoriteLfxList",
-    "saveFavoriteEffectList",
-    "getNetworkInfo",
+    "turnOnOff",
     "setBrightness",
-    "setLfxSpeed",
     "setSolidColor",
     "setSolidColorTemp",
+    "setLfxMode",
+    "setLfxSpeed",
+    "setLfxPixelCount",
+    "setLfxDir",
+    "setLfxColor",
+    "setLfxColorTemp",
+    "setLfxGradient",
+    "setLfxLoopMode",
+    "playPauseLfx",
+    "resetLfx",
+    "saveDiyLfx",
+    "saveFavoriteEffectList",
+    "favoriteLfx",
+    "updateFavoriteLfxList",
+    "saveTimingTask",
+    "removeTimingTask",
+    "setLightsDriverType",
+    "setLedColorChannelOrder",
+    "setWhiteLightCoexistWithRGB",
+    "setStartupState",
+    "setOnOffLfx",
+    "setFunToggleSwitch",
+    "setSoundSource",
+    "setSensitivity",
+    "setMusicType",
+    "addStripMusicSegment",
+    "delStripMusicSegment",
+    "updateStripMusicSegment",
+    "setMatrixMusicMode",
+    "getNetworkInfo",
+    "toggleRemoteControl",
+)
+
+SP630E_APP_COMMAND_ID_HINTS = apk_command_id_hints_for_names(
+    SP630E_APP_METHOD_HINTS
 )
 
 SP630E_DATA_MODEL_HINTS = (
@@ -306,8 +338,10 @@ class SP630EProfile:
     remote_hints: tuple[str, ...]
     motor_hints: tuple[str, ...]
     app_method_hints: tuple[str, ...]
+    app_command_id_hints: tuple[ApkCommandIdHint, ...]
     data_model_hints: tuple[str, ...]
     native_lfx_hints: tuple[str, ...]
+    native_export_detail_anchors: tuple[tuple[str, int, int], ...]
     catalog_hints: tuple[str, ...]
     protocol_gap_hints: tuple[str, ...]
     command_protocol_known: bool
@@ -338,8 +372,10 @@ def sp630e_profile_for_model(model: CatalogModel) -> SP630EProfile | None:
         remote_hints=SP630E_REMOTE_HINTS,
         motor_hints=SP630E_MOTOR_HINTS,
         app_method_hints=SP630E_APP_METHOD_HINTS,
+        app_command_id_hints=SP630E_APP_COMMAND_ID_HINTS,
         data_model_hints=SP630E_DATA_MODEL_HINTS,
         native_lfx_hints=SP630E_NATIVE_LFX_HINTS,
+        native_export_detail_anchors=SP630E_NATIVE_EXPORT_DETAIL_ANCHORS,
         catalog_hints=_catalog_hints(model),
         protocol_gap_hints=SP630E_PROTOCOL_GAP_HINTS,
         command_protocol_known=True,
@@ -369,8 +405,10 @@ def describe_sp630e_profile(profile: SP630EProfile | None) -> str | None:
         f"remote_hints={len(profile.remote_hints)}; "
         f"motor_hints={len(profile.motor_hints)}; "
         f"methods={len(profile.app_method_hints)}; "
+        f"app_command_ids={len(profile.app_command_id_hints)}; "
         f"data={len(profile.data_model_hints)}; "
         f"native_lfx={len(profile.native_lfx_hints)}; "
+        f"native_export_details={len(profile.native_export_detail_anchors)}; "
         f"gaps={len(profile.protocol_gap_hints)}; "
         f"package_assets={profile.package_asset_count}; {status}"
     )

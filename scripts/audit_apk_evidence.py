@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import argparse
+import json
+import re
 import sys
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
@@ -15,6 +17,9 @@ if str(REPO_ROOT) not in sys.path:
 from custom_components.uniled.core.apk_assets import (  # noqa: E402
     APK_ASSET_PACKAGE_PROFILES,
     APKAssetPackageProfile,
+)
+from custom_components.uniled.core.apk_commands import (  # noqa: E402
+    BANLANX_APP_COMMAND_ID_HINTS,
 )
 from custom_components.uniled.core.car_lights import (  # noqa: E402
     CAR_LIGHT_APK_ASSET_EVIDENCE,
@@ -133,6 +138,7 @@ from custom_components.uniled.core.sp630e import (  # noqa: E402
     SP630E_TIMER_HINTS,
 )
 from custom_components.uniled.core.transports.ble import (  # noqa: E402
+    APK_BLE_NOTIFICATION_STRING_HINTS,
     APK_BLE_PLUGIN_CONTRACT_STRING_HINTS,
     APK_BLE_UUID_STRING_HINTS,
 )
@@ -156,6 +162,7 @@ from custom_components.uniled.core.transports.mesh import (  # noqa: E402
     RG4_ROUTE_HINTS,
     SCENE_MESH_PROVISIONING_HINTS,
 )
+from scripts.generate_catalog import catalog_rows_from_csv  # noqa: E402
 from scripts.inspect_elf_exports import (  # noqa: E402
     read_symbol_bytes,
     read_symbol_tables,
@@ -163,6 +170,27 @@ from scripts.inspect_elf_exports import (  # noqa: E402
 
 DEFAULT_ANALYSIS_DIR = (
     REPO_ROOT.parent / ".codex" / "rev" / "BanlanX_3.3.1-analysis"
+)
+DEFAULT_BLUTTER_DIR = (
+    REPO_ROOT.parent / ".codex" / "rev" / "BanlanX_3.3.1-blutter-arm64"
+)
+DEFAULT_BUNDLED_CATALOG_PATH = (
+    REPO_ROOT
+    / "custom_components"
+    / "uniled"
+    / "core"
+    / "catalog"
+    / "models.json"
+)
+
+BLUTTER_HJ_ENUM_PATTERN = re.compile(
+    r"Obj!HJ@[^\n]*:\s*\{\s*"
+    r"Super!_Enum\s*:\s*\{\s*"
+    r"off_8:\s*int\((0x[0-9a-fA-F]+|\d+)\),\s*"
+    r"off_10:\s*\"([^\"]+)\"\s*"
+    r"\},\s*"
+    r"off_14:\s*int\((0x[0-9a-fA-F]+|\d+)\)",
+    re.MULTILINE,
 )
 
 DEFAULT_SCENE_NATIVE_LIB_CANDIDATES = (
@@ -469,6 +497,10 @@ STRING_EVIDENCE_SPECS = (
         APK_BLE_PLUGIN_CONTRACT_STRING_HINTS,
     ),
     StringEvidenceSpec(
+        "ble_notification_contract",
+        APK_BLE_NOTIFICATION_STRING_HINTS,
+    ),
+    StringEvidenceSpec(
         "scene_mesh_provisioning",
         SCENE_MESH_PROVISIONING_HINTS,
     ),
@@ -517,6 +549,181 @@ def read_asset_list(path: Path) -> frozenset[str]:
         for line in path.read_text(encoding="utf-8").splitlines()
         if line.strip()
     )
+
+
+def parse_blutter_app_command_ids(text: str) -> dict[str, tuple[int, int]]:
+    """Return Blutter HJ enum rows as name -> (ordinal, app command ID)."""
+    return {
+        name: (int(ordinal, 0), int(command_id, 0))
+        for ordinal, name, command_id in BLUTTER_HJ_ENUM_PATTERN.findall(text)
+    }
+
+
+def audit_blutter_app_command_ids(blutter_dir: Path) -> list[AuditFailure]:
+    """Verify recovered app-command enum IDs against a local Blutter dump."""
+    objs_path = blutter_dir.resolve() / "objs.txt"
+    if not objs_path.exists():
+        return [
+            AuditFailure(
+                "blutter_app_command_ids",
+                f"missing {objs_path}",
+            )
+        ]
+
+    recovered = parse_blutter_app_command_ids(
+        objs_path.read_text(encoding="utf-8", errors="ignore")
+    )
+    expected = {
+        hint.name: (hint.ordinal, hint.command_id)
+        for hint in BANLANX_APP_COMMAND_ID_HINTS
+    }
+    failures: list[AuditFailure] = []
+
+    if len(recovered) != len(expected):
+        failures.append(
+            AuditFailure(
+                "blutter_app_command_ids",
+                f"recovered {len(recovered)} HJ enum IDs, expected {len(expected)}",
+            )
+        )
+
+    missing = tuple(name for name in expected if name not in recovered)
+    if missing:
+        failures.append(
+            AuditFailure(
+                "blutter_app_command_ids",
+                f"{len(missing)} expected IDs are absent: {', '.join(missing[:8])}",
+            )
+        )
+
+    unexpected = tuple(name for name in recovered if name not in expected)
+    if unexpected:
+        failures.append(
+            AuditFailure(
+                "blutter_app_command_ids",
+                (
+                    f"{len(unexpected)} unexpected HJ enum IDs were recovered: "
+                    f"{', '.join(unexpected[:8])}"
+                ),
+            )
+        )
+
+    mismatched = tuple(
+        f"{name}: recovered={recovered[name]!r} expected={expected[name]!r}"
+        for name in expected.keys() & recovered.keys()
+        if recovered[name] != expected[name]
+    )
+    if mismatched:
+        failures.append(
+            AuditFailure(
+                "blutter_app_command_ids",
+                (
+                    f"{len(mismatched)} app command IDs changed: "
+                    f"{'; '.join(mismatched[:5])}"
+                ),
+            )
+        )
+
+    return failures
+
+
+def audit_bundled_catalog_source(
+    analysis_dir: Path,
+    catalog_path: Path = DEFAULT_BUNDLED_CATALOG_PATH,
+) -> list[AuditFailure]:
+    """Verify bundled catalog rows still match the APK-derived CSV source."""
+    source_path = analysis_dir / "model_catalog.csv"
+    if not source_path.exists():
+        return [AuditFailure("catalog_source", f"missing {source_path.name}")]
+    if not catalog_path.exists():
+        return [AuditFailure("catalog_source", f"missing {catalog_path.name}")]
+
+    expected_rows = catalog_rows_from_csv(source_path)
+    actual_rows = json.loads(catalog_path.read_text(encoding="utf-8"))
+    if not isinstance(actual_rows, list):
+        return [AuditFailure("catalog_source", f"{catalog_path.name} is not a list")]
+    if actual_rows == expected_rows:
+        return []
+
+    failures: list[AuditFailure] = []
+    if len(actual_rows) != len(expected_rows):
+        failures.append(
+            AuditFailure(
+                "catalog_source",
+                (
+                    f"{catalog_path.name} has {len(actual_rows)} rows, "
+                    f"expected {len(expected_rows)} from model_catalog.csv"
+                ),
+            )
+        )
+
+    actual_by_id = _catalog_rows_by_model_id(actual_rows)
+    expected_by_id = _catalog_rows_by_model_id(expected_rows)
+    missing = tuple(
+        _catalog_row_label(expected_by_id[model_id])
+        for model_id in sorted(set(expected_by_id) - set(actual_by_id))
+    )
+    unexpected = tuple(
+        _catalog_row_label(actual_by_id[model_id])
+        for model_id in sorted(set(actual_by_id) - set(expected_by_id))
+    )
+    if missing:
+        failures.append(
+            AuditFailure(
+                "catalog_source",
+                f"missing catalog rows: {', '.join(missing[:5])}",
+            )
+        )
+    if unexpected:
+        failures.append(
+            AuditFailure(
+                "catalog_source",
+                f"unexpected catalog rows: {', '.join(unexpected[:5])}",
+            )
+        )
+
+    changed: list[str] = []
+    for model_id in sorted(set(actual_by_id) & set(expected_by_id)):
+        actual = actual_by_id[model_id]
+        expected = expected_by_id[model_id]
+        if actual == expected:
+            continue
+        fields = tuple(
+            field
+            for field in sorted(set(actual) | set(expected))
+            if actual.get(field) != expected.get(field)
+        )
+        changed.append(f"{_catalog_row_label(expected)} fields={','.join(fields)}")
+        if len(changed) == 5:
+            break
+    if changed:
+        failures.append(
+            AuditFailure(
+                "catalog_source",
+                f"changed catalog rows: {'; '.join(changed)}",
+            )
+        )
+
+    return failures or [
+        AuditFailure("catalog_source", f"{catalog_path.name} differs from APK CSV")
+    ]
+
+
+def _catalog_rows_by_model_id(rows: object) -> dict[int, dict[str, object]]:
+    """Return catalog rows keyed by model ID for audit messages."""
+    by_model_id: dict[int, dict[str, object]] = {}
+    if not isinstance(rows, list):
+        return by_model_id
+    for row in rows:
+        if not isinstance(row, dict) or "model_id" not in row:
+            continue
+        by_model_id[int(row["model_id"])] = row
+    return by_model_id
+
+
+def _catalog_row_label(row: Mapping[str, object]) -> str:
+    """Return a compact catalog row label for audit messages."""
+    return f"{row.get('model_id')}:{row.get('name')}"
 
 
 def _read_required_texts(
@@ -573,6 +780,13 @@ def default_sp630e_native_lib_path() -> Path | None:
     for candidate in DEFAULT_SP630E_NATIVE_LIB_CANDIDATES:
         if candidate.exists():
             return candidate
+    return None
+
+
+def default_blutter_dir_path() -> Path | None:
+    """Return the local Blutter output directory, if present."""
+    if (DEFAULT_BLUTTER_DIR / "objs.txt").exists():
+        return DEFAULT_BLUTTER_DIR
     return None
 
 
@@ -1066,6 +1280,8 @@ def audit_analysis_dir(
     asset_package_profiles: Iterable[APKAssetPackageProfile] = (
         APK_ASSET_PACKAGE_PROFILES
     ),
+    catalog_path: Path = DEFAULT_BUNDLED_CATALOG_PATH,
+    require_catalog_source: bool = False,
 ) -> list[AuditFailure]:
     """Return all mismatches between profile constants and analysis files."""
     analysis_dir = analysis_dir.resolve()
@@ -1081,6 +1297,9 @@ def audit_analysis_dir(
                 f"missing {counts_path}",
             )
         ]
+
+    if require_catalog_source or (analysis_dir / "model_catalog.csv").exists():
+        failures.extend(audit_bundled_catalog_source(analysis_dir, catalog_path))
 
     counts = parse_package_counts(counts_path)
     inventory_profiles = tuple(asset_package_profiles)
@@ -1305,6 +1524,15 @@ def _parser() -> argparse.ArgumentParser:
             "if present."
         ),
     )
+    parser.add_argument(
+        "--blutter-dir",
+        type=Path,
+        default=None,
+        help=(
+            "Optional path to BanlanX Blutter output for app-command enum "
+            "auditing. When omitted, the local Blutter path is used if present."
+        ),
+    )
     return parser
 
 
@@ -1312,7 +1540,7 @@ def main() -> int:
     """Run the evidence audit."""
     args = _parser().parse_args()
     analysis_dir = args.analysis_dir
-    failures = audit_analysis_dir(analysis_dir)
+    failures = audit_analysis_dir(analysis_dir, require_catalog_source=True)
     scene_native_lib = args.scene_native_lib or default_scene_native_lib_path()
     if scene_native_lib is not None:
         failures.extend(audit_scene_native_exports(scene_native_lib))
@@ -1323,6 +1551,9 @@ def main() -> int:
     sp630e_native_lib = args.sp630e_native_lib or default_sp630e_native_lib_path()
     if sp630e_native_lib is not None:
         failures.extend(audit_sp630e_native_exports(sp630e_native_lib))
+    blutter_dir = args.blutter_dir or default_blutter_dir_path()
+    if blutter_dir is not None:
+        failures.extend(audit_blutter_app_command_ids(blutter_dir))
     if failures:
         print(f"APK evidence audit failed for {analysis_dir}")
         for failure in failures:
@@ -1351,6 +1582,13 @@ def main() -> int:
         f"classified_packages={len(APK_ASSET_PACKAGE_PROFILES)}, "
         f"classified_assets={classified_assets}"
     )
+    model_catalog_path = analysis_dir / "model_catalog.csv"
+    if model_catalog_path.exists():
+        print(
+            "- catalog_source: "
+            f"rows={len(catalog_rows_from_csv(model_catalog_path))}, "
+            "source=model_catalog.csv"
+        )
     if scene_native_lib is not None:
         print(
             "- scene_native_exports: "
@@ -1381,6 +1619,11 @@ def main() -> int:
             f"dynsym={SP630E_NATIVE_DYNSYM_COUNT}, "
             f"export_symbols={len(SP630E_NATIVE_EXPORT_SYMBOLS)}, "
             f"detail_anchors={len(SP630E_NATIVE_EXPORT_DETAIL_ANCHORS)}"
+        )
+    if blutter_dir is not None:
+        print(
+            "- blutter_app_command_ids: "
+            f"ids={len(BANLANX_APP_COMMAND_ID_HINTS)}, source=objs.txt"
         )
     return 0
 

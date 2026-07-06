@@ -7,6 +7,13 @@ from .apk_assets import (
     apk_asset_package_profile_for_key,
     apk_asset_package_profiles,
 )
+from .apk_commands import (
+    BANLANX_APP_COMMAND_ID_HINTS,
+    ApkCommandIdHint,
+    apk_command_id_hint_for_name,
+    apk_command_id_hints_for_names,
+    missing_apk_command_id_hint_names,
+)
 from .car_lights import (
     CarLightModelRole,
     CarLightProfile,
@@ -146,6 +153,8 @@ __all__ = [
     "NonCatalogFeaturePackageProfile",
     "APKAssetPackageProfile",
     "APKAssetPackageRole",
+    "ApkCommandIdHint",
+    "BANLANX_APP_COMMAND_ID_HINTS",
     "PlatformKind",
     "ProtocolFamily",
     "ProtocolEvidenceProfile",
@@ -183,6 +192,8 @@ __all__ = [
     "apk_asset_package_keys_by_role",
     "apk_asset_package_profile_for_key",
     "apk_asset_package_profiles",
+    "apk_command_id_hint_for_name",
+    "apk_command_id_hints_for_names",
     "banlanx6xx_effect_name_for_state",
     "banlanx6xx_effect_type_for_mode",
     "banlanx6xx_style_family",
@@ -227,6 +238,7 @@ __all__ = [
     "legacy_uniled_parity_profile_for_model",
     "mode_effect_parts",
     "mode_effect_value",
+    "missing_apk_command_id_hint_names",
     "network_profile_for_model",
     "non_catalog_feature_package_profiles",
     "plan_for_model",

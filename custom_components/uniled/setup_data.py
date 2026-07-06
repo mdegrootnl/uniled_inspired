@@ -30,8 +30,11 @@ from .const import (
     DISCOVERY_CONFIDENCE_DISCOVERED_ONLY,
     DISCOVERY_CONFIDENCE_PROTOCOL_PROVEN,
     DISCOVERY_CONFIDENCE_VERIFIED,
+    DISCOVERY_MATCH_BANLANX_MANUFACTURER_DATA,
     DISCOVERY_MATCH_EXACT_LABEL,
     DISCOVERY_MATCH_SAFE_SUFFIX,
+    DISCOVERY_MATCH_SPNET_CATALOG_MODEL_ID,
+    DISCOVERY_MATCH_SPNET_LEGACY_MODEL_CODE,
     DISCOVERY_MATCH_SPNET_MODEL_ID,
     DISCOVERY_MATCH_TELINK_MESH,
     DISCOVERY_SOURCE_BLUETOOTH,
@@ -51,14 +54,17 @@ from .core import (
 from .core.protocols import ZenggeCloudMesh
 from .core.transports import (
     BLEMeshAdvertisement,
+    SpNetDiscoveryResponse,
     lan_profile_for_model,
     mesh_profile_for_model,
     parse_spnet_discovery_response,
+    sptech_legacy_model_name_for_code,
     telink_mesh_advertisement,
 )
 
 _UNSET = object()
 _DISCOVERY_NAME_SUFFIX_SEPARATORS = (" ", "-", "_", "(", "[", "#", ":")
+_BANLANX_MANUFACTURER_IDS = (0x5053, 5053)
 
 
 class SetupDataError(ValueError):
@@ -115,6 +121,7 @@ def bluetooth_setup_entry_data(
     evidence = bluetooth_discovery_evidence(
         catalog,
         name=name,
+        manufacturer_data=manufacturer_data or {},
         mesh_advert=mesh_advert,
     )
 
@@ -210,9 +217,20 @@ def bluetooth_discovery_evidence(
     catalog: ModelCatalog,
     *,
     name: str,
+    manufacturer_data: Mapping[int, bytes | bytearray] | None = None,
     mesh_advert: BLEMeshAdvertisement | None = None,
 ) -> BluetoothDiscoveryEvidence | None:
     """Resolve Bluetooth advertisement evidence to a conservative model match."""
+    manufacturer_model = _banlanx_manufacturer_data_match(
+        catalog, manufacturer_data or {}
+    )
+    if manufacturer_model is not None:
+        return BluetoothDiscoveryEvidence(
+            model=manufacturer_model,
+            match=DISCOVERY_MATCH_BANLANX_MANUFACTURER_DATA,
+            confidence=_bluetooth_discovery_confidence(manufacturer_model),
+        )
+
     match = _bluetooth_discovery_match(catalog, str(name).strip())
     if match is None and mesh_advert is not None:
         model = catalog.resolve_name("RG4")
@@ -240,10 +258,18 @@ def lan_setup_entry_data_from_spnet_response(
     *,
     source: str = "",
 ) -> SetupEntryData:
-    """Build setup data from a verified SPNet LAN discovery response."""
+    """Build setup data from a recognized SPNet LAN discovery response."""
     parsed = parse_spnet_discovery_response(response, source=str(source).strip())
     if parsed is None:
         raise SetupDataError(CONF_MODEL, "unknown_model")
+    return _lan_setup_entry_data_from_spnet_parsed(catalog, parsed)
+
+
+def _lan_setup_entry_data_from_spnet_parsed(
+    catalog: ModelCatalog,
+    parsed: SpNetDiscoveryResponse,
+) -> SetupEntryData:
+    """Build setup data from parsed SPNet discovery fields."""
     if parsed.model_id is None or parsed.model_id not in catalog.model_ids:
         raise SetupDataError(CONF_MODEL_ID, "unknown_model_id")
 
@@ -251,12 +277,38 @@ def lan_setup_entry_data_from_spnet_response(
     if not model.is_user_facing:
         raise SetupDataError(CONF_MODEL, "unknown_model")
     profile = lan_profile_for_model(model)
+    if profile is None:
+        raise SetupDataError(CONF_TRANSPORT, "unsupported_lan_transport")
+    legacy_model_name = sptech_legacy_model_name_for_code(parsed.model_id)
+    verified_sp541e = profile.command_protocol_known and model.name == "SP541E"
+    legacy_sptech_diagnostic = (
+        legacy_model_name is not None
+        and legacy_model_name == model.name
+        and bool(profile.sptech_legacy_model_codes)
+    )
+    catalog_spnet_diagnostic = (
+        model.family is ProtocolFamily.BANLANX_CUSTOM_5XX
+        and profile.spnet_discovery_known
+        and _spnet_name_matches_model(catalog, parsed.device_name, model)
+    )
     if (
-        profile is None
-        or not profile.command_protocol_known
-        or model.name != "SP541E"
+        not verified_sp541e
+        and not legacy_sptech_diagnostic
+        and not catalog_spnet_diagnostic
     ):
         raise SetupDataError(CONF_TRANSPORT, "unsupported_lan_transport")
+
+    if verified_sp541e:
+        discovery_match = DISCOVERY_MATCH_SPNET_MODEL_ID
+    elif legacy_sptech_diagnostic:
+        discovery_match = DISCOVERY_MATCH_SPNET_LEGACY_MODEL_CODE
+    else:
+        discovery_match = DISCOVERY_MATCH_SPNET_CATALOG_MODEL_ID
+    discovery_confidence = (
+        DISCOVERY_CONFIDENCE_VERIFIED
+        if verified_sp541e
+        else DISCOVERY_CONFIDENCE_DISCOVERED_ONLY
+    )
 
     host = _normalized_host(parsed.source or "")
     device_id = parsed.mac_address or host
@@ -271,10 +323,23 @@ def lan_setup_entry_data_from_spnet_response(
             CONF_HOST: host,
             CONF_TRANSPORT: TRANSPORT_LAN,
             CONF_DISCOVERY_SOURCE: DISCOVERY_SOURCE_LAN,
-            CONF_DISCOVERY_MATCH: DISCOVERY_MATCH_SPNET_MODEL_ID,
-            CONF_DISCOVERY_CONFIDENCE: DISCOVERY_CONFIDENCE_VERIFIED,
+            CONF_DISCOVERY_MATCH: discovery_match,
+            CONF_DISCOVERY_CONFIDENCE: discovery_confidence,
         },
     )
+
+
+def _spnet_name_matches_model(
+    catalog: ModelCatalog,
+    device_name: str | None,
+    model: CatalogModel,
+) -> bool:
+    """Return whether an optional SPNet name agrees with the parsed model ID."""
+    name = str(device_name or "").strip()
+    if not name:
+        return True
+    resolved = catalog.resolve_label(name)
+    return resolved is not None and resolved.name == model.name
 
 
 def lan_setup_entry_data_from_discovery(
@@ -282,17 +347,23 @@ def lan_setup_entry_data_from_discovery(
     discovery_info: Any,
 ) -> SetupEntryData:
     """Build setup data from a Home Assistant LAN discovery object."""
-    response = _spnet_discovery_response_bytes(discovery_info)
     source = str(
         _discovery_value(discovery_info, CONF_HOST)
-        or _discovery_value(discovery_info, "source")
         or _discovery_value(discovery_info, "host")
+        or _discovery_value(discovery_info, "ip_address")
+        or _discovery_value(discovery_info, "source")
         or ""
     ).strip()
-    return lan_setup_entry_data_from_spnet_response(
+    if _spnet_discovery_response_value(discovery_info) is not None:
+        response = _spnet_discovery_response_bytes(discovery_info)
+        return lan_setup_entry_data_from_spnet_response(
+            catalog,
+            response,
+            source=source,
+        )
+    return _lan_setup_entry_data_from_spnet_parsed(
         catalog,
-        response,
-        source=source,
+        _structured_spnet_discovery_response(discovery_info, source=source),
     )
 
 
@@ -810,6 +881,24 @@ def _legacy_transport_name(value: Any) -> str:
     return transport
 
 
+def _banlanx_manufacturer_data_match(
+    catalog: ModelCatalog,
+    manufacturer_data: Mapping[int, bytes | bytearray],
+) -> CatalogModel | None:
+    """Resolve BanlanX BLE manufacturer bytes to an APK catalog model."""
+    for manufacturer_id in _BANLANX_MANUFACTURER_IDS:
+        data = manufacturer_data.get(manufacturer_id)
+        if not data:
+            continue
+        model_id = bytes(data)[0]
+        if model_id not in catalog.model_ids:
+            continue
+        model = catalog.get_model_id(model_id)
+        if model.is_user_facing and TransportKind.BLE in model.transports:
+            return model
+    return None
+
+
 def _bluetooth_discovery_match(
     catalog: ModelCatalog,
     advertised_name: str,
@@ -866,11 +955,7 @@ def _discovery_value(source: Any, key: str) -> Any:
 
 
 def _spnet_discovery_response_bytes(discovery_info: Any) -> bytes:
-    response = (
-        _discovery_value(discovery_info, CONF_DISCOVERY_RESPONSE_HEX)
-        or _discovery_value(discovery_info, "response")
-        or _discovery_value(discovery_info, "raw")
-    )
+    response = _spnet_discovery_response_value(discovery_info)
     if isinstance(response, bytes):
         return response
     if isinstance(response, (bytearray, memoryview)):
@@ -881,6 +966,51 @@ def _spnet_discovery_response_bytes(discovery_info: Any) -> bytes:
         except ValueError as ex:
             raise SetupDataError(CONF_MODEL, "unknown_model") from ex
     raise SetupDataError(CONF_MODEL, "unknown_model")
+
+
+def _spnet_discovery_response_value(discovery_info: Any) -> Any:
+    return (
+        _discovery_value(discovery_info, CONF_DISCOVERY_RESPONSE_HEX)
+        or _discovery_value(discovery_info, "response")
+        or _discovery_value(discovery_info, "raw")
+    )
+
+
+def _structured_spnet_discovery_response(
+    discovery_info: Any,
+    *,
+    source: str,
+) -> SpNetDiscoveryResponse:
+    model_id = _entry_model_id(
+        _discovery_value(discovery_info, "model_code")
+        or _discovery_value(discovery_info, CONF_MODEL_ID)
+    )
+    if model_id is None:
+        raise SetupDataError(CONF_MODEL_ID, "unknown_model_id")
+    return SpNetDiscoveryResponse(
+        raw=b"",
+        payload=b"",
+        model_id=model_id,
+        mac_address=_normalized_mac_address(
+            _discovery_value(discovery_info, "mac_address")
+        ),
+        device_name=str(
+            _discovery_value(discovery_info, "local_name")
+            or _discovery_value(discovery_info, CONF_MODEL)
+            or ""
+        ).strip()
+        or None,
+        source=source,
+    )
+
+
+def _normalized_mac_address(value: Any) -> str | None:
+    text = str(value or "").strip()
+    if not text:
+        return None
+    if not _looks_like_mac_address(text):
+        raise SetupDataError(CONF_DEVICE_ID, "invalid_device_id")
+    return ":".join(part.upper() for part in text.split(":"))
 
 
 def _text(entry_data: Mapping[str, Any], *keys: str) -> str:

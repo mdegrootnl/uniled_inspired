@@ -178,9 +178,10 @@ def _support_level(name: str, family: str) -> str:
     return "recognized"
 
 
-def generate() -> None:
+def catalog_rows_from_csv(source: Path = SOURCE) -> list[dict[str, Any]]:
+    """Return generated catalog rows for one APK-derived model CSV."""
     rows: list[dict[str, Any]] = []
-    with SOURCE.open("r", encoding="utf-8", newline="") as file:
+    with source.open("r", encoding="utf-8", newline="") as file:
         for row in csv.DictReader(file):
             name = row["name"]
             home_uri = row["homeUri"]
@@ -206,6 +207,11 @@ def generate() -> None:
             )
 
     rows.extend(LEGACY_UNILED_ONLY_MODELS)
+    return rows
+
+
+def generate() -> None:
+    rows = catalog_rows_from_csv(SOURCE)
 
     TARGET.parent.mkdir(parents=True, exist_ok=True)
     TARGET.write_text(

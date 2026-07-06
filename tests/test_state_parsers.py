@@ -491,6 +491,34 @@ def test_custom_5xx_status_parser_uses_6xx_offsets_with_custom_family() -> None:
     assert state.channels[0].rgb == (11, 22, 33)
 
 
+def test_custom_5xx_status_parser_accepts_issue_67_sptech_chunks() -> None:
+    """SP530E issue #67 BLE fragments carry SPTech-style chunked status."""
+    payload = _custom_5xx_sptech_issue_67_payload()
+
+    state = BanlanXCustom5xxProtocol().parse_status(payload)
+    channel = state.channels[0]
+
+    assert state.firmware == "V2.0.08"
+    assert state.raw == payload
+    assert state.diagnostics["protocol_family"] == "banlanx_custom_5xx"
+    assert state.diagnostics["chunk_types"] == (1, 3)
+    assert state.diagnostics["settings_unknown"] == (0, 25)
+    assert state.diagnostics["light_type"] == 0x84
+    assert state.diagnostics["onoff_effect"] == 3
+    assert state.diagnostics["onoff_speed"] == 3
+    assert state.diagnostics["onoff_pixels"] == 60
+    assert state.diagnostics["on_power"] == 1
+    assert channel.power is True
+    assert channel.brightness == 0x84
+    assert channel.light_mode == "Static White"
+    assert channel.effect == "Static White - Solid"
+    assert channel.effect_number == 1
+    assert channel.extra["chip_order_raw"] == 3
+    assert channel.extra["static_white"] == (0x50, 0x40)
+    assert channel.cold_white == 0x50
+    assert channel.warm_white == 0x40
+
+
 def test_sptech_lan_status_parser_decodes_sp541e_mono_response() -> None:
     """SPTech chunked LAN status becomes brightness-only SP541E state."""
     state = SPTechLANProtocol().parse_status(_sptech_sp541e_status_frame())
@@ -506,6 +534,7 @@ def test_sptech_lan_status_parser_decodes_sp541e_mono_response() -> None:
     assert state.diagnostics["on_power"] == 2
     assert channel.power is True
     assert channel.brightness == 73
+    assert channel.chip_order is None
     assert channel.light_mode == "Static White"
     assert channel.light_mode_number == 0x02
     assert channel.effect == "Static White - Solid"
@@ -515,6 +544,7 @@ def test_sptech_lan_status_parser_decodes_sp541e_mono_response() -> None:
     assert channel.effect_length is None
     assert channel.effect_direction is None
     assert channel.extra["white_level"] == 73
+    assert channel.extra["chip_order_raw"] == 0
 
 
 def test_sptech_lan_status_parser_decodes_live_sp541e_capture() -> None:
@@ -529,10 +559,310 @@ def test_sptech_lan_status_parser_decodes_live_sp541e_capture() -> None:
     assert state.firmware == "V3.0.11"
     assert state.diagnostics["light_type"] == 1
     assert state.diagnostics["onoff_pixels"] == 60
+    assert state.diagnostics["network_info"] == "ssid=Infra; ip=192.168.0.82"
+    assert state.diagnostics["network_info_strings"] == (
+        "Infra",
+        "192.168.0.82",
+    )
+    assert state.diagnostics["network_wifi_ssid"] == "Infra"
+    assert state.diagnostics["network_ip_address"] == "192.168.0.82"
+    assert state.diagnostics["network_info_tail"] == (
+        "01203964376131376461326333613132643462373233623763333131303130393031"
+    )
+    assert state.diagnostics["power_fun_switch"] == 0
+    assert state.diagnostics["sptech_diy_solid_mode"] == 1
+    assert state.diagnostics["sptech_diy_solid_slot_count"] == 14
+    assert state.diagnostics["sptech_diy_solid_slots"][:3] == (
+        {"pixels": 6, "rgb": (255, 0, 0)},
+        {"pixels": 6, "rgb": (0, 255, 0)},
+        {"pixels": 6, "rgb": (0, 0, 255)},
+    )
+    assert state.diagnostics["sptech_diy_gradient_mode"] == 1
+    assert state.diagnostics["sptech_diy_gradient_slot_count"] == 4
+    assert state.diagnostics["sptech_diy_gradient_slots"] == (
+        {"level": 0, "rgb": (255, 0, 0)},
+        {"level": 85, "rgb": (86, 213, 0)},
+        {"level": 170, "rgb": (0, 0, 255)},
+        {"level": 255, "rgb": (213, 0, 43)},
+    )
+    assert state.diagnostics["sptech_diy_gradient_tail"] == "03040104020403"
+    assert state.diagnostics["unknown_chunk_count"] == 1
+    assert state.diagnostics["unknown_chunk_types"] == (10,)
+    assert state.diagnostics["unknown_chunks"] == (
+        {
+            "type": 10,
+            "index": 0,
+            "size": 26,
+            "hex": "01002056332e302e31312004010303003c078000000000000000",
+            "ascii_runs": ("V3.0.11",),
+        },
+    )
     assert channel.power is True
     assert channel.brightness == 3
+    assert channel.chip_order is None
     assert channel.light_mode == "Static White"
     assert channel.effect == "Static White - Solid"
+    assert channel.extra["chip_order_raw"] == 120
+
+
+def test_sptech_lan_status_parser_keeps_malformed_network_info_nonfatal() -> None:
+    """Malformed optional network-info chunks do not drop the whole status."""
+    state = SPTechLANProtocol().parse_status(bytes([0x00, 0x06, 0x01, 0x00]))
+
+    assert state.diagnostics["chunk_types"] == (6,)
+    assert state.diagnostics["network_info_parse_error"] == (
+        "truncated_string_count"
+    )
+    assert state.channels[0].channel_id == 0
+
+
+def test_sptech_lan_status_parser_decodes_supported_chip_order() -> None:
+    """SPTech chip-order status is meaningful only for supporting light types."""
+    settings = bytes([0, 0]) + b"V3.0.11 " + bytes([0x86, 1, 2, 0, 60, 1, 2])
+    status = bytes(
+        [
+            0,
+            1,
+            0,
+            2,
+            1,
+            1,
+            0,
+            128,
+            64,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            0,
+            8,
+            0,
+            9,
+            10,
+            11,
+            12,
+            13,
+        ]
+    )
+    payload = bytes([0, 1, len(settings)]) + settings
+    payload += bytes([2, len(status)]) + status
+
+    channel = SPTechLANProtocol().parse_status(payload).channels[0]
+
+    assert channel.chip_order == 2
+    assert channel.extra["chip_order_raw"] == 2
+
+
+def test_sptech_lan_status_parser_uses_custom_5xx_net_effect_overlay() -> None:
+    """Old-UniLED SPTech NET custom 5xx profiles add Firework and gradient."""
+
+    def payload(mode: int, effect: int, *, light_type: int = 0x06) -> bytes:
+        settings = (
+            bytes([0, 0]) + b"V3.0.11 " + bytes([light_type, 1, 2, 0, 60, 1, 2])
+        )
+        status = bytearray(24)
+        status[1] = 1
+        status[3] = 2
+        status[4] = mode
+        status[5] = effect
+        status[7] = 128
+        status[14] = 5
+        return (
+            bytes([0, 1, len(settings)])
+            + settings
+            + bytes([2, len(status)])
+            + bytes(status)
+        )
+
+    solid = SPTechLANProtocol(model_name="SP548E").parse_status(
+        payload(0x07, 0x13)
+    ).channels[0]
+    gradient = SPTechLANProtocol(model_name="SP548E").parse_status(
+        payload(0x08, 0x04)
+    ).channels[0]
+    generic = SPTechLANProtocol(model_name="SP630E").parse_status(
+        payload(0x07, 0x13)
+    ).channels[0]
+    sp530_plain = SPTechLANProtocol(model_name="SP530E").parse_status(
+        payload(0x07, 0x13, light_type=0x06)
+    ).channels[0]
+    sp530_sptech = SPTechLANProtocol(model_name="SP530E").parse_status(
+        payload(0x07, 0x13, light_type=0x86)
+    ).channels[0]
+
+    assert solid.effect == "Custom Solid - Firework"
+    assert solid.effect_type == "Dynamic"
+    assert solid.effect_speed == 5
+    assert gradient.light_mode == "Custom Gradient"
+    assert gradient.effect == "Custom Gradient - Spin"
+    assert generic.effect is None
+    assert generic.effect_speed is None
+    assert sp530_plain.effect is None
+    assert sp530_plain.effect_speed is None
+    assert sp530_sptech.effect == "Custom Solid - Firework"
+    assert sp530_sptech.effect_speed == 5
+
+
+def test_sptech_lan_status_parser_decodes_diy_solid_tail() -> None:
+    """SPTech chunk 2 can carry DIY solid slot metadata after status bytes."""
+    status = bytes(
+        [
+            0,
+            1,
+            0,
+            2,
+            1,
+            1,
+            0,
+            128,
+            64,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            0,
+            8,
+            0,
+            9,
+            10,
+            11,
+            12,
+            13,
+        ]
+    )
+    tail = bytes([1, 2, 4, 10, 20, 30, 5, 40, 50, 60])
+    payload = bytes([0, 2, len(status) + len(tail)]) + status + tail
+
+    state = SPTechLANProtocol().parse_status(payload)
+
+    assert state.diagnostics["sptech_diy_solid_mode"] == 1
+    assert state.diagnostics["sptech_diy_solid_slot_count"] == 2
+    assert state.diagnostics["sptech_diy_solid_slots"] == (
+        {"pixels": 4, "rgb": (10, 20, 30)},
+        {"pixels": 5, "rgb": (40, 50, 60)},
+    )
+
+
+def test_sptech_lan_status_parser_keeps_empty_fun_switch_nonfatal() -> None:
+    """Empty optional fun-switch chunks do not drop the whole status."""
+    state = SPTechLANProtocol().parse_status(bytes([0x00, 0x07, 0x00]))
+
+    assert state.diagnostics["chunk_types"] == (7,)
+    assert state.diagnostics["power_fun_switch_parse_error"] == "empty"
+    assert state.channels[0].channel_id == 0
+
+
+def test_sptech_lan_status_parser_preserves_unknown_chunks_bounded() -> None:
+    """Unhandled SPTech chunks stay available without unbounded diagnostics."""
+    unknown = b"X" * 100
+    payload = bytes([0x00, 0x63, len(unknown)]) + unknown
+
+    state = SPTechLANProtocol().parse_status(payload)
+
+    assert state.diagnostics["chunk_types"] == (0x63,)
+    assert state.diagnostics["unknown_chunk_count"] == 1
+    assert state.diagnostics["unknown_chunk_types"] == (0x63,)
+    assert state.diagnostics["unknown_chunks"] == (
+        {
+            "type": 0x63,
+            "index": 0,
+            "size": 100,
+            "hex": (b"X" * 96).hex(),
+            "ascii_runs": ("X" * 96,),
+            "truncated": True,
+        },
+    )
+
+
+def test_sptech_lan_status_parser_preserves_repeated_timer_chunks() -> None:
+    """SPTech timer chunks can repeat, so they must not collapse by type."""
+    timer_1 = bytes.fromhex("01 01 01 6a 01 12 38")
+    timer_2 = bytes.fromhex("02 01 00 15 00 65 f4")
+    payload = bytes([0x00, 0x04, len(timer_1)]) + timer_1
+    payload += bytes([0x04, len(timer_2)]) + timer_2
+
+    state = SPTechLANProtocol().parse_status(payload)
+
+    assert state.diagnostics["chunk_types"] == (4, 4)
+    assert state.diagnostics["sptech_timer_count"] == 2
+    assert state.diagnostics["sptech_timer_records"] == (
+        {
+            "id": 1,
+            "enabled": True,
+            "power": True,
+            "days": 0x6A,
+            "meridiem": 1,
+            "time": 0x1238,
+        },
+        {
+            "id": 2,
+            "enabled": True,
+            "power": False,
+            "days": 0x15,
+            "meridiem": 0,
+            "time": 0x65F4,
+        },
+    )
+
+
+def test_sptech_lan_status_parser_decodes_effect_layout_chunk() -> None:
+    """SPTech chunk 5 exposes old-UniLED music/effect layout diagnostics."""
+    matrix_record = bytes(range(28))
+    layout_chunk = bytes(
+        [
+            0xAA,
+            0x02,
+            0x08,
+            0x10,
+            0x01,
+            0x01,
+            0x01,
+            0x03,
+            0x00,
+            0x78,
+            0x01,
+            0x22,
+            0x05,
+            10,
+            20,
+            30,
+            0x01,
+        ]
+    ) + matrix_record
+    payload = bytes([0x00, 0x05, len(layout_chunk)]) + layout_chunk
+
+    state = SPTechLANProtocol().parse_status(payload)
+
+    assert state.diagnostics["sptech_effect_layout_unknown"] == 0xAA
+    assert state.diagnostics["sptech_effect_layout"] == 2
+    assert state.diagnostics["sptech_matrix_width"] == 8
+    assert state.diagnostics["sptech_matrix_height"] == 16
+    assert state.diagnostics["sptech_matrix_layout"] == 1
+    assert state.diagnostics["sptech_sound_strip_mode_count"] == 1
+    assert state.diagnostics["sptech_sound_strip_modes"] == (
+        {
+            "mode": 0,
+            "segment_count": 1,
+            "segments": (
+                {
+                    "segment": 3,
+                    "pixels": 120,
+                    "direction": 1,
+                    "effect": 0x22,
+                    "frequency": 5,
+                    "rgb": (10, 20, 30),
+                },
+            ),
+        },
+    )
+    assert state.diagnostics["sptech_sound_matrix_mode_count"] == 1
+    assert state.diagnostics["sptech_sound_matrix_modes"] == (matrix_record.hex(),)
 
 
 def test_sptech_lan_status_parser_gates_dynamic_white_attributes() -> None:
@@ -641,6 +971,21 @@ def test_legacy_led_hue_parses_status_with_optional_leading_byte() -> None:
     assert auto.effect_speed == 6
     assert auto.effect_loop is True
     assert auto.rgb == (7, 8, 9)
+
+    issue_40_state = protocol.parse_status(
+        bytes.fromhex("01 65 c4 38 03 00 00 32 69 ff 00 00")
+    )
+    issue_40 = issue_40_state.channels[0]
+    assert issue_40.power is True
+    assert issue_40.brightness == 56
+    assert issue_40.rgbw == (105, 255, 0, 0)
+    assert issue_40.effect == "Pattern 101"
+    assert issue_40.effect_number == 0x65
+    assert issue_40.effect_type == "Dynamic"
+    assert issue_40.effect_speed == 196
+    assert issue_40.chip_order == 0
+    assert issue_40.extra["chip_type"] == 3
+    assert issue_40.extra["segment_pixels"] == 50
 
 
 def test_banlanx_6xx_status_parser_maps_richer_light_types() -> None:
@@ -823,8 +1168,20 @@ def test_banlanx_6xx_status_parser_gates_effect_loop_by_mode() -> None:
     custom_packet[30] = 1
     custom_state = protocol.parse_status(bytes(custom_packet)).channels[0]
 
-    assert custom_state.light_mode == "Custom"
+    assert custom_state.light_mode == "Custom Solid"
     assert custom_state.effect_loop is None
+
+    gradient_packet = bytearray(_banlanx_6xx_status_packet())
+    gradient_packet[19] = 0x86
+    gradient_packet[32] = 0x08
+    gradient_packet[33] = 0x04
+    gradient_state = protocol.parse_status(bytes(gradient_packet)).channels[0]
+
+    assert gradient_state.light_mode == "Custom Gradient"
+    assert gradient_state.effect == "Custom Gradient - Spin"
+    assert gradient_state.effect_type == "Dynamic"
+    assert gradient_state.effect_speed == 5
+    assert gradient_state.effect_loop is None
 
 
 def test_status_parsers_reject_short_or_encoded_packets() -> None:
@@ -872,6 +1229,37 @@ def _banlanx_6xx_status_packet() -> bytes:
     packet[46] = 2
     packet[52] = 7
     return bytes(packet)
+
+
+def _custom_5xx_sptech_issue_67_payload() -> bytes:
+    settings = bytes.fromhex(
+        "00 19 56 32 2e 30 2e 30 38 20 84 03 03 00 3c 00 01"
+    )
+    status = bytearray(26)
+    status[1] = 0x84
+    status_tail = bytearray(24)
+    status_tail[1] = 1
+    status_tail[3] = 3
+    status_tail[4] = 0x02
+    status_tail[5] = 0x01
+    status_tail[6] = 1
+    status_tail[7] = 0x7B
+    status_tail[8] = 0x84
+    status_tail[9:12] = bytes([1, 2, 3])
+    status_tail[12:14] = bytes([0x50, 0x40])
+    status_tail[14] = 7
+    status_tail[15] = 8
+    status_tail[16] = 1
+    status_tail[17] = 0x10
+    status_tail[19:22] = bytes([4, 5, 6])
+    status_tail[22:24] = bytes([0x51, 0x41])
+    status[2:] = status_tail
+    return (
+        bytes([0x01, 0x01, 0x00, len(settings)])
+        + settings
+        + bytes([0x03, 0x00, len(status)])
+        + status
+    )
 
 
 def _sptech_sp541e_status_frame() -> bytes:

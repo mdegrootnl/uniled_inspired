@@ -1,6 +1,6 @@
 # UniLED Next Implementation Status
 
-Last updated: 2026-07-05
+Last updated: 2026-07-06
 
 ## Current Milestone
 
@@ -21,13 +21,13 @@ Implemented:
   scene native `.dynsym` export anchors and Thumb `.text` code anchors from
   `libscene_lfx.so`, SP802E native LFX `.dynsym` export anchors from
   `libwled_lfx.so`, SP630E/shared native LFX `.dynsym` export anchors from
-  `liblfx.so`, and an exhaustive
-  22-bucket APK asset-package inventory against
+  `liblfx.so`, bundled catalog freshness against `model_catalog.csv`, and an
+  exhaustive 22-bucket APK asset-package inventory against
   `..\.codex\rev\BanlanX_3.3.1-analysis`. Current audited string-anchor
-  counts are `sp630e=73`, `scene_ui=268`, `module_sp801e=38`, `sp802e=101`,
+  counts are `sp630e=73`, `scene_ui=268`, `module_sp801e=38`, `sp802e=102`,
   `car_lights=70`, `fish_tank_lights=67`, `accessories=23`, `cloud=97`,
   `lan_network_setup=21`, `ble_plugin_contract=7`,
-  `scene_mesh_provisioning=3`,
+  `ble_notification_contract=5`, `scene_mesh_provisioning=3`,
   `rg4_provisioning=12`, and `sig_mesh_uuid=6`; the audited SP801E
   module-home setup guide asset
   group has 3 curated assets; the audited scene native export set has
@@ -38,7 +38,14 @@ Implemented:
   bytes; the audited SP802E native export set has
   `.dynsym=186`, 35 matrix/effect/LFX/generator exports, and 6 detail
   anchors; the audited SP630E/shared native export set has `.dynsym=162`,
-  34 renderer/music/PWM exports, and 7 detail anchors;
+  34 renderer/music/PWM exports, and 7 detail anchors; the local Blutter HJ
+  enum audit verifies 82 BanlanX app-command IDs from the arm64 Dart snapshot,
+  including `getNetworkInfo=0x92`, `getArtNetConfig=0x21`,
+  `setArtNetConfig=0x22`, `setLfxMode=0x53`, and
+  `setLedPanelLayout=0x7e` as app-layer enum evidence, not proven wire
+  packet envelopes; the catalog-source audit verifies all 191 bundled catalog
+  rows still derive from the APK `model_catalog.csv` plus the two explicit
+  legacy-only old-UniLED rows;
 - Repeatable old-UniLED parity audit at `scripts/audit_legacy_uniled.py`,
   statically deriving 51 old BLE model names and zero old NET model names from
   the detached `..\uniled` source tree and enforcing that the old `lib/zng`
@@ -149,12 +156,13 @@ Implemented:
   commands remain hidden pending packet evidence.
 - APK `/sp630e` surface diagnostics for SP6xx and custom 5xx models. The new
   `sp630e_profile` preserves route, control-surface, favorite-limit,
-  timer-limit, music-asset, network, remote, motor, method, data-model,
-  shared native LFX, catalog, gap, full package-asset, and APK evidence counts
-  from `packages/sp630e` without exposing unproven DIY/favorite/timer/remote
-  write flows. The evidence audit also verifies `liblfx.so` has 162 dynamic
-  symbols, 34 exported renderer/music/PWM anchors, and 7 pinned symbol
-  details.
+  timer-limit, music-asset, network, remote, motor, method, Blutter app-command
+  ID, data-model, shared native LFX, catalog, gap, full package-asset, and APK
+  evidence counts from `packages/sp630e` without exposing unproven
+  DIY/favorite/timer/remote write flows. The SP630E/shared profile now carries
+  35 app-layer command ID anchors for the existing `/sp630e` control surfaces.
+  The evidence audit also verifies `liblfx.so` has 162 dynamic symbols, 34
+  exported renderer/music/PWM anchors, and 7 pinned symbol details.
 - APK asset-package inventory at `core/apk_assets.py`. All 22 package-count
   buckets from `asset_package_counts.txt` are classified as catalog device
   profiles, non-catalog feature packages, shared app shell assets, shared
@@ -169,10 +177,12 @@ Implemented:
   timeout, provisioning-control warning, rapid-flash abnormal state,
   provisioned-device count, provisioner address log, capabilities anchors, PDU
   errors, the six APK-recovered Bluetooth SIG Mesh provisioning/proxy UUID
-  strings, the full 9-asset `packages/accessories` package count, asset paths,
-  and string evidence. A disabled planned `mesh_provisioning_state` select exposes
-  the nine callback-state labels without exposing unproven one-touch
-  provisioning or remote-button event controls. RG4 support disposition now
+  strings, Blutter app-command ID hints for composition/provisioner/zone/node
+  lookup and group/subgroup/master-heartbeat operations, the full 9-asset
+  `packages/accessories` package count, asset paths, and string evidence. A
+  disabled planned `mesh_provisioning_state` select exposes the nine
+  callback-state labels without exposing unproven one-touch provisioning or
+  remote-button event controls. RG4 support disposition now
   reports the remaining control blockers as
   `mesh_remote_event_parser_pending`, `mesh_provisioning_frame_pending`,
   `mesh_group_management_pending`, and
@@ -189,13 +199,17 @@ Implemented:
 - APK BLE evidence diagnostics for direct-BLE catalog models at
   `custom_components/uniled/core/transports/ble.py`, including recovered
   Flutter BLE channels, Java bridge methods for adapter/discovery/device
-  operations, method arguments, returned scan/characteristic fields, UUID
-  candidates `ff12`, `ff14`, `ff15`, `ffe0`, and `ffe1`, a normalized
-  per-UUID inventory backed by exact APK string anchors, and explicit
-  protocol-gap notes for families without a proven command profile. Lightweight
-  diagnostics expose UUID binding status, known service UUID count, UUID-pool,
+  operations, method arguments, returned scan/service/characteristic/RSSI/MTU
+  fields, UUID candidates `ff12`, `ff14`, `ff15`, `ffe0`, and `ffe1`, a normalized
+  per-UUID inventory backed by exact APK string anchors, decompiled adapter
+  state result fields, scan, connection-state, and notification event payload
+  contracts, discovery default/scan-filter behavior, and explicit protocol-gap
+  notes for families without a proven command profile. Lightweight diagnostics
+  expose UUID binding status, known service UUID count, UUID-pool,
   UUID-inventory, unbound-candidate, legacy-candidate, plugin-method,
-  plugin-argument, plugin-result-field, plugin-channel, and BLE protocol-gap
+  plugin-argument, plugin-result-field, grouped result-field,
+  adapter-state-result-field, event-field, boolean-event-channel, event-hint,
+  plugin-contract, plugin-error-code, plugin-channel, and BLE protocol-gap
   counts. The three APK-only `ff12`/`ff14`/`ff15` candidates remain
   diagnostics-only until family-specific service/characteristic binding is
   proven.
@@ -204,7 +218,8 @@ Implemented:
   `supportGetNetInfo`, `maxDataLength`, host-network method names, discovery
   plugin/channel hints, Bonsoir/Android NSD method arguments, decompiled
   Bonsoir service-type handoff flow, Bonsoir TXT-query flow,
-  Android `NsdManager` method names,
+  Android `NsdManager` method names, Bonsoir discovery event names, Bonsoir
+  service event fields, Bonsoir service normalization hints,
   multicast-lock method names, the universal
   `/device/universal/network/config` setup route,
   AP/STA network setup prompts, local-only/cloud-binding warnings, mDNS
@@ -217,7 +232,8 @@ Implemented:
   discovery-channel, network-setup route/prompt, SP801E setup-guide asset,
   cloud-setup prompt,
   multicast-lock method, Bonsoir method, Bonsoir argument, Android NSD method,
-  Bonsoir service-type flow, Bonsoir TXT-query flow, discovery-gap,
+  Bonsoir discovery event, Bonsoir service event field, Bonsoir service
+  normalization, Bonsoir service-type flow, Bonsoir TXT-query flow, discovery-gap,
   UDP raw-socket hint, discovery-status hint, socket timeout, UDP receive
   buffer, mDNS TXT query timeout, TXT record type/query class, and mDNS TXT
   buffer facts.
@@ -261,14 +277,17 @@ Implemented:
   surface/content-mode/LFX-effect/GIF-preview counts, per-model
   catalog/transport hints, SP801E Art-Net field, port field, playlist-action,
   and DXF constraints, SP802E matrix-music setter controls, and explicit
-  protocol gaps including the missing concrete DNS-SD service type. The profile
+  protocol gaps including the missing concrete DNS-SD service type. A targeted
+  APK/Blutter string pass found multicast/raw datagram anchors but no concrete
+  `_tcp`/`_udp` service type. The profile
   records full APK package asset counts separately from curated evidence:
   143 assets for `packages/module_sp801e` and 81 assets for `packages/sp802e`.
   It also preserves method/native anchors from `libapp.so` strings:
   `getNetworkInfo`,
-  `getArtNetConfig`, `setArtNetConfig`, playlist methods, SP802E LFX setter
-  names, raw SP801E channel/port/playlist storage labels, raw SP802E LFX,
-  matrix, GIF-frame, and Wi-Fi state labels, and `libwled_lfx.so` matrix/LFX
+  `getArtNetConfig`, `setArtNetConfig`, playlist methods, SP802E network-info
+  and LFX setter names, raw SP801E channel/port/playlist storage labels, raw
+  SP802E LFX, matrix, GIF-frame, and Wi-Fi state labels, and `libwled_lfx.so`
+  matrix/LFX
   symbols including LFX parameter helpers, effect generators, matrix/mode
   helpers, and pixel/frame helpers such as `render_frame` and
   `get_frame_data`. Lightweight
@@ -292,7 +311,9 @@ Implemented:
   subdevice-filter selectors, device-password entry/change/policy and reset
   labels, password-reset procedure hints,
   planned disabled password-flow-state selectors, `sp_trigger` storage hints,
-  planned disabled trigger-action selectors, BLE-only catalog hints, the
+  planned disabled trigger-action selectors, Blutter-recovered app command ID
+  hints for `configZoneKeyAddrMapping` (`0x24`), `configTrigger` (`0x36`),
+  and `configWelcomeLights` (`0x91`), BLE-only catalog hints, the
   APK-proven `SP-MIC` -> `SP702E` accessory dependency, and explicit
   protocol-gap notes.
   The full `packages/car_lights` asset manifest has 58 assets, tracked
@@ -303,7 +324,7 @@ Implemented:
   password-policy-hint, password-reset-hint, trigger-storage-hint,
   trigger-action, control-surface, route,
   setup-requirement, setup-flow-hint, setup-key-hint, model-role-hint,
-  setup-stage, setup-order, required-controller, protocol-gap, APK
+  app-command-ID, setup-stage, setup-order, required-controller, protocol-gap, APK
   package-asset, APK asset-evidence, and APK string-evidence counts.
   Runtime support disposition now includes car-light command blockers:
   `car_light_ble_opcode_pending`, `car_light_status_parser_pending`,
@@ -343,6 +364,7 @@ Implemented:
   favorite-action, favorite store/recall/clear, favorite-action-type,
   favorite-loop-hint, favorite-loop-action, firmware-prompt-hint,
   timer-slot, timer-action, timer-hint, timer-string, app-method,
+  app-command-ID,
   data-model-hint, favorite-service, favorite-storage, timer-storage,
   brightness-state, raw-string, brightness-string, protocol-gap, APK
   package-asset, APK asset-evidence, and APK string-evidence counts.
@@ -371,7 +393,8 @@ Implemented:
   including the universal timer list/config routes, SP31XE/SP32XE firmware
   V1.1, and one-touch provisioning strings.
   Lightweight diagnostics expose scene app-method, storage-hint, recent-action,
-  favorite-action, timer-route, timer-action, DIY-action, white-brightness-anchor,
+  app-command-ID, favorite-action, timer-route, timer-action, DIY-action,
+  white-brightness-anchor,
   raw-string, native-handler, native-paired-API, native-IC-only-API,
   native-loop-handler, native-library-hint, native-frame-helper,
   native-opcode-helper, native-state-helper, native-state-export,
@@ -383,15 +406,18 @@ Implemented:
 - BLE mesh profile facts at `custom_components/uniled/core/transports/mesh.py`,
   including old UniLED Telink/Zengge UUIDs, manufacturer IDs, default mesh UUID,
   notification-based status behavior, pairing requirement, effect names,
-  command names, the `0xED` effect packet's effect/speed/level fields, and
-  guarded paired-node speed/level number controls plus explicit gaps for
+  command names, the `0xED` effect packet's effect/speed/level fields,
+  Blutter app-command ID hints for mesh composition, provisioning, group, and
+  node-management intent names, and guarded paired-node speed/level number
+  controls plus explicit gaps for
   remote events, panel status, and non-light mesh entities. BanlanX scene-mesh
   records now also
   expose a diagnostics-only mesh profile with the shared `/device/scene_ui`
   route, `packages/scene_ui` package count, exact three-line SP31XE/SP32XE
   one-touch provisioning guide, the same six APK-recovered Bluetooth SIG Mesh
-  UUID anchors, and explicit missing frame-map gaps, without exposing RG4
-  provisioning callback controls. Their support disposition now
+  UUID anchors, the same diagnostics-only mesh app-command ID count, and
+  explicit missing frame-map gaps, without exposing RG4 provisioning callback
+  controls. Their support disposition now
   includes `firmware_v1_1_required`, `provisioning_frame_pending`, and
   `scene_mesh_routing_pending` while command support stays pending.
 - Telink/Zengge mesh advertisement parsing that extracts mesh UUID, node ID,
@@ -516,7 +542,9 @@ Implemented:
   The SP6xx parser now preserves old-UniLED's split color offsets: static
   color modes read stored RGB from bytes `37..39`, while dynamic/sound color
   modes read live RGB from bytes `47..49`; dynamic white/CCT modes use bytes
-  `50..51`.
+  `50..51`. Dev_v3 SPTech custom mode evidence is preserved as `Custom Solid`
+  (`0x07`) and `Custom Gradient` (`0x08`) for gradient-capable SPI RGB/RGBW
+  light types.
 - Custom 5xx status parsing through the same unencrypted SP6xx offset map, with
   diagnostics preserving `banlanx_custom_5xx`.
 - Stateful notification frame assemblers for the legacy BLE packet formats:
@@ -582,8 +610,9 @@ Implemented:
   catalog and creates entries with stable local identifiers.
 - Conservative Bluetooth config-flow step that creates an entry only when the
   advertised name resolves to an exact catalog name, APK friendly label, or a
-  safely suffixed catalog name such as `SP601E_AABB`, or when a generic Telink
-  mesh advertisement can be parsed. The flow delegates Home Assistant
+  safely suffixed catalog name such as `SP601E_AABB`, when BanlanX manufacturer
+  data byte `0` resolves to a user-facing APK BLE model, or when a generic
+  Telink mesh advertisement can be parsed. The flow delegates Home Assistant
   discovery-object normalization to the Home Assistant-independent setup-data
   helper, so `name`/`local_name`, address, manufacturer data, and connectability
   are tested without importing Home Assistant. It rejects non-connectable
@@ -591,7 +620,8 @@ Implemented:
   writes.
   Resolved discovery still has to pass the catalog transport gate, so broad
   manifest matches cannot create BLE entries for LAN-only models such as
-  `SP801E`, and near misses such as `SP601EX` stay unknown. Discovery-created
+  `SP801E`, manufacturer-data matches cannot create BLE entries for LAN-only
+  catalog rows, and near misses such as `SP601EX` stay unknown. Discovery-created
   BLE and BLE-mesh entries also require a Bluetooth address because runtime
   transport attachment resolves devices by address. Friendly labels are input
   aliases only; config-entry data stores the canonical APK catalog `name`.
@@ -614,10 +644,12 @@ Implemented:
 - Bluetooth manifest matchers for bounded catalog name patterns such as
   `SP1*`, `SP3*`, `SP5*`, `SP6*`, `SP7*`, `SP802E`, `LED Strip`,
   `Light Bar`, `Wall Light`, `DynamicBar`, `Car Lights`, `FT001`, `RG4`, and
-  `360PhotoB`. Tests prove those local-name matchers cover all 151 user-facing
-  BLE or BLE-mesh catalog names, including legacy-only `SP107E`/`SP110E`, that
-  a blanket `SP*` matcher is not present, and that every matcher remains
-  `connectable: true`.
+  `360PhotoB`, plus BanlanX manufacturer-data wake-up matchers for manufacturer
+  IDs `20563` (`0x5053`) and `5053`. Tests prove those local-name matchers cover
+  all 151 user-facing BLE or BLE-mesh catalog names, including legacy-only
+  `SP107E`/`SP110E`, that name-less BanlanX manufacturer-data advertisements can
+  wake the Bluetooth flow, that a blanket `SP*` matcher is not present, and that
+  every matcher remains `connectable: true`.
 - Home Assistant BLE byte transport at `custom_components/uniled/bluetooth.py`
   using current HA Bluetooth lookup plus Bleak characteristic write/notify.
   Direct BLE write/notify targets are now resolved under the expected service
@@ -652,9 +684,11 @@ Implemented:
   use the APK's write-without-response versus response-write fallback.
 - LAN profile tests proving SP547E/SP548E carry network-info code `37` and
   `maxDataLength=185`, SP541E carries the recovered SPNet UDP discovery
-  request/response anchors plus guarded SPTECH TCP candidate facts, SP802E
-  carries network-info code `9`, SP801E remains a LAN profile without a
-  network-info code, and BLE-only models do not claim LAN facts.
+  request/response anchors plus guarded SPTECH TCP candidate facts, custom
+  5xx profiles preserve old-UniLED SPTech model-code aliases and configuration
+  hints as diagnostics only, SP802E carries network-info code `9`, SP801E
+  remains a LAN profile without a network-info code, and BLE-only models do
+  not claim LAN facts.
 - Setup-data tests proving manual entries keep stable legacy diagnostic IDs,
   LAN entries use host/IP identity, LAN setup rejects BLE-only models, and
   invalid hosts fail before config-entry creation.
@@ -748,11 +782,16 @@ Implemented:
   the live client helper builds the old login payload, including MD5 password
   hash and AES checkcode input, and performs the login, mesh-list, bridge, and
   device-list request sequence.
-- Setup-data tests proving exact-name and safe-suffixed Bluetooth discovery
-  create direct BLE entries with stored provenance, while generic Telink mesh
-  advertisements and parsed MagicHue cloud metadata create RG4 BLE-mesh entries
-  using the old UniLED `zng_mesh_<uuid>` unique ID shape. They also prove all
-  51 old-UniLED BLE names resolve from exact-name and safe-suffixed Home
+- Setup-data tests proving exact-name, safe-suffixed, and BanlanX
+  manufacturer-data Bluetooth discovery create direct BLE entries with stored
+  provenance, while generic Telink mesh advertisements and parsed MagicHue
+  cloud metadata create RG4 BLE-mesh entries using the old UniLED
+  `zng_mesh_<uuid>` unique ID shape. Manufacturer-data tests cover the SP542E
+  `5d 10 ...` issue evidence, the SP613E `09 10` payload variant, prove
+  duplicate SP548E variant `0x94` wins over the ambiguous local name, preserve
+  issue-reported SP538E/SP548E `f0` manufacturer payloads, and reject LAN-only
+  catalog model IDs. They also prove all 51 old-UniLED BLE names
+  resolve from exact-name and safe-suffixed Home
   Assistant-shaped discovery objects as `protocol_proven`, including the 49
   BanlanX APK overlap models and the legacy-only `SP107E`/`SP110E` rows, and
   that each one reports the raw-address old-UniLED config-entry IDs that must
@@ -827,10 +866,17 @@ Implemented:
 - Runtime tests proving state refresh sends a state query, adopts parsed state,
   preserves runtime diagnostics, and marks no-response devices unavailable.
 - BLE profile tests proving the old UniLED UUID profile assignments for
-  `ffe0`/`ffe1` and the SP6xx/custom 5xx `e0ff`/`ffe0` service fallback.
+  `ffe0`/`ffe1`, the issue #111 SP107E `ffb0`/`ffb1` fallback, the issue #122
+  SP60x `ffb0`/`ffb1` fallback, the issue #105 BanlanX v2 `e0ff` service
+  fallback with existing `ffe1` characteristic binding, and the SP6xx/custom
+  5xx `e0ff`/`ffe0` service fallback.
   The same tests and APK evidence audit keep the normalized BLE UUID inventory
   tied to exact raw APK anchors while leaving `ff12`/`ff14`/`ff15` unbound for
-  scene/car/fish/SP802E families.
+  scene/car/fish/SP802E families. Runtime BLE diagnostics now also expose
+  per-model old-UniLED issue advertisement fixtures, with exact payload/service
+  anchors for issue #45 SP63AE, #57 SP617E, #60 SP621E, #78 SP642E, #105
+  SP611E, #111 SP107E, #69 SP110E, #120 SP538E/SP548E `ffe1` adverts,
+  #122 SP608E, and #132 SP542E.
 - Session tests proving command dispatch to a byte transport, response-aware
   state queries, unsupported-command failures before writes, runtime transport
   attachment, direct-response refresh parsing, notification-wait refresh, and
@@ -864,9 +910,10 @@ Verified catalog facts:
   protocol evidence, and the two legacy-only BLE rows `SP107E` and `SP110E`.
 - Legacy-only old UniLED `LED Chord`/`LED Hue` models are cataloged outside
   the APK source as `SP107E` and `SP110E`. They autodiscover as BLE
-  `protocol_proven` devices with the old `ffe0`/`ffe1` UUID binding and now
-  have limited command/status support. Hidden configuration/edit surfaces such
-  as chip type, segment/pixel layout, and the second RGB bank remain explicit
+  `protocol_proven` devices with the old `ffe0`/`ffe1` UUID binding; SP107E
+  also accepts the issue #111 `ffb0`/`ffb1` transport fallback. They now have
+  limited command/status support. Hidden configuration/edit surfaces such as
+  chip type, segment/pixel layout, and the second RGB bank remain explicit
   parity gaps until packet behavior is proven.
 - Legacy old-UniLED `lib/net` has no reusable BanlanX LAN model evidence:
   `UNILED_NET_MODELS` is empty, so APK LAN families remain blocked on BanlanX
@@ -979,6 +1026,11 @@ Support levels are:
   `service.port`, `service.host`, and `service.attributes`. Decompiled Java
   also pins the Android `NsdManager` calls and shows the service type is
   supplied by Dart rather than hard-coded in the Java plugin layer.
+- Decompiled Bonsoir event marshalling also confirms the discovery event names,
+  top-level event `id`, nested `service.*` payload fields, trailing-dot service
+  type trimming, host-address string emission, UTF-8 TXT byte decoding, empty
+  string normalization for null TXT values, and serialized Android
+  `resolveService` calls.
 - The APK's mDNS helper sends TXT queries to multicast group `224.0.0.251` on
   port `5353` with TTL `255`, a 2000 ms query timeout, DNS TXT record type
   `16`, query class `32769`, and a 1024-byte TXT receive buffer. Decompiled
@@ -1009,11 +1061,75 @@ Support levels are:
   Setup-data helpers can turn the proven SPNet response plus source host into
   a verified SP541E LAN config-entry shape with `discovery_source=lan`,
   `discovery_match=spnet_model_id`, and `discovery_confidence=verified`;
-  non-SPNet packets, missing hosts, unknown model bytes, and LAN-capable models
-  without the proven SP541E/SPTech command path are rejected before entry
-  creation.
+  old-UniLED SPTech model-code matches create confirmation-required
+  diagnostic-only LAN entries with `discovery_match=spnet_legacy_model_code`
+  and `discovery_confidence=discovered_only`. Non-SPNet packets, missing hosts,
+  unknown model bytes, and unsupported LAN families are still rejected before
+  entry creation.
+  Issue #115 SP525E evidence now adds a third, still diagnostic-only SPNet
+  discovery tier: custom 5xx packets whose model byte maps to an APK LAN row
+  and whose optional packet name agrees with that row create
+  `discovery_match=spnet_catalog_model_id` entries with
+  `discovery_confidence=discovered_only`; LAN commands remain guarded behind
+  the SP541E-only verified command path. That same guard now accepts structured
+  SPNet summary dictionaries when raw UDP bytes are unavailable, covering
+  old-UniLED issue #91/#123 `SP548E` model-code `148` logs as
+  confirmation-required catalog-model diagnostics.
   Other custom 5xx LAN profiles keep `command_protocol_known=False` until their
   frame/session behavior is proven.
+- Old UniLED `origin/dev_v3` and tag `3.0.10-beta.11` preserve SPTech LAN
+  recognition aliases in
+  `custom_components/uniled/lib/net/sp53x_54xe.py`: model codes `0x4e`
+  -> `SP530E`, `0x56` -> `SP538E`, `0x57` -> `SP539E`, `0x63`/`0x69`
+  -> `SP548E`, and `0x64` -> `SP549E`, plus 16 configuration-code hints
+  covering the SP530E PWM/SPI variants and SP538E/SP548E/SP539E/SP549E SPI
+  variants. That dev branch also gives the SPTech NET RGB/RGBW profiles a
+  richer custom-effect surface: custom-solid effect `0x13` is `Firework`, and
+  SP530E uses that richer surface only on its `0x86`/`0x88` SPI variants,
+  while the fixed SP538E/SP548E `0x06` plus SP539E/SP549E `0x08` profiles use
+  the gradient-capable SP5XXE mode table. The same old `sptech_model.py` source
+  preserves 20 SPTech command IDs (`0x02`, `0x08`, `0x0a`, `0x0b`,
+  `0x50`-`0x5a`, `0x5d`, `0x60`, `0x61`, `0x6a`, `0x6b`) and eight response
+  chunk decoders for settings, status, extended status, timer, music layout,
+  network info, fun switch, and an unknown firmware/status block. UniLED Next
+  exposes these as structured LAN diagnostics, count sensors, and model-scoped
+  custom 5xx status/select options. If such a SPNet response is seen, config
+  flow asks for confirmation before creating a diagnostic-only LAN entry; the
+  aliases and command/chunk inventory do not enable LAN writes outside the
+  verified SP541E path.
+  A separate issue-backed catalog-model diagnostic path covers SP525E
+  model-code `113` from old-UniLED issue #115 and structured SP548E
+  model-code `148` summaries from old-UniLED issues #91/#123 without treating
+  the LAN command protocol as proven.
+- `SPTechLANProtocol` now parses old-UniLED status chunk `6` as live network
+  info when present. The live SP541E capture includes `Infra` and
+  `192.168.0.82`, which now surfaces as the implemented `network_info`
+  diagnostic while preserving the raw chunk tail; malformed chunk `6` data
+  records a parse-error diagnostic without losing the rest of the state.
+- `SPTechLANProtocol` also records old-UniLED status chunk `7` as the raw
+  `power_fun_switch` diagnostic byte when present. Empty chunk `7` data records
+  a parse-error diagnostic and does not enable a user-facing switch or LAN
+  write path.
+- SPTech repeated chunk types are now preserved instead of collapsed, matching
+  old UniLED's sequential decoder model. Chunk `4` timer records surface as
+  parsed read-only diagnostics, and chunk `5` music/effect layout data surfaces
+  effect layout, matrix dimensions/layout, strip segment metadata, and raw
+  matrix-mode records without enabling layout writes.
+- SPTech mode/status parsing now preserves the old-UniLED chip-order byte, and
+  the SPTech protocol has old-UniLED frame builders for `0x08`, `0x0a`,
+  `0x0b`, `0x52`, `0x57`, `0x60`, `0x61`, `0x6a`, and `0x6b`: on/off
+  animation, coexistence, on-power, static/dynamic RGB, static/dynamic CCT,
+  light-type reconfiguration, and chip-order. This is protocol evidence for
+  future custom 5xx LAN work; non-SP541E LAN writes remain disabled.
+- SPTech status-tail parsing now preserves old-UniLED DIY solid slot metadata
+  from chunk `2` and DIY solid plus gradient slot metadata from extended chunk
+  `3`. The live SP541E capture carries 14 solid slots, four gradient slots, and
+  an unknown gradient tail, all retained as diagnostics only; DIY write frames
+  are still unproven.
+- SPTech unhandled status chunks are now preserved as bounded diagnostics with
+  type, index, size, sampled hex, and printable ASCII runs. The live chunk `10`
+  sample exposes a `V3.0.11` ASCII run, but remains an unknown firmware/status
+  block rather than a modeled entity or command path.
 - LAN-capable models now expose `lan_host_setup_mode`, currently
   `discovery_ready` for the verified SP541E/SPNet path and `manual_host` for
   other LAN-capable models, as an implemented diagnostic sensor. This makes the
@@ -1075,7 +1191,8 @@ Support levels are:
   string anchor rather than a `.dynsym` export. A detailed dynsym pass places
   `set_effect_params` at `0x0000a4dd` with a 26-byte exported function body;
   this is a useful disassembly anchor, not a packet payload. SP802E diagnostics
-  now separate LFX parameter/mode-switch anchors (`switch_lfx_mode`,
+  now preserve six exact native export detail anchors and separate LFX
+  parameter/mode-switch anchors (`switch_lfx_mode`,
   `set_effect_params`, `recover_effect_param`, `effect_prj`,
   `Create_effectsTables`, `EFFECT_GENERATOR_CONSTRUCTORS`, `Dyneffect_num`,
   `Rhyeffect_num`), eleven regular-effect generator functions, matrix/mode
@@ -1089,9 +1206,11 @@ Support levels are:
   `lfxDurationInLoop`, `lfxLoopMode`, `lfxMode-`, `lfxParams`,
   `lfx_color_sets`, `lfx_colors`, `lfx_gradients`, `lfx_mode_id`,
   `lfx_mode_type`, `gif_lfx_frames`, `led_matrix_info`, `matrixType`,
-  `wifiState`, `wifiStrength2`, and `supportGetNetInfo`. These exports confirm
-  matrix/LFX implementation anchors, not packet framing. The LAN discovery
-  primitives above are generic plugin plumbing; no confirmed SP801E/SP802E
+  `wifiState`, `wifiStrength2`, and `supportGetNetInfo`; the Blutter enum also
+  anchors SP802E's planned network-info method as `getNetworkInfo=0x92`. These
+  exports confirm matrix/LFX and network-info app anchors, not packet framing.
+  The LAN discovery primitives above are generic plugin plumbing; no confirmed
+  SP801E/SP802E
   service type, discovery response, local socket frame, Art-Net config payload,
   SP802E BLE/LAN LFX command, status parser, playlist packet, DXF import
   packet, or panel-layout packet has been mapped yet.
@@ -1138,10 +1257,17 @@ Support levels are:
   `interval`, `clearPreDiscoveredDevices`, and `aliveTime` arguments; device
   connection, RSSI, MTU, service, characteristic, notification, and write
   calls; scan result fields `id`, `name`, `rssi`, `serviceData`, and
-  `manufacturerData`; and characteristic capability fields `uuid`,
-  `supportWrite`, `supportWriteNoResponse`, `supportRead`, `supportNotify`, and
-  `supportIndicate`. This matches the new core split: protocol sessions
-  build/parse bytes while transports only move bytes.
+  `manufacturerData`; service result fields `uuid` and `isPrimary`;
+  characteristic capability fields `uuid`, `supportWrite`,
+  `supportWriteNoResponse`, `supportRead`, `supportNotify`, and
+  `supportIndicate`; RSSI result field `rssi`; and MTU result field `value`.
+  Discovery defaults missing `interval` to `0`,
+  `clearPreDiscoveredDevices` to false, and `aliveTime` to `10000`, turns
+  supplied service UUIDs into Android `ScanFilter` entries, and only applies
+  scan report delay when the interval is positive and offloaded batching is
+  supported.
+  This matches the new core split: protocol sessions build/parse bytes while
+  transports only move bytes.
 - APK BLE writes set the characteristic value, honor explicit
   `characteristicWriteType` and `forceWaitResponse` arguments, otherwise choose
   write-without-response when characteristic property `0x04` is present and
@@ -1152,6 +1278,29 @@ Support levels are:
   present, otherwise from the read characteristic, otherwise from the write
   characteristic. For current ported BanlanX families this means `ffe1` is both
   write and notify fallback.
+- Old-UniLED issue #122 reports a newer SP608E/BanlanX60X advertisement using
+  service UUID `ffb0`, write/notify characteristic `ffb1`, manufacturer ID
+  `20563`, and manufacturer payload `05 01 ...`; the BLE profile now treats
+  `ffb0`/`ffb1` as a BanlanX60X fallback while leaving unrelated families on
+  their existing bindings.
+- Old-UniLED issue #111 reports an SP107E/LED Chord advertisement using
+  service UUID `ffb0`, manufacturer ID `21301`, and manufacturer payload
+  `1a 05 98 9e`; the BLE profile now treats `ffb0`/`ffb1` as an SP107E-only
+  fallback while keeping SP110E and unrelated legacy families on their
+  existing bindings.
+- Old-UniLED issue #105 reports an SP611E/BanlanX v2 advertisement using
+  service UUID `e0ff`, manufacturer ID `20563`, and manufacturer payload
+  `10 00 21 06 28 00 4e 44`; the BLE profile now treats `e0ff` as a BanlanX
+  v2 service fallback while keeping the existing `ffe1` write/notify
+  characteristic and command protocol.
+- Exact old-UniLED issue advertisements are also preserved as BLE diagnostics:
+  issue #45 `SP63AE` has `29 10 32 00 00 00 1a a6` with `e0ff`, issue #57
+  `SP617E` has `17 11 41 00 00 00 26 19` with `e0ff`, issue #60 `SP621E`
+  has `0d 00 ff 23 06 03 21 f3` with `e0ff`, issue #78 `SP642E` has
+  `4a 10 35 00 00 00 15 f5` with `e0ff`, issue #69 `SP110E` has
+  `10 00 0c 91` with `ffe0`, issue #120 `SP538E`/`SP548E`
+  has model-ID-pinned `56 f0 ...`/`63 f0 ...` payloads with `ffe1`, and
+  issue #132 `SP542E` has `5d 10 54 20 24 00 27 16` with `ffe0`.
 - Old UniLED SP6xx accepts service UUIDs `e0ff` and `ffe0`, with write
   characteristic `ffe1`.
 - The APK places SP52x/SP53x/SP54x custom records on the same `/sp630e` app
@@ -1258,9 +1407,10 @@ Support levels are:
   packet shape has been extracted yet.
 - Command-adjacent FT001/native hints now preserved in diagnostics include
   shared app setter names (`getNetworkInfo`, `setBrightness`, `setLfxColor`,
-  `setLfxColorTemp`, `setLfxSpeed`, `setSolidColor`, `setSolidColorTemp`) and
-  favorite update methods (`saveFavoriteEffectList`,
-  `updateFavoriteLfxList`). Favorite storage/service strings include
+  `setLfxColorTemp`, `setLfxMode`, `setLfxLoopMode`, `setLfxSpeed`,
+  `setSolidColor`, `setSolidColorTemp`) and favorite/update methods
+  (`saveFavoriteEffectList`, `updateFavoriteLfxList`, `favoriteLfx`). Favorite
+  storage/service strings include
   `FavoriteLightingEffectApiService`, `FavEffectNameEntity`,
   `FavoriteEffectName`, `FavoriteStore0-3`, `FavoriteRecall0-3`,
   `FavoriteClear0-3`, `favoriteLightingEffectIds`, and
@@ -1431,8 +1581,9 @@ Support levels are:
   `API_IC_Scene_Set_Handler`, `API_PWM_Scene_Set_Handler`,
   `API_IC_Param_Get_Handler`, `API_PWM_Param_Get_Handler`,
   `API_IC_All_Reset_Handler`, and `API_PWM_All_Reset_Handler`. These hashes
-  pin the native implementation identity for future disassembly work; they
-  still do not make the scene command envelope known.
+  pin the native implementation identity for future disassembly work; runtime
+  diagnostics include integer and hex addresses for Ghidra cross-reference, but
+  they still do not make the scene command envelope known.
   Fourteen favor/routine/system record/recover and LED/default parameter
   handlers are also tracked separately as native persistence anchors.
 - Scene UI catalog metadata spans 51 user-facing scene-family records:
@@ -1463,6 +1614,9 @@ Support levels are:
 - Old UniLED delivers SP601, SP60x, and BanlanX2 status through headered,
   possibly segmented BLE notifications. The new core now has strict assemblers
   that validate packet order, message length, and payload length before parsing.
+- The SP110E/LED Hue parser accepts the exact issue #40 notification
+  `01 65 c4 38 03 00 00 32 69 ff 00 00` as a 12-byte status packet instead
+  of waiting for an additional notification.
 - Old UniLED BanlanX2 and BanlanX3 status payloads expose the primary channel
   as a single payload with power, brightness, RGB, effect, mode/loop, audio, and
   white tail bytes. The new core preserves the raw numeric values and maps
@@ -1497,6 +1651,18 @@ Support levels are:
   offsets. The new parser validates the frame, maps light mode/effect names
   when the light type is known, and rejects encoded packets until the decoder is
   proven.
+- Old-UniLED issue #67 showed SP530E custom-5xx BLE status arriving as
+  zero-based `53 02 00 <total> <index> <length>` fragments whose assembled
+  payload is SPTech chunk data. The custom-5xx assembler now accepts that
+  fragment shape, and the custom-5xx status parser can decode the assembled
+  SPTech settings/status chunks while preserving the direct SP6xx frame path.
+- Old UniLED dev_v3 SPTech sources name custom mode `0x07` as `Custom Solid`
+  and `0x08` as `Custom Gradient`; uniled-next maps those mode/effect labels
+  for the gradient-capable SPTech SPI RGB/RGBW light types `0x86`/`0x88`.
+  The model-aware SPTech NET overlay exposes custom-solid `0x13` as `Firework`
+  for SP530E only on `0x86`/`0x88`, and for the fixed SP538E/SP548E `0x06`
+  plus SP539E/SP549E `0x08` profiles. This improves parsed state and select
+  options but does not expose DIY save/edit packet flows.
 - Old UniLED also exposes recall-only scene slots for SP601/SP60x devices:
   `SceneAttribute(b)` for slots 0 through 8, displayed as Scene 1 through
   Scene 9. The verified recall packets are `AA 2E 01 <slot>` for SP601 and
@@ -1612,9 +1778,9 @@ Support levels are:
 - Runtime diagnostics now expose the shared `/sp630e` APK surface for SP6xx and
   custom 5xx models: 16 route hints, 23 control surfaces, 4 favorite-limit
   hints, exact 5-timer limit and power-off timer-deletion warning text, 19
-  music assets, 12 network hints, 7 remote hints, 6 motor hints, 8 app-method
-  hints, 8 data-model hints, 27 shared native
-  `liblfx.so` renderer hints, 7 protocol gaps, 46 APK asset evidence paths,
+  music assets, 12 network hints, 7 remote hints, 6 motor hints, 35 app-method
+  hints, 35 Blutter-backed app-command ID hints, 8 data-model hints, 27 shared
+  native `liblfx.so` renderer hints, 7 protocol gaps, 46 APK asset evidence paths,
   and 10 APK string evidence notes. These are evidence counters only; editable
   DIY, favorite, timer, remote, motor, and native-renderer controls stay hidden
   until command frames are proven.
@@ -1646,6 +1812,13 @@ Support levels are:
   `support_disposition`.
 - Old UniLED parity candidates get a diagnostic marker and an implementation
   hint so protocol-porting tests can find them.
+- Legacy LED Chord/LED Hue config command parity is now ported at the core
+  protocol/session layer. `SP107E` covers secondary/matrix RGB, chip type,
+  segment count, and segment pixels; `SP110E` covers chip type and segment
+  pixels. Home Assistant now exposes the chip type and segment config commands
+  as disabled-by-default config entities backed by parsed status diagnostics.
+  SP107E secondary/matrix RGB is exposed as the advanced `uniled.set_state`
+  `rgb2_color` service field rather than a standalone light entity.
 - Color-capable models get a planned `light` entity. The command entity is
   disabled and not marked implemented until the protocol family has command and
   parser tests.
@@ -1782,34 +1955,64 @@ Support levels are:
   `network_surface_count`, `network_content_mode_count`,
   `network_artnet_field_count`, `network_port_field_count`,
   `network_playlist_action_count`, `network_matrix_music_control_count`,
-  `network_lfx_effect_count`, `network_lfx_gif_count`, and
-  `network_native_frame_hint_count`, plus SP802E-only
+  `network_lfx_effect_count`, `network_lfx_gif_count`,
+  `network_app_command_id_count`, and `network_native_frame_hint_count`,
+  plus SP802E-only
   `network_native_lfx_param_hint_count`,
   `network_native_effect_generator_hint_count`,
   `network_native_matrix_mode_hint_count`, and
-  `network_native_pixel_helper_hint_count` diagnostic sensors.
+  `network_native_pixel_helper_hint_count` diagnostic sensors, plus
+  `network_native_export_detail_count` for the exact Ghidra/dynsym anchors.
   These selectors remain hidden from command entities until BLE/LAN payloads
   are proven.
 - LAN profile diagnostics also expose `lan_host_setup_mode`: `discovery_ready`
   for the verified SP541E/SPNet path and `manual_host` for the remaining
   LAN-capable APK families. The concrete DNS-SD service type, SP80x/FT001
   discovery responses, and socket command frames remain unproven.
-  They also expose Bonsoir NSD method, service-type flow, TXT-query flow,
-  raw-socket, discovery-status, mDNS TXT timeout/type/class, and buffer facts
-  from the APK without treating those strings as a packet contract.
-- Direct BLE diagnostics now expose a decompiled plugin call-contract hint
-  count. The APK Java bridge requires `serviceUuid`/`characteristicUuid` for
-  characteristic operations, defaults notification `enabled` to false, defaults
-  connection `timeout` to zero, defaults write `forceWaitResponse` to false,
-  and maps provided `characteristicWriteType` values to Android write types.
-  Seven argument/default anchors are audited as `ble_plugin_contract` string
-  evidence, while the Java-only error code `10013` stays in structured
-  diagnostics but outside the native-string audit. These hints document bridge
-  behavior only and do not bind `ff12`/`ff14`/`ff15` to unported families.
+  They also expose Bonsoir NSD method, discovery-event, service-field,
+  service-normalization, service-type flow, TXT-query flow, raw-socket,
+  discovery-status, mDNS TXT timeout/type/class, and buffer facts from the APK
+  without treating those strings as a packet contract.
+- Direct BLE diagnostics now expose decompiled plugin call-contract and
+  event-contract hint counts. The APK Java bridge requires
+  `serviceUuid`/`characteristicUuid` for characteristic operations, defaults
+  notification `enabled` to false, defaults connection `timeout` to zero,
+  defaults write `forceWaitResponse` to false, and maps provided
+  `characteristicWriteType` values to Android write types. Seven
+  argument/default anchors are audited as `ble_plugin_contract` string
+  evidence, while discovery defaults and cached-device behavior are tracked as
+  Java-decompile-only plugin contract hints. The event payloads are now tracked
+  separately: discovery emits `id`, `name`, `rssi`, `serviceData`, and
+  `manufacturerData`; connection state emits `deviceId` and `connected`;
+  characteristic notification emits `deviceId`, `serviceUuid`,
+  `characteristicUuid`, and `value`, and notification enablement writes the
+  standard CCCD descriptor
+  `00002902-0000-1000-8000-00805f9b34fb`. The notification event channel and
+  four payload fields are audited as five `ble_notification_contract` string
+  anchors; discovery/connection payloads, the CCCD descriptor, and Java-only
+  error codes stay in structured diagnostics but outside the native-string
+  audit. The recovered BLE plugin error ledger currently covers
+  `10000` adapter-not-open, `10001` adapter unavailable, `10002` missing
+  cached device, `10003` connection failure, `10004` missing service,
+  `10005` missing characteristic, `10006` unconnected device, `10008`
+  generic BLE operation failure, `10012` connection timeout, and `10013`
+  missing required argument. The adapter-state request result has boolean
+  `available` and `discovering` fields, while adapter-state and discovery-state
+  event channels emit booleans. Service discovery result maps expose `uuid`
+  and `isPrimary`; characteristic discovery result maps expose `uuid` plus the
+  five characteristic capability booleans; RSSI and MTU calls return `rssi` and
+  `value` respectively. Start discovery defaults `interval=0`,
+  `clearPreDiscoveredDevices=False`, and `aliveTime=10000`, optionally filters
+  by supplied service UUIDs, and uses report delay only when batching is
+  supported. These hints document bridge behavior only and do not bind
+  `ff12`/`ff14`/`ff15` to unported families.
   BLE diagnostics now make that explicit with
   `ble_uuid_binding_status`, `ble_known_service_uuid_count`,
-  `ble_unbound_uuid_candidate_count=3`, and
-  `ble_legacy_uuid_candidate_count=2`.
+  `ble_known_service_uuids`, `ble_known_write_uuid`,
+  `ble_known_notify_uuid`, `ble_apk_uuid_pool`,
+  `ble_unbound_uuid_candidate_count=3`,
+  `ble_unbound_uuid_candidates`, `ble_legacy_uuid_candidate_count=2`,
+  and `ble_legacy_uuid_candidates`.
 - `supportGetNetInfo` creates a diagnostic network-info sensor. Until a live
   network-info query frame is proven, the sensor reports the catalog/APK code
   such as `supportGetNetInfo=9; command_protocol_pending`; live device
@@ -1819,9 +2022,10 @@ Support levels are:
   surfaces, but edit/save controls remain planned only until packet flows are
   proven.
 - SP6xx and custom 5xx models also get a `sp630e_profile` diagnostic sensor
-  plus route/surface/favorite-limit/timer/music/network/remote/motor/method
-  and native-LFX count diagnostics from the APK `/sp630e` package. They also
-  expose the full 217-asset package count separately from the curated 46
+  plus route/surface/favorite-limit/timer/music/network/remote/motor, method,
+  app-command-ID, native-LFX, and native export detail count diagnostics from
+  the APK `/sp630e` package. They also expose the full 217-asset package count
+  separately from the curated 46
   asset-evidence paths. The native renderer evidence is separately audited
   against `liblfx.so` with `.dynsym=162`, 34 exported anchors, and 7 detail
   anchors. These counts explain the vendor-app surface while command support
@@ -1835,6 +2039,7 @@ Support levels are:
   scene entities, plus diagnostic `scene_preset_count`,
   `scene_mode_effect_count`, `scene_lfx_route_count`,
   `scene_timer_route_count`,
+  `scene_app_command_id_count`,
   `scene_recent_action_count`, `scene_favorite_action_count`,
   `scene_timer_action_count`, `scene_diy_action_count`,
   `scene_white_brightness_anchor_count`,
@@ -1877,8 +2082,8 @@ Support levels are:
   command and event frames.
 - FT001 gets fish-tank profile, favorite-slot-count, timer-limit, channel,
   control-surface, effect, favorite, timer, asset-bucket, favorite-action,
-  favorite-loop-action, firmware-prompt, and raw-string surfaces from APK
-  labels. Channel/effect/favorite/timer/favorite-loop selectors remain
+  favorite-loop-action, firmware-prompt, app-command-ID, and raw-string
+  surfaces from APK labels. Channel/effect/favorite/timer/favorite-loop selectors remain
   disabled pending confirmed command frames.
 - Mesh remote/control models get mesh-role diagnostics and a planned remote
   event diagnostic. RG4/Zengge mesh-role diagnostics now report
@@ -1890,8 +2095,10 @@ Support levels are:
   routing, including ported command names, Zengge effect packet fields, and
   remaining mesh-control gaps/blockers. Both BLE-mesh profiles now expose the
   six APK-recovered Bluetooth SIG Mesh provisioning/proxy UUID anchors as
-  `mesh_sig_mesh_uuid_hint_count`; these are evidence only and do not prove a
-  provisioning frame sequence. BanlanX scene mesh exposes the three APK
+  `mesh_sig_mesh_uuid_hint_count` and the 12 shared Blutter mesh app-command
+  enum IDs as `mesh_app_command_id_count`; these are evidence only and do not
+  prove a provisioning frame sequence or command envelope. BanlanX scene mesh
+  exposes the three APK
   one-touch provisioning guide lines as setup hints, while RG4 exposes route,
   provisioning hint,
   provisioning state, APK package-asset, APK asset, and APK string evidence
@@ -1936,6 +2143,12 @@ Implemented:
 - `light.py` now exposes dynamic `supported_color_modes` for SP6xx models based
   on parsed light type and coexistence state, and sends RGBW, RGBWW, white, and
   Kelvin color-temperature commands through `DeviceSession` where supported.
+  Runtime color-mode normalization also strips Home Assistant-invalid
+  `brightness` or `onoff` entries when richer modes such as `rgb` are present,
+  covering the old UniLED `{'brightness', 'rgb'}` failure mode reported for
+  SP530E/BanlanX controllers. HA artifact tests also pin Kelvin-only color
+  temperature usage so the removed legacy `ATTR_COLOR_TEMP` import cannot
+  return.
 - `number.py` exposes session-backed output-scoped SP601/SP60x effect
   speed/length controls, SP601 output sensitivity, SP60x master sensitivity,
   aggregate controls for other legacy families, and SP6xx on/off animation
@@ -1954,6 +2167,9 @@ Implemented:
   surface, and keeps audio controls hidden; `360PhotoB` attaches the SP6xx BLE
   command session, exposes dynamic light-type controls, and surfaces SP6xx
   audio/on-off/effect controls after a parsed light type is known.
+  A direct `SP630E` regression covers old UniLED issue #121 by proving the
+  setup helper creates a BLE command session and `main_light` alongside RSSI
+  diagnostics, instead of loading the device as Signal-strength-only.
   A catalog-wide runtime regression test also proves all 94 command-protocol
   ready BLE models attach a BLE session through the Home Assistant setup helper
   and expose at least one session-backed command light.
@@ -1998,9 +2214,12 @@ Implemented:
   with redacted entry identifiers and explicit pending command/discovery
   protocol flags, plus compact LAN evidence diagnostics for APK host-network,
   discovery, network setup route/prompt, cloud-setup warning, multicast-lock,
-  Bonsoir, Android NSD method flow, discovery-gap, raw-socket and
-  discovery-status anchors, UDP timeout/buffer, mDNS TXT-buffer facts, and
+  Bonsoir methods/events/service fields/normalization, Android NSD method flow,
+  discovery-gap, raw-socket and discovery-status anchors, UDP timeout/buffer,
+  mDNS TXT-buffer facts, and
   custom 5xx SPNet/SPTECH discovery-candidate anchors where proven for SP541E.
+  Custom 5xx LAN profiles also carry old-UniLED SPTech model/configuration
+  code aliases as recognition diagnostics only.
 - Runtime diagnostics include a structured BanlanX cloud profile for
   optional-cloud models, including split endpoint groups for device auth,
   account auth/lifecycle, `/home/device`, `/user/device`,
@@ -2024,14 +2243,15 @@ Implemented:
   BLE-mesh, and LAN setup entry data without importing Home Assistant.
 - The same setup-data helper now validates Bluetooth discovery data without
   importing Home Assistant. Exact catalog names use direct BLE or BLE-mesh
-  transport metadata, while generic Telink mesh advertisements resolve to RG4
-  diagnostic entries.
+  transport metadata, BanlanX manufacturer data can resolve direct BLE model IDs
+  for user-facing BLE catalog rows, and generic Telink mesh advertisements
+  resolve to RG4 diagnostic entries.
 - `config_flow.py` supports diagnostic/manual catalog model setup, manual
   BLE-by-address setup for BLE-capable models, manual host/IP setup for
   LAN-capable models, manual RG4/Zengge BLE-mesh setup with old UniLED mesh
   identity, manual BanlanX scene-mesh diagnostic setup with local
   `ble_mesh:<address>` identity, exact-name Bluetooth setup, and
-  manufacturer-data RG4/Zengge mesh discovery.
+  BanlanX direct-BLE plus RG4/Zengge mesh manufacturer-data discovery.
 - `config_flow.py` also supports a current Home Assistant reconfigure step for
   repairing BLE address, LAN host, manual device ID, and RG4/Zengge local mesh
   node metadata. It replaces entry data through
@@ -2062,14 +2282,16 @@ Implemented:
   resources open for Home Assistant retry/recovery. Runtime close tests prove
   diagnostic LAN holders are closed and transport close errors still clear
   runtime session/coordinator references while recording `last_close_error`.
-- `manifest.json` includes a narrow Telink/Zengge BLE matcher using both
-  manufacturer ID `529` and service UUID
+- `manifest.json` includes BanlanX manufacturer-data wake-up matchers for IDs
+  `20563` (`0x5053`) and `5053`, plus a narrow Telink/Zengge BLE matcher using
+  both manufacturer ID `529` and service UUID
   `00010203-0405-0607-0809-0a0b0c0d1910`, matching current Home Assistant
   Bluetooth manifest matcher support. Catalog coverage tests also prove the
   local-name matchers cover every current user-facing BLE or BLE-mesh model
-  name and that every Bluetooth matcher stays connectable. The Telink matcher
-  deliberately avoids `manufacturer_data_start` because manufacturer bytes
-  `0..1` carry the variable mesh UUID.
+  name, the BanlanX manufacturer matchers remain present for issue-style
+  name-less advertisements, and every Bluetooth matcher stays connectable. The
+  Telink matcher deliberately avoids `manufacturer_data_start` because
+  manufacturer bytes `0..1` carry the variable mesh UUID.
 - Runtime can attach a `DeviceSession` when a command protocol exists. The
   session owns high-level command dispatch, command results, and notification
   parsing state. Runtime diagnostics expose this as
@@ -2114,10 +2336,16 @@ Implemented:
   registers service type, port, host, and TXT attributes through
   `NsdManager.registerService`. It also confirms `discoveryServiceFound`
   schedules a secondary TXT-record query and updates service attributes when
-  the parsed TXT map changes. The concrete BanlanX DNS-SD service type and TXT
-  schema remain unrecovered; the only non-manual LAN discovery/setup path
-  currently proven is the SP541E startup SPNet UDP scan plus source-host
-  helper.
+  the parsed TXT map changes. The event bridge emits discovery start/stop,
+  found/resolved/lost, TXT-resolved/TXT-failed, and discovery-error events with
+  `id` plus nested `service.*` fields; it trims trailing-dot service types,
+  emits host addresses as strings, decodes TXT bytes as UTF-8, normalizes null
+  TXT values to empty strings, and serializes Android `resolveService` calls.
+  A targeted APK/Blutter pass found multicast/raw datagram anchors but no
+  concrete `_tcp`/`_udp` DNS-SD service type. The concrete BanlanX DNS-SD
+  service type and TXT schema remain unrecovered; the only non-manual LAN
+  discovery/setup path currently proven is the SP541E startup SPNet UDP scan
+  plus source-host helper.
 
 Not implemented yet:
 
@@ -2193,7 +2421,7 @@ tokens. A read-only run against Home Assistant `2026.7.0` verified
 
 Publication docs/package polish is mostly complete: the README links the 0.1
 install guide and release notes, and `python scripts\build_package.py` writes
-`dist/uniled-next.zip` with 52 validated Home Assistant custom-component files
+`dist/uniled-next.zip` with 53 validated Home Assistant custom-component files
 and no bundled image/logo assets.
 
 Live HA API smoke on 2026-07-05 progressed without deploying the latest local
@@ -2395,7 +2623,8 @@ Not implemented yet:
   optional Bluetooth-discovery/manual/options cloud import, but not non-light
   mesh entities or complete multi-node Home Assistant controls.
 - Custom 5xx LAN/provisioning and any LAN command behavior beyond the verified
-  SP541E SPTech path and the SP6xx-style BLE command/status surface.
+  SP541E SPTech path, SP6xx-style BLE command/status surface, and model-scoped
+  dev_v3 SPTech NET effect mapping.
 - Network-info query command bytes. `supportGetNetInfo` values are now tracked
   and exposed as diagnostics, but no query frame should be sent until
   APK/native or hardware evidence proves the command path.
@@ -2405,8 +2634,8 @@ Not implemented yet:
 
 ## Verification Commands
 
-The latest local verification run on 2026-07-05 used the full release gate and
-covered 397 pytest tests with 0 failures.
+The latest local verification run on 2026-07-06 used the full release gate and
+covered 452 pytest tests with 0 failures.
 
 ```powershell
 python scripts\quality_gate.py

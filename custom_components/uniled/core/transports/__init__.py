@@ -13,10 +13,15 @@ from .ble import (
 from .lan import (
     LANProfile,
     SpNetDiscoveryResponse,
+    SPTechLegacyCommandId,
+    SPTechLegacyConfigurationCode,
+    SPTechLegacyModelCode,
+    SPTechLegacyStatusChunkHint,
     build_spnet_discovery_request,
     describe_lan_profile,
     lan_profile_for_model,
     parse_spnet_discovery_response,
+    sptech_legacy_model_name_for_code,
 )
 from .mesh import (
     BLEMeshAdvertisement,
@@ -35,6 +40,10 @@ __all__ = [
     "BLEUUIDCandidate",
     "CommandTransport",
     "LANProfile",
+    "SPTechLegacyCommandId",
+    "SPTechLegacyConfigurationCode",
+    "SPTechLegacyModelCode",
+    "SPTechLegacyStatusChunkHint",
     "SpNetDiscoveryResponse",
     "TransportError",
     "ble_evidence_for_model",
@@ -46,5 +55,6 @@ __all__ = [
     "lan_profile_for_model",
     "mesh_profile_for_model",
     "parse_spnet_discovery_response",
+    "sptech_legacy_model_name_for_code",
     "telink_mesh_advertisement",
 ]

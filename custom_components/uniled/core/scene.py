@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from .apk_commands import ApkCommandIdHint, apk_command_id_hints_for_names
 from .catalog import CatalogModel, ProtocolFamily
 
 
@@ -218,6 +219,38 @@ SCENE_TIMER_ACTIONS = (
 SCENE_DIY_ACTIONS = (
     "saveDiyLfx",
     "resetLfx",
+)
+
+SCENE_APP_COMMAND_ID_NAMES = (
+    "setBrightness",
+    "setLfxMode",
+    "setLfxSpeed",
+    "setLfxPixelCount",
+    "setLfxLoopMode",
+    "setLfxColor",
+    "setLfxColorTemp",
+    "setLfxGradient",
+    "setLfxDir",
+    "setOnOffLfx",
+    "setSensitivity",
+    "setSoundSource",
+    "setSolidColor",
+    "setSolidColorTemp",
+    "setWhiteLightCoexistWithRGB",
+    "setLedPanelLayout",
+    "addRecScene",
+    "getRecSceneList",
+    "removeRecScene",
+    "saveDiyLfx",
+    "saveFavoriteEffectList",
+    "updateFavoriteLfxList",
+    "resetLfx",
+    "saveTimingTask",
+    "removeTimingTask",
+)
+
+SCENE_APP_COMMAND_ID_HINTS = apk_command_id_hints_for_names(
+    SCENE_APP_COMMAND_ID_NAMES
 )
 
 SCENE_WHITE_BRIGHTNESS_ANCHORS = (
@@ -863,6 +896,7 @@ class SceneProfile:
     mode_effects: tuple[str, ...]
     mode_icon_samples: tuple[str, ...]
     app_method_hints: tuple[str, ...]
+    app_command_id_hints: tuple[ApkCommandIdHint, ...]
     storage_hints: tuple[str, ...]
     recent_actions: tuple[str, ...]
     favorite_actions: tuple[str, ...]
@@ -922,6 +956,7 @@ def scene_profile_for_model(model: CatalogModel) -> SceneProfile | None:
         mode_effects=SCENE_MODE_EFFECTS,
         mode_icon_samples=SCENE_MODE_ICON_SAMPLES,
         app_method_hints=SCENE_APP_METHOD_HINTS,
+        app_command_id_hints=SCENE_APP_COMMAND_ID_HINTS,
         storage_hints=SCENE_STORAGE_HINTS,
         recent_actions=SCENE_RECENT_ACTIONS,
         favorite_actions=SCENE_FAVORITE_ACTIONS,
@@ -1000,6 +1035,7 @@ def describe_scene_profile(profile: SceneProfile | None) -> str | None:
         f"lfx_routes={len(profile.lfx_route_hints)}; "
         f"timer_routes={len(profile.timer_route_hints)}; "
         f"methods={len(profile.app_method_hints)}; "
+        f"app_command_ids={len(profile.app_command_id_hints)}; "
         f"storage={len(profile.storage_hints)}; "
         f"recent_actions={len(profile.recent_actions)}; "
         f"favorite_actions={len(profile.favorite_actions)}; "

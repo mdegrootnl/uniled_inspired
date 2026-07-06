@@ -22,13 +22,16 @@ clear diagnostics for unsupported families.
 
 ## Current Evidence Baseline
 
-The latest local release gate on 2026-07-05 reports:
+The latest local release gate on 2026-07-06 reports:
 
-- `python scripts\quality_gate.py`: 397 pytest tests passed.
+- `python scripts\quality_gate.py`: 453 pytest tests passed.
 - Legacy UniLED audit: 51 old BLE names, zero old NET names,
   `migration_mismatches=0`, `command_mismatches=0`,
   `autodiscovery_mismatches=0`, and `entity_identity_mismatches=0`.
-- APK evidence audit passes against the local BanlanX 3.3.1 analysis artifacts.
+- APK evidence audit passes against the local BanlanX 3.3.1 analysis artifacts,
+  including the bundled-catalog source check against `model_catalog.csv` and
+  the Blutter-derived 82-entry app-command enum ledger. These IDs are
+  diagnostic evidence only until matching BLE/LAN packet envelopes are proven.
 - Support matrix totals: 152 canonical user-facing models, 95 limited,
   57 recognized, and 94 command-protocol-ready models.
 - SP541E LAN path has live Home Assistant 2026.7 evidence for three local
@@ -49,7 +52,7 @@ The latest local release gate on 2026-07-05 reports:
   local `pytest-homeassistant-custom-component` dependency stack currently
   fails on Windows ARM64 native builds. The gate uses the HA HTTP API to verify
   services and required entities without printing tokens.
-- The manual package builder writes `dist/uniled-next.zip` with 52 validated
+- The manual package builder writes `dist/uniled-next.zip` with 53 validated
   Home Assistant custom-component files and no image/logo assets. 0.1 beta
   install and release-note docs are linked from the README.
 - A read-only/reversible HA API pre-smoke against the currently deployed
@@ -72,6 +75,8 @@ The latest local release gate on 2026-07-05 reports:
   - Preserve duplicate checks for old raw-address unique IDs.
   - Preserve migration coverage for old BLE and RG4/Zengge mesh shapes.
   - Keep old-UniLED-compatible command builders/parsers audited.
+  - Preserve issue-backed advertisement/status fixtures for support-critical
+    variants such as SP110E issue #69/#40 and SP538E/SP548E issue #120.
 - Diagnostics-only APK catalog coverage:
   - Recognized models must remain addable only when setup is safe.
   - Do not enable command entities for families with unresolved packet

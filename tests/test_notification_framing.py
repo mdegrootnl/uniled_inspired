@@ -8,6 +8,7 @@ from custom_components.uniled.core import (
     BanlanX6xxProtocol,
     BanlanX60xProtocol,
     BanlanX601Protocol,
+    BanlanXCustom5xxProtocol,
     ParseNotificationError,
 )
 
@@ -94,6 +95,38 @@ def test_banlanx_3_status_assembler_rebuilds_indexed_packets() -> None:
 def test_banlanx_6xx_status_assembler_passes_complete_packet() -> None:
     """SP6xx packets are already framed for the parser."""
     protocol = BanlanX6xxProtocol()
+    assembler = protocol.make_status_assembler()
+    packet = bytes([0x53, 0x02, 0x00, 0x01, 0x00, 1, 1])
+
+    assert assembler.feed(packet) == packet
+
+
+def test_custom_5xx_status_assembler_pins_issue_67_fragment_shape() -> None:
+    """SP530E issue #67 used zero-based fragments around SPTech chunks."""
+    protocol = BanlanXCustom5xxProtocol()
+    assembler = protocol.make_status_assembler()
+
+    first = bytes.fromhex(
+        "53 02 00 1e 00 0e 01 01 00 11 00 19 56 32 2e 30 2e 30 38 20"
+    )
+    second = bytes.fromhex(
+        "53 02 00 1e 01 0e 84 03 03 00 3c 00 01 03 00 7b 01 84 00 01"
+    )
+    third = bytes.fromhex("53 02 00 1e 02 02 02 03")
+
+    assert assembler.feed(first) is None
+    assert assembler.feed(second) is None
+    payload = assembler.feed(third)
+
+    assert payload == bytes.fromhex(
+        "01 01 00 11 00 19 56 32 2e 30 2e 30 38 20 84 03 03 00 3c "
+        "00 01 03 00 7b 01 84 00 01 02 03"
+    )
+
+
+def test_custom_5xx_status_assembler_still_passes_complete_sp6xx_packet() -> None:
+    """Custom 5xx keeps the old direct SP6xx status path as a fallback."""
+    protocol = BanlanXCustom5xxProtocol()
     assembler = protocol.make_status_assembler()
     packet = bytes([0x53, 0x02, 0x00, 0x01, 0x00, 1, 1])
 

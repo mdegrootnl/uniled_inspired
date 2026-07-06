@@ -86,11 +86,15 @@ LED_CHORD_COMMAND_BUILDERS = (
     "brightness",
     "white_level",
     "rgb_color",
+    "rgb2_color",
     "rgbw_color",
     "effect",
     "effect_speed",
     "sensitivity",
+    "chip_type",
     "chip_order",
+    "segment_count",
+    "segment_pixels",
 )
 
 LED_HUE_COMMAND_BUILDERS = (
@@ -103,7 +107,9 @@ LED_HUE_COMMAND_BUILDERS = (
     "effect",
     "effect_loop",
     "effect_speed",
+    "chip_type",
     "chip_order",
+    "segment_pixels",
 )
 
 SEGMENTED_601_PARSER_HINTS = (
@@ -161,18 +167,6 @@ SCENE_SAVE_STUB_GAP = (
     "scene_save existed as an empty old-UniLED stub and is intentionally not "
     "ported as a command",
 )
-LED_CHORD_CONFIG_GAPS = (
-    "rgb2_color, chip_type, segment_count, and segment_pixels are old "
-    "configuration/edit commands and stay hidden until Home Assistant entities "
-    "and status round-trip behavior are proven",
-)
-LED_HUE_CONFIG_GAPS = (
-    "chip_type and segment_pixels are old configuration/edit commands and stay "
-    "hidden until Home Assistant entities and status round-trip behavior are "
-    "proven",
-)
-
-
 @dataclass(frozen=True, slots=True)
 class LegacyUniLEDParityProfile:
     """Evidence summary for an old-UniLED-backed protocol family."""
@@ -240,13 +234,6 @@ def legacy_uniled_parity_profile_for_model(
             source_module="custom_components/uniled/lib/ble/led_chord.py",
             command_builders=LED_CHORD_COMMAND_BUILDERS,
             status_parser_hints=LED_CHORD_PARSER_HINTS,
-            stubbed_builders=(
-                "chip_type",
-                "rgb2_color",
-                "segment_count",
-                "segment_pixels",
-            ),
-            gap_hints=LED_CHORD_CONFIG_GAPS,
         )
     if model.family is ProtocolFamily.LEGACY_LED_HUE:
         return LegacyUniLEDParityProfile(
@@ -254,8 +241,6 @@ def legacy_uniled_parity_profile_for_model(
             source_module="custom_components/uniled/lib/ble/led_hue.py",
             command_builders=LED_HUE_COMMAND_BUILDERS,
             status_parser_hints=LED_HUE_PARSER_HINTS,
-            stubbed_builders=("chip_type", "segment_pixels"),
-            gap_hints=LED_HUE_CONFIG_GAPS,
         )
     return None
 

@@ -28,8 +28,11 @@ from custom_components.uniled.const import (
     DISCOVERY_CONFIDENCE_DISCOVERED_ONLY,
     DISCOVERY_CONFIDENCE_PROTOCOL_PROVEN,
     DISCOVERY_CONFIDENCE_VERIFIED,
+    DISCOVERY_MATCH_BANLANX_MANUFACTURER_DATA,
     DISCOVERY_MATCH_EXACT_LABEL,
     DISCOVERY_MATCH_SAFE_SUFFIX,
+    DISCOVERY_MATCH_SPNET_CATALOG_MODEL_ID,
+    DISCOVERY_MATCH_SPNET_LEGACY_MODEL_CODE,
     DISCOVERY_MATCH_SPNET_MODEL_ID,
     DISCOVERY_MATCH_TELINK_MESH,
     DISCOVERY_SOURCE_BLUETOOTH,
@@ -104,6 +107,282 @@ def test_bluetooth_setup_entry_data_resolves_suffixed_catalog_names() -> None:
         CONF_DISCOVERY_MATCH: DISCOVERY_MATCH_SAFE_SUFFIX,
         CONF_DISCOVERY_CONFIDENCE: DISCOVERY_CONFIDENCE_PROTOCOL_PROVEN,
     }
+
+
+def test_bluetooth_setup_entry_data_uses_banlanx_manufacturer_model_id() -> None:
+    """BanlanX manufacturer data can identify devices without a local name."""
+    catalog = default_catalog()
+
+    setup = bluetooth_setup_entry_data(
+        catalog,
+        name="",
+        address="AA:BB:CC:DD:EE:42",
+        manufacturer_data={
+            0x5053: bytes.fromhex("5d 10 54 20 24 00 27 16"),
+        },
+    )
+
+    assert setup.unique_id == "ble:aa:bb:cc:dd:ee:42"
+    assert setup.title == "SP542E"
+    assert setup.data == {
+        CONF_MODEL: "SP542E",
+        CONF_MODEL_ID: 93,
+        CONF_ADDRESS: "AA:BB:CC:DD:EE:42",
+        CONF_TRANSPORT: TRANSPORT_BLE,
+        CONF_DISCOVERY_SOURCE: DISCOVERY_SOURCE_BLUETOOTH,
+        CONF_DISCOVERY_MATCH: DISCOVERY_MATCH_BANLANX_MANUFACTURER_DATA,
+        CONF_DISCOVERY_CONFIDENCE: DISCOVERY_CONFIDENCE_PROTOCOL_PROVEN,
+    }
+
+
+def test_bluetooth_manufacturer_model_id_handles_sp613e_variant_payload() -> None:
+    """SP613E manufacturer data variants resolve from the APK model ID byte."""
+    catalog = default_catalog()
+
+    setup = bluetooth_setup_entry_data(
+        catalog,
+        name="",
+        address="AA:BB:CC:DD:EE:09",
+        manufacturer_data={5053: bytes.fromhex("09 10")},
+    )
+
+    assert setup.title == "SP613E"
+    assert setup.data[CONF_MODEL_ID] == 9
+    assert setup.data[CONF_DISCOVERY_MATCH] == (
+        DISCOVERY_MATCH_BANLANX_MANUFACTURER_DATA
+    )
+
+
+def test_bluetooth_discovery_handles_sp608e_issue_122_variant() -> None:
+    """Issue #122 SP608E advert resolves from 0x5053 manufacturer model byte."""
+    catalog = default_catalog()
+
+    setup = bluetooth_setup_entry_data_from_discovery(
+        catalog,
+        SimpleNamespace(
+            name="SP608E",
+            local_name="SP608E",
+            address="FC:58:FA:A7:9A:EE",
+            manufacturer_data={20563: bytes.fromhex("05 01 fc 58 fa a7 9a ee")},
+            service_uuids=["0000ffb0-0000-1000-8000-00805f9b34fb"],
+            connectable=True,
+        ),
+    )
+
+    assert setup.unique_id == "ble:fc:58:fa:a7:9a:ee"
+    assert setup.title == "SP608E"
+    assert setup.data[CONF_MODEL] == "SP608E"
+    assert setup.data[CONF_MODEL_ID] == 5
+    assert setup.data[CONF_ADDRESS] == "FC:58:FA:A7:9A:EE"
+    assert setup.data[CONF_DISCOVERY_MATCH] == (
+        DISCOVERY_MATCH_BANLANX_MANUFACTURER_DATA
+    )
+    assert setup.data[CONF_DISCOVERY_CONFIDENCE] == (
+        DISCOVERY_CONFIDENCE_PROTOCOL_PROVEN
+    )
+
+
+def test_bluetooth_discovery_handles_sp107e_issue_111_variant() -> None:
+    """Issue #111 SP107E advert stays protocol-proven despite ffb0 service."""
+    catalog = default_catalog()
+
+    setup = bluetooth_setup_entry_data_from_discovery(
+        catalog,
+        SimpleNamespace(
+            name="SP107E",
+            local_name="SP107E",
+            address="35:53:1A:05:98:9E",
+            manufacturer_data={21301: bytes.fromhex("1a 05 98 9e")},
+            service_uuids=["0000ffb0-0000-1000-8000-00805f9b34fb"],
+            connectable=True,
+        ),
+    )
+
+    assert setup.unique_id == "ble:35:53:1a:05:98:9e"
+    assert setup.title == "SP107E"
+    assert setup.data[CONF_MODEL] == "SP107E"
+    assert setup.data[CONF_MODEL_ID] == 0x107E
+    assert setup.data[CONF_ADDRESS] == "35:53:1A:05:98:9E"
+    assert setup.data[CONF_DISCOVERY_MATCH] == DISCOVERY_MATCH_EXACT_LABEL
+    assert setup.data[CONF_DISCOVERY_CONFIDENCE] == (
+        DISCOVERY_CONFIDENCE_PROTOCOL_PROVEN
+    )
+
+
+def test_bluetooth_discovery_handles_sp611e_issue_105_variant() -> None:
+    """Issue #105 SP611E advert resolves from model byte and e0ff service."""
+    catalog = default_catalog()
+
+    setup = bluetooth_setup_entry_data_from_discovery(
+        catalog,
+        SimpleNamespace(
+            name="SP611E",
+            local_name="SP611E",
+            address="21:06:28:00:4E:44",
+            manufacturer_data={20563: bytes.fromhex("10 00 21 06 28 00 4e 44")},
+            service_uuids=["0000e0ff-0000-1000-8000-00805f9b34fb"],
+            connectable=True,
+        ),
+    )
+
+    assert setup.unique_id == "ble:21:06:28:00:4e:44"
+    assert setup.title == "SP611E"
+    assert setup.data[CONF_MODEL] == "SP611E"
+    assert setup.data[CONF_MODEL_ID] == 16
+    assert setup.data[CONF_ADDRESS] == "21:06:28:00:4E:44"
+    assert setup.data[CONF_DISCOVERY_MATCH] == (
+        DISCOVERY_MATCH_BANLANX_MANUFACTURER_DATA
+    )
+    assert setup.data[CONF_DISCOVERY_CONFIDENCE] == (
+        DISCOVERY_CONFIDENCE_PROTOCOL_PROVEN
+    )
+
+
+def test_bluetooth_discovery_handles_old_issue_advertisement_variants() -> None:
+    """Old issue advertisement logs stay protocol-proven discovery fixtures."""
+    catalog = default_catalog()
+    cases = (
+        (
+            "SP63AE",
+            41,
+            "32:00:00:00:1A:A6",
+            20563,
+            "29 10 32 00 00 00 1a a6",
+            "0000e0ff-0000-1000-8000-00805f9b34fb",
+        ),
+        (
+            "SP617E",
+            23,
+            "41:00:00:00:26:19",
+            20563,
+            "17 11 41 00 00 00 26 19",
+            "0000e0ff-0000-1000-8000-00805f9b34fb",
+        ),
+        (
+            "SP621E",
+            13,
+            "FF:23:06:03:21:F3",
+            20563,
+            "0d 00 ff 23 06 03 21 f3",
+            "0000e0ff-0000-1000-8000-00805f9b34fb",
+        ),
+        (
+            "SP642E",
+            74,
+            "35:00:00:00:15:F5",
+            20563,
+            "4a 10 35 00 00 00 15 f5",
+            "0000e0ff-0000-1000-8000-00805f9b34fb",
+        ),
+        (
+            "SP538E",
+            86,
+            "90:E5:B1:34:D0:9E",
+            20563,
+            "56 f0 90 e5 b1 34 d0 9e",
+            "0000ffe1-0000-1000-8000-00805f9b34fb",
+        ),
+        (
+            "SP548E",
+            99,
+            "BC:17:D6:BE:0D:BC",
+            20563,
+            "63 f0 bc 17 d6 be 0d bc",
+            "0000ffe1-0000-1000-8000-00805f9b34fb",
+        ),
+    )
+
+    for name, model_id, address, manufacturer_id, payload, service_uuid in cases:
+        setup = bluetooth_setup_entry_data_from_discovery(
+            catalog,
+            SimpleNamespace(
+                name=name,
+                local_name=name,
+                address=address,
+                manufacturer_data={
+                    manufacturer_id: bytes.fromhex(payload),
+                },
+                service_uuids=[service_uuid],
+                connectable=True,
+            ),
+        )
+
+        assert setup.unique_id == f"ble:{address.casefold()}"
+        assert setup.title == name
+        assert setup.data[CONF_MODEL] == name
+        assert setup.data[CONF_MODEL_ID] == model_id
+        assert setup.data[CONF_ADDRESS] == address
+        assert setup.data[CONF_DISCOVERY_MATCH] == (
+            DISCOVERY_MATCH_BANLANX_MANUFACTURER_DATA
+        )
+        assert setup.data[CONF_DISCOVERY_CONFIDENCE] == (
+            DISCOVERY_CONFIDENCE_PROTOCOL_PROVEN
+        )
+
+
+def test_bluetooth_manufacturer_model_id_selects_duplicate_variant() -> None:
+    """Manufacturer data beats ambiguous local names for duplicate model IDs."""
+    catalog = default_catalog()
+
+    setup = bluetooth_setup_entry_data(
+        catalog,
+        name="SP548E",
+        address="AA:BB:CC:DD:EE:94",
+        manufacturer_data={0x5053: bytes.fromhex("94 10 b8 11 b5 fe 16 cb")},
+    )
+
+    assert setup.title == "SP548E"
+    assert setup.data[CONF_MODEL] == "SP548E"
+    assert setup.data[CONF_MODEL_ID] == 148
+    assert setup.data[CONF_DISCOVERY_MATCH] == (
+        DISCOVERY_MATCH_BANLANX_MANUFACTURER_DATA
+    )
+
+
+def test_bluetooth_manufacturer_model_id_handles_sp538e_sp548e_f0_payloads() -> None:
+    """Issue-reported SP538E/SP548E f0 variant payloads resolve by model byte."""
+    catalog = default_catalog()
+
+    cases = {
+        "SP538E": (0x56, "56 f0 90 e5 b1 34 d0 9e"),
+        "SP548E": (0x63, "63 f0 bc 17 d6 be 0d bc"),
+    }
+
+    for name, (model_id, payload) in cases.items():
+        setup = bluetooth_setup_entry_data(
+            catalog,
+            name=name,
+            address=f"AA:BB:CC:DD:EE:{model_id:02X}",
+            manufacturer_data={0x5053: bytes.fromhex(payload)},
+        )
+
+        assert setup.title == name
+        assert setup.data[CONF_MODEL] == name
+        assert setup.data[CONF_MODEL_ID] == model_id
+        assert setup.data[CONF_DISCOVERY_MATCH] == (
+            DISCOVERY_MATCH_BANLANX_MANUFACTURER_DATA
+        )
+        assert setup.data[CONF_DISCOVERY_CONFIDENCE] == (
+            DISCOVERY_CONFIDENCE_PROTOCOL_PROVEN
+        )
+
+
+def test_bluetooth_manufacturer_model_id_rejects_non_ble_catalog_models() -> None:
+    """Manufacturer-model matching cannot create BLE entries for LAN-only models."""
+    catalog = default_catalog()
+
+    try:
+        bluetooth_setup_entry_data(
+            catalog,
+            name="",
+            address="AA:BB:CC:DD:EE:9D",
+            manufacturer_data={0x5053: bytes.fromhex("9d 10")},
+        )
+    except SetupDataError as ex:
+        assert ex.field == CONF_MODEL
+        assert ex.reason == "unknown_model"
+    else:
+        raise AssertionError("LAN-only manufacturer model should not create BLE setup")
 
 
 def test_bluetooth_setup_entry_data_resolves_friendly_labels() -> None:
@@ -239,6 +518,31 @@ def test_bluetooth_setup_entry_data_from_discovery_uses_ha_object_fields() -> No
     )
 
 
+def test_bluetooth_setup_entry_data_from_discovery_uses_manufacturer_data() -> None:
+    """HA-shaped name-less discovery can resolve BanlanX manufacturer data."""
+    catalog = default_catalog()
+
+    setup = bluetooth_setup_entry_data_from_discovery(
+        catalog,
+        SimpleNamespace(
+            name="",
+            local_name="",
+            address="AA:BB:CC:DD:EE:5D",
+            manufacturer_data={
+                0x5053: bytes.fromhex("5d 10 54 20 24 00 27 16"),
+            },
+            connectable=True,
+        ),
+    )
+
+    assert setup.unique_id == "ble:aa:bb:cc:dd:ee:5d"
+    assert setup.data[CONF_MODEL] == "SP542E"
+    assert setup.data[CONF_MODEL_ID] == 93
+    assert setup.data[CONF_DISCOVERY_MATCH] == (
+        DISCOVERY_MATCH_BANLANX_MANUFACTURER_DATA
+    )
+
+
 def test_bluetooth_setup_entry_data_from_discovery_accepts_mapping_shape() -> None:
     """The HA-independent helper also handles dict-like discovery fixtures."""
     catalog = default_catalog()
@@ -321,10 +625,18 @@ def test_discovery_confirmation_policy_only_pauses_catalog_only_matches() -> Non
         ),
         source="192.0.2.92",
     )
+    legacy_sptech_lan = lan_setup_entry_data_from_spnet_response(
+        catalog,
+        bytes.fromhex(
+            "53704e65740000210000000000010000106300542024111f99065350353438450000"
+        ),
+        source="192.0.2.99",
+    )
 
     assert setup_entry_requires_discovery_confirmation(old_uniled) is False
     assert setup_entry_requires_discovery_confirmation(catalog_only) is True
     assert setup_entry_requires_discovery_confirmation(verified_lan) is False
+    assert setup_entry_requires_discovery_confirmation(legacy_sptech_lan) is True
 
 
 def test_bluetooth_autodiscovery_covers_old_uniled_apk_overlap() -> None:
@@ -383,6 +695,34 @@ def test_bluetooth_autodiscovery_covers_legacy_only_old_uniled_models() -> None:
             setup.data[CONF_DISCOVERY_CONFIDENCE]
             == DISCOVERY_CONFIDENCE_PROTOCOL_PROVEN
         )
+
+
+def test_bluetooth_discovery_handles_sp110e_issue_69_variant() -> None:
+    """Issue #69 SP110E advert resolves despite the 0x1000 manufacturer variant."""
+    catalog = default_catalog()
+
+    setup = bluetooth_setup_entry_data_from_discovery(
+        catalog,
+        SimpleNamespace(
+            name="SP110E",
+            local_name="SP110E",
+            address="FF:FF:10:00:0C:91",
+            manufacturer_data={65535: bytes.fromhex("10 00 0c 91")},
+            service_uuids=["0000ffe0-0000-1000-8000-00805f9b34fb"],
+            connectable=True,
+        ),
+    )
+
+    assert setup.unique_id == "ble:ff:ff:10:00:0c:91"
+    assert setup.title == "SP110E"
+    assert setup.data[CONF_MODEL] == "SP110E"
+    assert setup.data[CONF_MODEL_ID] == 0x110E
+    assert setup.data[CONF_ADDRESS] == "FF:FF:10:00:0C:91"
+    assert setup.data[CONF_TRANSPORT] == TRANSPORT_BLE
+    assert setup.data[CONF_DISCOVERY_MATCH] == DISCOVERY_MATCH_EXACT_LABEL
+    assert setup.data[CONF_DISCOVERY_CONFIDENCE] == (
+        DISCOVERY_CONFIDENCE_PROTOCOL_PROVEN
+    )
 
 
 def test_setup_data_reports_legacy_compatible_unique_ids() -> None:
@@ -1406,6 +1746,111 @@ def test_lan_setup_entry_data_from_spnet_response_creates_verified_sp541e() -> N
     }
 
 
+def test_lan_setup_entry_data_from_spnet_response_recognizes_legacy_sptech() -> None:
+    """Old-UniLED SPTech model codes create diagnostic-only LAN entries."""
+    catalog = default_catalog()
+
+    setup = lan_setup_entry_data_from_spnet_response(
+        catalog,
+        bytes.fromhex(
+            "53704e65740000210000000000010000106300542024111f99065350353438450000"
+        ),
+        source="192.0.2.99",
+    )
+
+    assert setup.unique_id == "54:20:24:11:1f:99"
+    assert setup.title == "SP548E 192.0.2.99"
+    assert setup.data == {
+        CONF_MODEL: "SP548E",
+        CONF_MODEL_ID: 99,
+        CONF_DEVICE_ID: "54:20:24:11:1F:99",
+        CONF_HOST: "192.0.2.99",
+        CONF_TRANSPORT: TRANSPORT_LAN,
+        CONF_DISCOVERY_SOURCE: DISCOVERY_SOURCE_LAN,
+        CONF_DISCOVERY_MATCH: DISCOVERY_MATCH_SPNET_LEGACY_MODEL_CODE,
+        CONF_DISCOVERY_CONFIDENCE: DISCOVERY_CONFIDENCE_DISCOVERED_ONLY,
+    }
+    assert setup_entry_requires_discovery_confirmation(setup) is True
+
+
+def test_lan_setup_entry_data_from_spnet_response_recognizes_sp525e_issue_115() -> None:
+    """Issue #115 SP525E model-code discovery creates a diagnostic LAN entry."""
+    catalog = default_catalog()
+
+    setup = lan_setup_entry_data_from_spnet_response(
+        catalog,
+        bytes.fromhex(
+            "53704e65740000210000000000010000107100542024051994065350353235450000"
+        ),
+        source="192.168.86.95",
+    )
+
+    assert setup.unique_id == "54:20:24:05:19:94"
+    assert setup.title == "SP525E 192.168.86.95"
+    assert setup.data == {
+        CONF_MODEL: "SP525E",
+        CONF_MODEL_ID: 113,
+        CONF_DEVICE_ID: "54:20:24:05:19:94",
+        CONF_HOST: "192.168.86.95",
+        CONF_TRANSPORT: TRANSPORT_LAN,
+        CONF_DISCOVERY_SOURCE: DISCOVERY_SOURCE_LAN,
+        CONF_DISCOVERY_MATCH: DISCOVERY_MATCH_SPNET_CATALOG_MODEL_ID,
+        CONF_DISCOVERY_CONFIDENCE: DISCOVERY_CONFIDENCE_DISCOVERED_ONLY,
+    }
+    assert setup_entry_requires_discovery_confirmation(setup) is True
+
+
+def test_lan_setup_entry_data_from_discovery_accepts_issue_91_sp548e_log() -> None:
+    """Issue #91 SP548E model-code 148 logs create a diagnostic LAN entry."""
+    catalog = default_catalog()
+
+    setup = lan_setup_entry_data_from_discovery(
+        catalog,
+        {
+            "source": "UDP",
+            "transport": "net",
+            "mac_address": "58:22:24:01:12:18",
+            "ip_address": "192.168.1.196",
+            "local_name": "SP548E",
+            "model_code": 148,
+            "model_name": None,
+        },
+    )
+
+    assert setup.unique_id == "58:22:24:01:12:18"
+    assert setup.title == "SP548E 192.168.1.196"
+    assert setup.data == {
+        CONF_MODEL: "SP548E",
+        CONF_MODEL_ID: 148,
+        CONF_DEVICE_ID: "58:22:24:01:12:18",
+        CONF_HOST: "192.168.1.196",
+        CONF_TRANSPORT: TRANSPORT_LAN,
+        CONF_DISCOVERY_SOURCE: DISCOVERY_SOURCE_LAN,
+        CONF_DISCOVERY_MATCH: DISCOVERY_MATCH_SPNET_CATALOG_MODEL_ID,
+        CONF_DISCOVERY_CONFIDENCE: DISCOVERY_CONFIDENCE_DISCOVERED_ONLY,
+    }
+    assert setup_entry_requires_discovery_confirmation(setup) is True
+
+
+def test_lan_setup_entry_data_from_spnet_response_rejects_name_mismatch() -> None:
+    """SPNet catalog-model diagnostics require a consistent advertised name."""
+    catalog = default_catalog()
+
+    try:
+        lan_setup_entry_data_from_spnet_response(
+            catalog,
+            bytes.fromhex(
+                "53704e65740000210000000000010000107100542024051994065350353431450000"
+            ),
+            source="192.168.86.95",
+        )
+    except SetupDataError as ex:
+        assert ex.field == CONF_TRANSPORT
+        assert ex.reason == "unsupported_lan_transport"
+    else:
+        raise AssertionError("SPNet model ID and device name mismatch should fail")
+
+
 def test_lan_setup_entry_data_from_discovery_accepts_flow_shape() -> None:
     """Home Assistant LAN discovery data reuses the verified SPNet path."""
     catalog = default_catalog()
@@ -1454,7 +1899,7 @@ def test_lan_setup_entry_data_from_discovery_accepts_raw_response_attr() -> None
 
 
 def test_lan_setup_entry_data_from_spnet_response_rejects_unsafe_shapes() -> None:
-    """SPNet setup only accepts the verified SP541E model-byte path."""
+    """SPNet setup rejects packets without verified or legacy diagnostic evidence."""
     catalog = default_catalog()
 
     cases = (

@@ -56,6 +56,14 @@
     },
     {
       "connectable": true,
+      "manufacturer_id": 20563
+    },
+    {
+      "connectable": true,
+      "manufacturer_id": 5053
+    },
+    {
+      "connectable": true,
       "local_name": "RG4"
     },
     {

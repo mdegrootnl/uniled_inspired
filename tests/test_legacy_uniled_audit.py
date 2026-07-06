@@ -328,17 +328,12 @@ def test_old_uniled_command_surfaces_match_ported_parity_profiles() -> None:
 
     chord = surfaces["custom_components/uniled/lib/ble/led_chord.py"]
     assert "rgb2_color" in chord.old_command_builders
-    assert chord.stubbed_builders == (
-        "chip_type",
-        "rgb2_color",
-        "segment_count",
-        "segment_pixels",
-    )
+    assert chord.stubbed_builders == ()
     assert chord.missing_builders == ()
 
     hue = surfaces["custom_components/uniled/lib/ble/led_hue.py"]
     assert "effect_loop" in hue.old_command_builders
-    assert hue.stubbed_builders == ("chip_type", "segment_pixels")
+    assert hue.stubbed_builders == ()
     assert hue.missing_builders == ()
 
     assert all(

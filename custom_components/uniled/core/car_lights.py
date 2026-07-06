@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from .apk_commands import ApkCommandIdHint, apk_command_id_hints_for_names
 from .catalog import CatalogModel, ProtocolFamily
 
 CAR_LIGHT_PACKAGE = "packages/car_lights"
@@ -178,6 +179,16 @@ CAR_LIGHT_TRIGGER_STORAGE_HINTS = (
 CAR_LIGHT_TRIGGER_ACTIONS = (
     "Set the lighting effect when the corresponding trigger signal is received",
     "Rename trigger",
+)
+
+CAR_LIGHT_APP_COMMAND_ID_NAMES = (
+    "configZoneKeyAddrMapping",
+    "configTrigger",
+    "configWelcomeLights",
+)
+
+CAR_LIGHT_APP_COMMAND_ID_HINTS = apk_command_id_hints_for_names(
+    CAR_LIGHT_APP_COMMAND_ID_NAMES
 )
 
 CAR_LIGHT_ROUTE_HINTS = (
@@ -435,6 +446,7 @@ class CarLightProfile:
     required_controller_model: str | None
     setup_flow_hints: tuple[str, ...]
     setup_key_hints: tuple[str, ...]
+    app_command_id_hints: tuple[ApkCommandIdHint, ...]
     model_role: CarLightModelRole | None
     model_role_hints: tuple[str, ...]
     model_setup_dependency: CarLightSetupDependency | None
@@ -477,6 +489,7 @@ def car_light_profile_for_model(model: CatalogModel) -> CarLightProfile | None:
         required_controller_model=car_light_required_controller_model(model),
         setup_flow_hints=CAR_LIGHT_SETUP_FLOW_HINTS,
         setup_key_hints=CAR_LIGHT_SETUP_KEY_HINTS,
+        app_command_id_hints=CAR_LIGHT_APP_COMMAND_ID_HINTS,
         model_role=car_light_model_role_for_model(model),
         model_role_hints=CAR_LIGHT_MODEL_ROLE_HINTS,
         model_setup_dependency=car_light_setup_dependency_for_model(model),
@@ -637,6 +650,7 @@ def describe_car_light_profile(profile: CarLightProfile | None) -> str | None:
         f"{profile.model_role.setup_stage if profile.model_role else 'unknown'}; "
         f"setup_flows={len(profile.setup_flow_hints)}; "
         f"setup_keys={len(profile.setup_key_hints)}; "
+        f"app_command_ids={len(profile.app_command_id_hints)}; "
         f"role_hints={len(profile.model_role_hints)}; "
         f"setup_dependencies={len(profile.setup_dependencies)}; "
         f"required_dependencies={len(car_light_required_setup_dependencies(profile))}; "

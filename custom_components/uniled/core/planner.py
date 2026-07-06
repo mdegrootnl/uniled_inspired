@@ -223,9 +223,25 @@ def plan_for_model(model: CatalogModel) -> EntityPlan:
                     unit="uuids",
                 ),
                 _diagnostic(
+                    "ble_known_service_uuids",
+                    "BLE known service UUIDs",
+                ),
+                _diagnostic(
+                    "ble_known_write_uuid",
+                    "BLE known write UUID",
+                ),
+                _diagnostic(
+                    "ble_known_notify_uuid",
+                    "BLE known notify UUID",
+                ),
+                _diagnostic(
                     "ble_uuid_pool_count",
                     "BLE APK UUID pool count",
                     unit="uuids",
+                ),
+                _diagnostic(
+                    "ble_apk_uuid_pool",
+                    "BLE APK UUID pool",
                 ),
                 _diagnostic(
                     "ble_uuid_inventory_count",
@@ -238,9 +254,17 @@ def plan_for_model(model: CatalogModel) -> EntityPlan:
                     unit="uuids",
                 ),
                 _diagnostic(
+                    "ble_unbound_uuid_candidates",
+                    "BLE unbound UUID candidates",
+                ),
+                _diagnostic(
                     "ble_legacy_uuid_candidate_count",
                     "BLE legacy UUID candidate count",
                     unit="uuids",
+                ),
+                _diagnostic(
+                    "ble_legacy_uuid_candidates",
+                    "BLE legacy UUID candidates",
                 ),
                 _diagnostic(
                     "ble_plugin_method_count",
@@ -258,9 +282,74 @@ def plan_for_model(model: CatalogModel) -> EntityPlan:
                     unit="fields",
                 ),
                 _diagnostic(
+                    "ble_scan_result_field_count",
+                    "BLE scan result field count",
+                    unit="fields",
+                ),
+                _diagnostic(
+                    "ble_service_result_field_count",
+                    "BLE service result field count",
+                    unit="fields",
+                ),
+                _diagnostic(
+                    "ble_characteristic_result_field_count",
+                    "BLE characteristic result field count",
+                    unit="fields",
+                ),
+                _diagnostic(
+                    "ble_rssi_result_field_count",
+                    "BLE RSSI result field count",
+                    unit="fields",
+                ),
+                _diagnostic(
+                    "ble_mtu_result_field_count",
+                    "BLE MTU result field count",
+                    unit="fields",
+                ),
+                _diagnostic(
+                    "ble_adapter_state_result_field_count",
+                    "BLE adapter-state result field count",
+                    unit="fields",
+                ),
+                _diagnostic(
+                    "ble_notification_event_field_count",
+                    "BLE notification event field count",
+                    unit="fields",
+                ),
+                _diagnostic(
+                    "ble_connection_event_field_count",
+                    "BLE connection event field count",
+                    unit="fields",
+                ),
+                _diagnostic(
+                    "ble_device_found_event_field_count",
+                    "BLE device-found event field count",
+                    unit="fields",
+                ),
+                _diagnostic(
+                    "ble_descriptor_uuid_count",
+                    "BLE descriptor UUID count",
+                    unit="uuids",
+                ),
+                _diagnostic(
+                    "ble_boolean_event_channel_count",
+                    "BLE boolean event channel count",
+                    unit="channels",
+                ),
+                _diagnostic(
+                    "ble_plugin_event_hint_count",
+                    "BLE plugin event hint count",
+                    unit="hints",
+                ),
+                _diagnostic(
                     "ble_plugin_contract_hint_count",
                     "BLE plugin contract hint count",
                     unit="hints",
+                ),
+                _diagnostic(
+                    "ble_plugin_error_code_count",
+                    "BLE plugin error code count",
+                    unit="codes",
                 ),
                 _diagnostic(
                     "ble_plugin_channel_count",
@@ -271,6 +360,15 @@ def plan_for_model(model: CatalogModel) -> EntityPlan:
                     "ble_protocol_gap_count",
                     "BLE protocol gap count",
                     unit="gaps",
+                ),
+                _diagnostic(
+                    "ble_issue_advertisement_count",
+                    "BLE old-UniLED issue advertisement count",
+                    unit="adverts",
+                ),
+                _diagnostic(
+                    "ble_issue_advertisements",
+                    "BLE old-UniLED issue advertisements",
                 ),
             )
         )
@@ -335,6 +433,21 @@ def plan_for_model(model: CatalogModel) -> EntityPlan:
                     unit="methods",
                 ),
                 _diagnostic(
+                    "lan_bonsoir_discovery_event_count",
+                    "LAN Bonsoir discovery event count",
+                    unit="events",
+                ),
+                _diagnostic(
+                    "lan_bonsoir_service_event_field_count",
+                    "LAN Bonsoir service event field count",
+                    unit="fields",
+                ),
+                _diagnostic(
+                    "lan_bonsoir_service_normalization_hint_count",
+                    "LAN Bonsoir service normalization hint count",
+                    unit="hints",
+                ),
+                _diagnostic(
                     "lan_bonsoir_service_type_flow_hint_count",
                     "LAN Bonsoir service-type flow hint count",
                     unit="hints",
@@ -397,6 +510,38 @@ def plan_for_model(model: CatalogModel) -> EntityPlan:
                     unit="assets",
                 )
             )
+        if profile is not None and profile.sptech_legacy_model_codes:
+            features.append(
+                _diagnostic(
+                    "lan_sptech_legacy_model_code_count",
+                    "LAN SPTech legacy model-code count",
+                    unit="codes",
+                )
+            )
+        if profile is not None and profile.sptech_legacy_configuration_codes:
+            features.append(
+                _diagnostic(
+                    "lan_sptech_legacy_configuration_code_count",
+                    "LAN SPTech legacy configuration-code count",
+                    unit="codes",
+                )
+            )
+        if profile is not None and profile.sptech_legacy_command_ids:
+            features.append(
+                _diagnostic(
+                    "lan_sptech_legacy_command_id_count",
+                    "LAN SPTech legacy command ID count",
+                    unit="commands",
+                )
+            )
+        if profile is not None and profile.sptech_legacy_status_chunks:
+            features.append(
+                _diagnostic(
+                    "lan_sptech_legacy_status_chunk_count",
+                    "LAN SPTech legacy status chunk count",
+                    unit="chunks",
+                )
+            )
 
     if TransportKind.BLE_MESH in model.transports:
         features.append(_diagnostic("mesh_profile", "Mesh profile"))
@@ -439,6 +584,14 @@ def plan_for_model(model: CatalogModel) -> EntityPlan:
                         "mesh_sig_mesh_uuid_hint_count",
                         "Mesh SIG UUID hint count",
                         unit="uuids",
+                    )
+                )
+            if mesh_profile.app_command_id_hints:
+                features.append(
+                    _diagnostic(
+                        "mesh_app_command_id_count",
+                        "Mesh app command ID count",
+                        unit="ids",
                     )
                 )
             if mesh_profile.control_blockers:
@@ -887,6 +1040,25 @@ def _lighting_controls(model: CatalogModel) -> tuple[FeatureSpec, ...]:
                 options=select_options_for_model(model, "chip_order"),
                 category=EntityCategoryKind.CONFIG,
             ),
+            _planned_select(
+                "chip_type",
+                "Chip type",
+                options=select_options_for_model(model, "chip_type"),
+                category=EntityCategoryKind.CONFIG,
+            ),
+            _planned_config_number(
+                "segment_count",
+                "Segment count",
+                minimum=1,
+                maximum=64,
+            ),
+            _planned_config_number(
+                "segment_pixels",
+                "Segment pixels",
+                minimum=1,
+                maximum=150,
+                unit="px",
+            ),
             _planned_config_number(
                 "effect_speed",
                 "Effect speed",
@@ -912,6 +1084,19 @@ def _lighting_controls(model: CatalogModel) -> tuple[FeatureSpec, ...]:
                 "Chip order",
                 options=select_options_for_model(model, "chip_order"),
                 category=EntityCategoryKind.CONFIG,
+            ),
+            _planned_select(
+                "chip_type",
+                "Chip type",
+                options=select_options_for_model(model, "chip_type"),
+                category=EntityCategoryKind.CONFIG,
+            ),
+            _planned_config_number(
+                "segment_pixels",
+                "Segment pixels",
+                minimum=1,
+                maximum=1024,
+                unit="px",
             ),
             _planned_config_number(
                 "effect_speed",
@@ -1186,7 +1371,9 @@ def _catalog_config_features(model: CatalogModel) -> tuple[FeatureSpec, ...]:
             ]
         )
 
-    if model.features.get("settingFeature"):
+    if model.features.get("settingFeature") and not banlanx6xx_style_family(
+        model.family
+    ):
         features.append(
             _planned_select(
                 "light_type",
@@ -1302,6 +1489,11 @@ def _family_features(model: CatalogModel) -> tuple[FeatureSpec, ...]:
                 "scene_app_method_count",
                 "Scene app method count",
                 unit="methods",
+            ),
+            _diagnostic(
+                "scene_app_command_id_count",
+                "Scene app command ID count",
+                unit="ids",
             ),
             _diagnostic(
                 "scene_storage_hint_count",
@@ -1593,6 +1785,11 @@ def _family_features(model: CatalogModel) -> tuple[FeatureSpec, ...]:
                 unit="methods",
             ),
             _diagnostic(
+                "sp630e_app_command_id_count",
+                "SP630E app command ID count",
+                unit="ids",
+            ),
+            _diagnostic(
                 "sp630e_data_model_hint_count",
                 "SP630E data-model hint count",
                 unit="hints",
@@ -1601,6 +1798,11 @@ def _family_features(model: CatalogModel) -> tuple[FeatureSpec, ...]:
                 "sp630e_native_lfx_hint_count",
                 "SP630E native LFX hint count",
                 unit="hints",
+            ),
+            _diagnostic(
+                "sp630e_native_export_detail_count",
+                "SP630E native export detail count",
+                unit="anchors",
             ),
             _diagnostic(
                 "sp630e_catalog_hint_count",
@@ -1771,6 +1973,11 @@ def _family_features(model: CatalogModel) -> tuple[FeatureSpec, ...]:
                 unit="hints",
             ),
             _diagnostic(
+                "car_light_app_command_id_count",
+                "Car light app command ID count",
+                unit="ids",
+            ),
+            _diagnostic(
                 "car_light_model_role_hint_count",
                 "Car light model role hint count",
                 unit="hints",
@@ -1897,6 +2104,11 @@ def _family_features(model: CatalogModel) -> tuple[FeatureSpec, ...]:
                 unit="methods",
             ),
             _diagnostic(
+                "network_app_command_id_count",
+                "Network app command ID count",
+                unit="ids",
+            ),
+            _diagnostic(
                 "network_workflow_hint_count",
                 "Network workflow hint count",
                 unit="workflows",
@@ -1955,6 +2167,11 @@ def _family_features(model: CatalogModel) -> tuple[FeatureSpec, ...]:
                 "network_native_export_hint_count",
                 "Network native export hint count",
                 unit="hints",
+            ),
+            _diagnostic(
+                "network_native_export_detail_count",
+                "Network native export detail count",
+                unit="anchors",
             ),
             _diagnostic(
                 "network_protocol_gap_count",
@@ -2181,6 +2398,11 @@ def _family_features(model: CatalogModel) -> tuple[FeatureSpec, ...]:
                 "fish_tank_app_method_count",
                 "Fish-tank app method count",
                 unit="methods",
+            ),
+            _diagnostic(
+                "fish_tank_app_command_id_count",
+                "Fish-tank app command ID count",
+                unit="ids",
             ),
             _diagnostic(
                 "fish_tank_data_model_hint_count",

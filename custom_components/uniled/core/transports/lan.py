@@ -102,6 +102,37 @@ APK_BONSOIR_NSD_METHODS = (
     "NsdManager.unregisterService",
 )
 
+APK_BONSOIR_DISCOVERY_EVENTS = (
+    "discoveryStarted",
+    "discoveryServiceFound",
+    "discoveryServiceResolved",
+    "discoveryServiceResolveFailed",
+    "discoveryServiceLost",
+    "discoveryStopped",
+    "discoveryUndiscoveredServiceResolveFailed",
+    "discoveryTxtResolved",
+    "discoveryTxtResolveFailed",
+    "discoveryError",
+)
+
+APK_BONSOIR_SERVICE_EVENT_FIELDS = (
+    "id",
+    "service",
+    "service.name",
+    "service.type",
+    "service.port",
+    "service.host",
+    "service.attributes",
+)
+
+APK_BONSOIR_SERVICE_NORMALIZATION_HINTS = (
+    "Trailing-dot Android NSD service types are trimmed before lookup/emission",
+    "Resolved host values are emitted as getHostAddress() strings when present",
+    "NSD TXT byte values are decoded as UTF-8 strings",
+    "Null TXT values are normalized to empty strings",
+    "Android NSD resolveService calls are serialized through a plugin queue",
+)
+
 APK_BONSOIR_SERVICE_TYPE_FLOW_HINTS = (
     "discovery.initialize stores the Dart session type as the NSD service type",
     "discovery.start passes that service type to NsdManager.discoverServices",
@@ -133,6 +164,10 @@ APK_DISCOVERY_GAP_HINTS = (
     (
         "Decompiled Bonsoir plugin shows service type is supplied by Dart, "
         "but the concrete BanlanX DNS-SD service type was not recovered"
+    ),
+    (
+        "Blutter/static string searches found multicast/raw datagram anchors "
+        "but no concrete _tcp/_udp DNS-SD service type"
     ),
     "No model-specific TXT attribute schema or discovery response was recovered",
     (
@@ -204,6 +239,247 @@ SPTECH_CANDIDATE_EVIDENCE = (
 
 
 @dataclass(frozen=True, slots=True)
+class SPTechLegacyModelCode:
+    """Old-UniLED SPTech LAN model-code alias."""
+
+    code: int
+    model_name: str
+    source: str
+
+    @property
+    def code_hex(self) -> str:
+        """Return the model code as a compact hex string."""
+        return f"0x{self.code:02x}"
+
+
+@dataclass(frozen=True, slots=True)
+class SPTechLegacyConfigurationCode:
+    """Old-UniLED SPTech LAN configuration-code hint."""
+
+    code: int
+    label: str
+    model_names: tuple[str, ...]
+    source: str
+
+    @property
+    def code_hex(self) -> str:
+        """Return the configuration code as a compact hex string."""
+        return f"0x{self.code:02x}"
+
+
+@dataclass(frozen=True, slots=True)
+class SPTechLegacyCommandId:
+    """Old-UniLED SPTech LAN command ID hint."""
+
+    name: str
+    command_id: int
+    category: str
+    source: str
+
+    @property
+    def command_id_hex(self) -> str:
+        """Return the command ID as a compact hex string."""
+        return f"0x{self.command_id:02x}"
+
+
+@dataclass(frozen=True, slots=True)
+class SPTechLegacyStatusChunkHint:
+    """Old-UniLED SPTech LAN status chunk decoder hint."""
+
+    chunk_type: int
+    label: str
+    source: str
+
+    @property
+    def chunk_type_hex(self) -> str:
+        """Return the chunk type as a compact hex string."""
+        return f"0x{self.chunk_type:02x}"
+
+
+SPTECH_LEGACY_SOURCE = (
+    "monty68/uniled origin/dev_v3 and 3.0.10-beta.11 "
+    "custom_components/uniled/lib/net/sp53x_54xe.py"
+)
+SPTECH_LEGACY_PROTOCOL_SOURCE = (
+    "monty68/uniled origin/dev_v3 and 3.0.10-beta.11 "
+    "custom_components/uniled/lib/sptech_model.py"
+)
+
+SPTECH_LEGACY_MODEL_CODES = (
+    SPTechLegacyModelCode(0x4E, "SP530E", SPTECH_LEGACY_SOURCE),
+    SPTechLegacyModelCode(0x56, "SP538E", SPTECH_LEGACY_SOURCE),
+    SPTechLegacyModelCode(0x57, "SP539E", SPTECH_LEGACY_SOURCE),
+    SPTechLegacyModelCode(0x63, "SP548E", SPTECH_LEGACY_SOURCE),
+    SPTechLegacyModelCode(0x64, "SP549E", SPTECH_LEGACY_SOURCE),
+    SPTechLegacyModelCode(0x69, "SP548E", SPTECH_LEGACY_SOURCE),
+)
+
+SPTECH_LEGACY_CONFIGURATION_CODES = (
+    SPTechLegacyConfigurationCode(
+        0x06, "SPI - RGB", ("SP538E", "SP548E"), SPTECH_LEGACY_SOURCE
+    ),
+    SPTechLegacyConfigurationCode(
+        0x08, "SPI - RGBW", ("SP539E", "SP549E"), SPTECH_LEGACY_SOURCE
+    ),
+    SPTechLegacyConfigurationCode(
+        0x81, "PWM Mono", ("SP530E",), SPTECH_LEGACY_SOURCE
+    ),
+    SPTechLegacyConfigurationCode(
+        0x83, "PWM CCT", ("SP530E",), SPTECH_LEGACY_SOURCE
+    ),
+    SPTechLegacyConfigurationCode(
+        0x85, "PWM RGB", ("SP530E",), SPTECH_LEGACY_SOURCE
+    ),
+    SPTechLegacyConfigurationCode(
+        0x87, "PWM RGBW", ("SP530E",), SPTECH_LEGACY_SOURCE
+    ),
+    SPTechLegacyConfigurationCode(
+        0x8A, "PWM RGBCCT", ("SP530E",), SPTECH_LEGACY_SOURCE
+    ),
+    SPTechLegacyConfigurationCode(
+        0x82, "SPI - Mono", ("SP530E",), SPTECH_LEGACY_SOURCE
+    ),
+    SPTechLegacyConfigurationCode(
+        0x84, "SPI - CCT (1)", ("SP530E",), SPTECH_LEGACY_SOURCE
+    ),
+    SPTechLegacyConfigurationCode(
+        0x8D, "SPI - CCT (2)", ("SP530E",), SPTECH_LEGACY_SOURCE
+    ),
+    SPTechLegacyConfigurationCode(
+        0x86, "SPI - RGB", ("SP530E",), SPTECH_LEGACY_SOURCE
+    ),
+    SPTechLegacyConfigurationCode(
+        0x88, "SPI - RGBW", ("SP530E",), SPTECH_LEGACY_SOURCE
+    ),
+    SPTechLegacyConfigurationCode(
+        0x8B, "SPI - RGBCCT (1)", ("SP530E",), SPTECH_LEGACY_SOURCE
+    ),
+    SPTechLegacyConfigurationCode(
+        0x8E, "SPI - RGBCCT (2)", ("SP530E",), SPTECH_LEGACY_SOURCE
+    ),
+    SPTechLegacyConfigurationCode(
+        0x89, "SPI - RGB + 1 CH PWM", ("SP530E",), SPTECH_LEGACY_SOURCE
+    ),
+    SPTechLegacyConfigurationCode(
+        0x8C, "SPI - RGB + 2 CH PWM", ("SP530E",), SPTECH_LEGACY_SOURCE
+    ),
+)
+
+SPTECH_LEGACY_MODEL_CODE_EVIDENCE = (
+    "Old UniLED dev_v3 and 3.0.10-beta.11 map SP530E to SPTech LAN code 0x4e",
+    (
+        "Old UniLED dev_v3 and 3.0.10-beta.11 map "
+        "SP538E/SP548E/SP539E/SP549E to SPTech LAN model codes"
+    ),
+    (
+        "The old mapping proves recognition/configuration hints only; "
+        "non-SP541E LAN writes remain disabled until response frames are proven"
+    ),
+)
+
+SPTECH_LEGACY_COMMAND_IDS = (
+    SPTechLegacyCommandId(
+        "STATUS_QUERY", 0x02, "read_only_query", SPTECH_LEGACY_PROTOCOL_SOURCE
+    ),
+    SPTechLegacyCommandId(
+        "ONOFF_OPTIONS", 0x08, "configuration", SPTECH_LEGACY_PROTOCOL_SOURCE
+    ),
+    SPTechLegacyCommandId(
+        "COEXISTENCE", 0x0A, "configuration", SPTECH_LEGACY_PROTOCOL_SOURCE
+    ),
+    SPTechLegacyCommandId(
+        "ON_POWER", 0x0B, "configuration", SPTECH_LEGACY_PROTOCOL_SOURCE
+    ),
+    SPTechLegacyCommandId(
+        "POWER", 0x50, "control", SPTECH_LEGACY_PROTOCOL_SOURCE
+    ),
+    SPTechLegacyCommandId(
+        "BRIGHTNESS", 0x51, "control", SPTECH_LEGACY_PROTOCOL_SOURCE
+    ),
+    SPTechLegacyCommandId(
+        "STATIC_COLOR", 0x52, "control", SPTECH_LEGACY_PROTOCOL_SOURCE
+    ),
+    SPTechLegacyCommandId(
+        "LIGHT_MODE", 0x53, "control", SPTECH_LEGACY_PROTOCOL_SOURCE
+    ),
+    SPTechLegacyCommandId(
+        "EFFECT_SPEED", 0x54, "control", SPTECH_LEGACY_PROTOCOL_SOURCE
+    ),
+    SPTechLegacyCommandId(
+        "EFFECT_LENGTH", 0x55, "control", SPTECH_LEGACY_PROTOCOL_SOURCE
+    ),
+    SPTechLegacyCommandId(
+        "EFFECT_DIRECTION", 0x56, "control", SPTECH_LEGACY_PROTOCOL_SOURCE
+    ),
+    SPTechLegacyCommandId(
+        "EFFECT_COLOR", 0x57, "control", SPTECH_LEGACY_PROTOCOL_SOURCE
+    ),
+    SPTechLegacyCommandId(
+        "EFFECT_LOOP", 0x58, "control", SPTECH_LEGACY_PROTOCOL_SOURCE
+    ),
+    SPTechLegacyCommandId(
+        "AUDIO_INPUT", 0x59, "control", SPTECH_LEGACY_PROTOCOL_SOURCE
+    ),
+    SPTechLegacyCommandId(
+        "AUDIO_GAIN", 0x5A, "control", SPTECH_LEGACY_PROTOCOL_SOURCE
+    ),
+    SPTechLegacyCommandId(
+        "EFFECT_PLAY", 0x5D, "control", SPTECH_LEGACY_PROTOCOL_SOURCE
+    ),
+    SPTechLegacyCommandId(
+        "EFFECT_CCT", 0x60, "control", SPTECH_LEGACY_PROTOCOL_SOURCE
+    ),
+    SPTechLegacyCommandId(
+        "STATIC_CCT", 0x61, "control", SPTECH_LEGACY_PROTOCOL_SOURCE
+    ),
+    SPTechLegacyCommandId(
+        "LIGHT_TYPE", 0x6A, "configuration", SPTECH_LEGACY_PROTOCOL_SOURCE
+    ),
+    SPTechLegacyCommandId(
+        "CHIP_ORDER", 0x6B, "configuration", SPTECH_LEGACY_PROTOCOL_SOURCE
+    ),
+)
+
+SPTECH_LEGACY_STATUS_CHUNKS = (
+    SPTechLegacyStatusChunkHint(
+        1, "settings/firmware/light type", SPTECH_LEGACY_PROTOCOL_SOURCE
+    ),
+    SPTechLegacyStatusChunkHint(
+        2, "device mode/status/settings", SPTECH_LEGACY_PROTOCOL_SOURCE
+    ),
+    SPTechLegacyStatusChunkHint(
+        3, "extended device status/settings", SPTECH_LEGACY_PROTOCOL_SOURCE
+    ),
+    SPTechLegacyStatusChunkHint(4, "timer", SPTECH_LEGACY_PROTOCOL_SOURCE),
+    SPTechLegacyStatusChunkHint(
+        5, "music strip/matrix layout", SPTECH_LEGACY_PROTOCOL_SOURCE
+    ),
+    SPTechLegacyStatusChunkHint(
+        6, "network information", SPTECH_LEGACY_PROTOCOL_SOURCE
+    ),
+    SPTechLegacyStatusChunkHint(7, "fun switch", SPTECH_LEGACY_PROTOCOL_SOURCE),
+    SPTechLegacyStatusChunkHint(
+        10, "unknown firmware/status block", SPTECH_LEGACY_PROTOCOL_SOURCE
+    ),
+)
+
+SPTECH_LEGACY_PROTOCOL_EVIDENCE = (
+    (
+        "Old UniLED SPTechModel encodes NET frames as SPTECH\\0, command ID, "
+        "key byte, two reserved bytes, two-byte payload length, and payload"
+    ),
+    (
+        "Old UniLED SPTechModel decodes chunked status payloads for settings, "
+        "mode/status, timers, music layout, network info, and fun switch data"
+    ),
+    (
+        "These command IDs and chunk labels are diagnostics only until each "
+        "model's LAN response and write behavior is proven"
+    ),
+)
+
+
+@dataclass(frozen=True, slots=True)
 class SpNetDiscoveryResponse:
     """Parsed SPNet UDP discovery response."""
 
@@ -237,6 +513,15 @@ class LANProfile:
     bonsoir_methods: tuple[str, ...] = APK_BONSOIR_METHODS
     bonsoir_arguments: tuple[str, ...] = APK_BONSOIR_ARGUMENTS
     bonsoir_nsd_methods: tuple[str, ...] = APK_BONSOIR_NSD_METHODS
+    bonsoir_discovery_events: tuple[
+        str, ...
+    ] = APK_BONSOIR_DISCOVERY_EVENTS
+    bonsoir_service_event_fields: tuple[
+        str, ...
+    ] = APK_BONSOIR_SERVICE_EVENT_FIELDS
+    bonsoir_service_normalization_hints: tuple[
+        str, ...
+    ] = APK_BONSOIR_SERVICE_NORMALIZATION_HINTS
     bonsoir_service_type_flow_hints: tuple[
         str, ...
     ] = APK_BONSOIR_SERVICE_TYPE_FLOW_HINTS
@@ -265,6 +550,14 @@ class LANProfile:
     sptech_status_query: bytes = b""
     sptech_response_header_bytes: int | None = None
     sptech_candidate_evidence: tuple[str, ...] = ()
+    sptech_legacy_model_codes: tuple[SPTechLegacyModelCode, ...] = ()
+    sptech_legacy_configuration_codes: tuple[
+        SPTechLegacyConfigurationCode, ...
+    ] = ()
+    sptech_legacy_model_code_evidence: tuple[str, ...] = ()
+    sptech_legacy_command_ids: tuple[SPTechLegacyCommandId, ...] = ()
+    sptech_legacy_status_chunks: tuple[SPTechLegacyStatusChunkHint, ...] = ()
+    sptech_legacy_protocol_evidence: tuple[str, ...] = ()
 
     @property
     def requires_manual_host(self) -> bool:
@@ -295,6 +588,18 @@ def lan_profile_for_model(model: CatalogModel) -> LANProfile | None:
             "sptech_status_query": SPTECH_STATUS_QUERY,
             "sptech_response_header_bytes": SPTECH_RESPONSE_HEADER_BYTES,
             "sptech_candidate_evidence": SPTECH_CANDIDATE_EVIDENCE,
+            "sptech_legacy_model_codes": SPTECH_LEGACY_MODEL_CODES,
+            "sptech_legacy_configuration_codes": (
+                SPTECH_LEGACY_CONFIGURATION_CODES
+            ),
+            "sptech_legacy_model_code_evidence": (
+                SPTECH_LEGACY_MODEL_CODE_EVIDENCE
+            ),
+            "sptech_legacy_command_ids": SPTECH_LEGACY_COMMAND_IDS,
+            "sptech_legacy_status_chunks": SPTECH_LEGACY_STATUS_CHUNKS,
+            "sptech_legacy_protocol_evidence": (
+                SPTECH_LEGACY_PROTOCOL_EVIDENCE
+            ),
         }
     is_verified_sp541e = model.name == "SP541E"
 
@@ -338,6 +643,14 @@ def describe_lan_profile(profile: LANProfile | None) -> str | None:
         f"cloud_setup_prompts={len(profile.network_cloud_setup_prompts)}"
     )
     parts.append(f"bonsoir_nsd_methods={len(profile.bonsoir_nsd_methods)}")
+    parts.append(f"bonsoir_events={len(profile.bonsoir_discovery_events)}")
+    parts.append(
+        f"service_fields={len(profile.bonsoir_service_event_fields)}"
+    )
+    parts.append(
+        "service_normalization="
+        f"{len(profile.bonsoir_service_normalization_hints)}"
+    )
     parts.append(
         "service_type_flow="
         f"{len(profile.bonsoir_service_type_flow_hints)}"
@@ -353,12 +666,37 @@ def describe_lan_profile(profile: LANProfile | None) -> str | None:
         parts.append(f"spnet=udp/{profile.spnet_udp_port}")
     if profile.sptech_tcp_port is not None:
         parts.append(f"sptech_candidate=tcp/{profile.sptech_tcp_port}")
+    if profile.sptech_legacy_model_codes:
+        parts.append(
+            f"sptech_legacy_codes={len(profile.sptech_legacy_model_codes)}"
+        )
+    if profile.sptech_legacy_configuration_codes:
+        parts.append(
+            "sptech_legacy_configs="
+            f"{len(profile.sptech_legacy_configuration_codes)}"
+        )
+    if profile.sptech_legacy_command_ids:
+        parts.append(
+            f"sptech_legacy_commands={len(profile.sptech_legacy_command_ids)}"
+        )
+    if profile.sptech_legacy_status_chunks:
+        parts.append(
+            f"sptech_legacy_chunks={len(profile.sptech_legacy_status_chunks)}"
+        )
     return "; ".join(parts)
 
 
 def build_spnet_discovery_request() -> bytes:
     """Return the SPNet UDP discovery request recovered from BanlanX."""
     return SPNET_DISCOVERY_REQUEST
+
+
+def sptech_legacy_model_name_for_code(code: int) -> str | None:
+    """Return an old-UniLED SPTech model name for a LAN model code."""
+    for candidate in SPTECH_LEGACY_MODEL_CODES:
+        if candidate.code == code:
+            return candidate.model_name
+    return None
 
 
 def parse_spnet_discovery_response(

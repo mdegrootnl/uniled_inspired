@@ -28,6 +28,7 @@ from .const import (
     CONF_TRANSPORT,
 )
 from .core import (
+    ApkCommandIdHint,
     BanlanXCloudEndpoint,
     BanlanXCloudProfile,
     BanlanXCloudRequestContractHint,
@@ -171,6 +172,8 @@ _COMMAND_NUMBER_KEYS = {
     "effect_length",
     "audio_sensitivity",
     "onoff_pixels",
+    "segment_count",
+    "segment_pixels",
 }
 _COMMAND_SELECT_KEYS = {
     "audio_input",
@@ -181,6 +184,7 @@ _COMMAND_SELECT_KEYS = {
     "on_power",
     "light_type",
     "chip_order",
+    "chip_type",
 }
 _COMMAND_SWITCH_KEYS = {
     "effect_direction",
@@ -212,6 +216,7 @@ _SERVICE_POWER = "power"
 _SERVICE_BRIGHTNESS = "brightness"
 _SERVICE_TRANSITION = "transition"
 _SERVICE_RGB_COLOR = "rgb_color"
+_SERVICE_RGB2_COLOR = "rgb2_color"
 _SERVICE_RGBW_COLOR = "rgbw_color"
 _SERVICE_RGBWW_COLOR = "rgbww_color"
 _SERVICE_COLOR_TEMP_KELVIN = "color_temp_kelvin"
@@ -394,18 +399,54 @@ class UniLEDRuntime:
         if key == "ble_known_service_uuid_count":
             profile = ble_evidence_for_model(self.model)
             return None if profile is None else len(profile.known_service_uuids)
+        if key == "ble_known_service_uuids":
+            profile = ble_evidence_for_model(self.model)
+            return (
+                None
+                if profile is None
+                else _format_tuple(profile.known_service_uuids)
+            )
+        if key == "ble_known_write_uuid":
+            profile = ble_evidence_for_model(self.model)
+            return None if profile is None else profile.known_write_uuid or "pending"
+        if key == "ble_known_notify_uuid":
+            profile = ble_evidence_for_model(self.model)
+            return None if profile is None else profile.known_notify_uuid or "pending"
         if key == "ble_uuid_pool_count":
             profile = ble_evidence_for_model(self.model)
             return None if profile is None else len(profile.apk_uuid_pool)
+        if key == "ble_apk_uuid_pool":
+            profile = ble_evidence_for_model(self.model)
+            return None if profile is None else _format_tuple(profile.apk_uuid_pool)
         if key == "ble_uuid_inventory_count":
             profile = ble_evidence_for_model(self.model)
             return None if profile is None else len(profile.uuid_inventory)
         if key == "ble_unbound_uuid_candidate_count":
             profile = ble_evidence_for_model(self.model)
             return None if profile is None else len(profile.unbound_uuid_candidates)
+        if key == "ble_unbound_uuid_candidates":
+            profile = ble_evidence_for_model(self.model)
+            if profile is None:
+                return None
+            return _format_tuple(
+                tuple(
+                    candidate.short_name
+                    for candidate in profile.unbound_uuid_candidates
+                )
+            )
         if key == "ble_legacy_uuid_candidate_count":
             profile = ble_evidence_for_model(self.model)
             return None if profile is None else len(profile.legacy_uuid_candidates)
+        if key == "ble_legacy_uuid_candidates":
+            profile = ble_evidence_for_model(self.model)
+            if profile is None:
+                return None
+            return _format_tuple(
+                tuple(
+                    candidate.short_name
+                    for candidate in profile.legacy_uuid_candidates
+                )
+            )
         if key == "ble_plugin_method_count":
             profile = ble_evidence_for_model(self.model)
             return None if profile is None else len(profile.plugin_methods)
@@ -415,15 +456,72 @@ class UniLEDRuntime:
         if key == "ble_plugin_result_field_count":
             profile = ble_evidence_for_model(self.model)
             return None if profile is None else len(profile.plugin_result_fields)
+        if key == "ble_scan_result_field_count":
+            profile = ble_evidence_for_model(self.model)
+            return None if profile is None else len(profile.scan_result_fields)
+        if key == "ble_service_result_field_count":
+            profile = ble_evidence_for_model(self.model)
+            return None if profile is None else len(profile.service_result_fields)
+        if key == "ble_characteristic_result_field_count":
+            profile = ble_evidence_for_model(self.model)
+            return (
+                None
+                if profile is None
+                else len(profile.characteristic_result_fields)
+            )
+        if key == "ble_rssi_result_field_count":
+            profile = ble_evidence_for_model(self.model)
+            return None if profile is None else len(profile.rssi_result_fields)
+        if key == "ble_mtu_result_field_count":
+            profile = ble_evidence_for_model(self.model)
+            return None if profile is None else len(profile.mtu_result_fields)
+        if key == "ble_adapter_state_result_field_count":
+            profile = ble_evidence_for_model(self.model)
+            return None if profile is None else len(profile.adapter_state_result_fields)
+        if key == "ble_notification_event_field_count":
+            profile = ble_evidence_for_model(self.model)
+            return None if profile is None else len(profile.notification_event_fields)
+        if key == "ble_connection_event_field_count":
+            profile = ble_evidence_for_model(self.model)
+            return None if profile is None else len(profile.connection_event_fields)
+        if key == "ble_device_found_event_field_count":
+            profile = ble_evidence_for_model(self.model)
+            return None if profile is None else len(profile.device_found_event_fields)
+        if key == "ble_descriptor_uuid_count":
+            profile = ble_evidence_for_model(self.model)
+            return None if profile is None else len(profile.descriptor_uuids)
+        if key == "ble_boolean_event_channel_count":
+            profile = ble_evidence_for_model(self.model)
+            return None if profile is None else len(profile.boolean_event_channels)
+        if key == "ble_plugin_event_hint_count":
+            profile = ble_evidence_for_model(self.model)
+            return None if profile is None else len(profile.plugin_event_hints)
         if key == "ble_plugin_contract_hint_count":
             profile = ble_evidence_for_model(self.model)
             return None if profile is None else len(profile.plugin_contract_hints)
+        if key == "ble_plugin_error_code_count":
+            profile = ble_evidence_for_model(self.model)
+            return None if profile is None else len(profile.plugin_error_hints)
         if key == "ble_plugin_channel_count":
             profile = ble_evidence_for_model(self.model)
             return None if profile is None else len(profile.plugin_channels)
         if key == "ble_protocol_gap_count":
             profile = ble_evidence_for_model(self.model)
             return None if profile is None else len(profile.protocol_gap_hints)
+        if key == "ble_issue_advertisement_count":
+            profile = ble_evidence_for_model(self.model)
+            return None if profile is None else len(profile.issue_advertisements)
+        if key == "ble_issue_advertisements":
+            profile = ble_evidence_for_model(self.model)
+            if profile is None:
+                return None
+            return _format_tuple(
+                tuple(
+                    f"{advertisement.issue}:{advertisement.model_name}:"
+                    f"{advertisement.manufacturer_payload_hex}"
+                    for advertisement in profile.issue_advertisements
+                )
+            )
         if key == "lan_profile":
             return describe_lan_profile(lan_profile_for_model(self.model))
         if key == "lan_host_network_method_count":
@@ -476,6 +574,27 @@ class UniLEDRuntime:
         if key == "lan_bonsoir_nsd_method_count":
             profile = lan_profile_for_model(self.model)
             return None if profile is None else len(profile.bonsoir_nsd_methods)
+        if key == "lan_bonsoir_discovery_event_count":
+            profile = lan_profile_for_model(self.model)
+            return (
+                None
+                if profile is None
+                else len(profile.bonsoir_discovery_events)
+            )
+        if key == "lan_bonsoir_service_event_field_count":
+            profile = lan_profile_for_model(self.model)
+            return (
+                None
+                if profile is None
+                else len(profile.bonsoir_service_event_fields)
+            )
+        if key == "lan_bonsoir_service_normalization_hint_count":
+            profile = lan_profile_for_model(self.model)
+            return (
+                None
+                if profile is None
+                else len(profile.bonsoir_service_normalization_hints)
+            )
         if key == "lan_bonsoir_service_type_flow_hint_count":
             profile = lan_profile_for_model(self.model)
             return (
@@ -517,6 +636,37 @@ class UniLEDRuntime:
         if key == "lan_mdns_txt_buffer_bytes":
             profile = lan_profile_for_model(self.model)
             return None if profile is None else profile.mdns_txt_buffer_bytes
+        if key == "lan_sptech_legacy_model_code_count":
+            profile = lan_profile_for_model(self.model)
+            return (
+                None
+                if profile is None or not profile.sptech_legacy_model_codes
+                else len(profile.sptech_legacy_model_codes)
+            )
+        if key == "lan_sptech_legacy_configuration_code_count":
+            profile = lan_profile_for_model(self.model)
+            return (
+                None
+                if (
+                    profile is None
+                    or not profile.sptech_legacy_configuration_codes
+                )
+                else len(profile.sptech_legacy_configuration_codes)
+            )
+        if key == "lan_sptech_legacy_command_id_count":
+            profile = lan_profile_for_model(self.model)
+            return (
+                None
+                if profile is None or not profile.sptech_legacy_command_ids
+                else len(profile.sptech_legacy_command_ids)
+            )
+        if key == "lan_sptech_legacy_status_chunk_count":
+            profile = lan_profile_for_model(self.model)
+            return (
+                None
+                if profile is None or not profile.sptech_legacy_status_chunks
+                else len(profile.sptech_legacy_status_chunks)
+            )
         if key == "mesh_profile":
             return describe_mesh_profile(mesh_profile_for_model(self.model))
         if key == "mesh_route_count":
@@ -546,6 +696,13 @@ class UniLEDRuntime:
                 None
                 if profile is None or not profile.sig_mesh_uuid_hints
                 else len(profile.sig_mesh_uuid_hints)
+            )
+        if key == "mesh_app_command_id_count":
+            profile = mesh_profile_for_model(self.model)
+            return (
+                None
+                if profile is None or not profile.app_command_id_hints
+                else len(profile.app_command_id_hints)
             )
         if key == "mesh_control_blocker_count":
             profile = mesh_profile_for_model(self.model)
@@ -797,6 +954,9 @@ class UniLEDRuntime:
         if key == "car_light_setup_key_hint_count":
             profile = car_light_profile_for_model(self.model)
             return None if profile is None else len(profile.setup_key_hints)
+        if key == "car_light_app_command_id_count":
+            profile = car_light_profile_for_model(self.model)
+            return None if profile is None else len(profile.app_command_id_hints)
         if key == "car_light_model_role_hint_count":
             profile = car_light_profile_for_model(self.model)
             return None if profile is None else len(profile.model_role_hints)
@@ -898,6 +1058,9 @@ class UniLEDRuntime:
         if key == "fish_tank_app_method_count":
             profile = fish_tank_profile_for_model(self.model)
             return None if profile is None else len(profile.app_method_hints)
+        if key == "fish_tank_app_command_id_count":
+            profile = fish_tank_profile_for_model(self.model)
+            return None if profile is None else len(profile.app_command_id_hints)
         if key == "fish_tank_data_model_hint_count":
             profile = fish_tank_profile_for_model(self.model)
             return None if profile is None else len(profile.data_model_hints)
@@ -963,6 +1126,9 @@ class UniLEDRuntime:
         if key == "scene_app_method_count":
             profile = scene_profile_for_model(self.model)
             return None if profile is None else len(profile.app_method_hints)
+        if key == "scene_app_command_id_count":
+            profile = scene_profile_for_model(self.model)
+            return None if profile is None else len(profile.app_command_id_hints)
         if key == "scene_storage_hint_count":
             profile = scene_profile_for_model(self.model)
             return None if profile is None else len(profile.storage_hints)
@@ -1120,6 +1286,9 @@ class UniLEDRuntime:
         if key == "network_app_method_count":
             profile = network_profile_for_model(self.model)
             return None if profile is None else len(profile.app_method_hints)
+        if key == "network_app_command_id_count":
+            profile = network_profile_for_model(self.model)
+            return None if profile is None else len(profile.app_command_id_hints)
         if key == "network_workflow_hint_count":
             profile = network_profile_for_model(self.model)
             return None if profile is None else len(profile.workflow_hints)
@@ -1164,6 +1333,13 @@ class UniLEDRuntime:
         if key == "network_native_export_hint_count":
             profile = network_profile_for_model(self.model)
             return None if profile is None else len(profile.native_export_hints)
+        if key == "network_native_export_detail_count":
+            profile = network_profile_for_model(self.model)
+            return (
+                None
+                if profile is None
+                else len(profile.native_export_detail_anchors)
+            )
         if key == "network_protocol_gap_count":
             profile = network_profile_for_model(self.model)
             return None if profile is None else len(profile.protocol_gap_hints)
@@ -1219,12 +1395,22 @@ class UniLEDRuntime:
         if key == "sp630e_app_method_count":
             profile = sp630e_profile_for_model(self.model)
             return None if profile is None else len(profile.app_method_hints)
+        if key == "sp630e_app_command_id_count":
+            profile = sp630e_profile_for_model(self.model)
+            return None if profile is None else len(profile.app_command_id_hints)
         if key == "sp630e_data_model_hint_count":
             profile = sp630e_profile_for_model(self.model)
             return None if profile is None else len(profile.data_model_hints)
         if key == "sp630e_native_lfx_hint_count":
             profile = sp630e_profile_for_model(self.model)
             return None if profile is None else len(profile.native_lfx_hints)
+        if key == "sp630e_native_export_detail_count":
+            profile = sp630e_profile_for_model(self.model)
+            return (
+                None
+                if profile is None
+                else len(profile.native_export_detail_anchors)
+            )
         if key == "sp630e_catalog_hint_count":
             profile = sp630e_profile_for_model(self.model)
             return None if profile is None else len(profile.catalog_hints)
@@ -2712,6 +2898,11 @@ def command_control_available(
         channel=channel,
     ):
         return False
+    if runtime.model.family is ProtocolFamily.LEGACY_LED_CHORD:
+        if key == "segment_count":
+            return control_value(runtime, "segment_pixels", channel=channel) is not None
+        if key == "segment_pixels":
+            return control_value(runtime, "segment_count", channel=channel) is not None
     if (
         banlanx6xx_style_family(runtime.model.family)
         and key in _BANLANX6XX_STATE_DEPENDENT_COMMAND_KEYS
@@ -3029,6 +3220,16 @@ async def async_apply_legacy_set_state_service(
             apply_light_command_state(runtime, channel=channel, brightness=brightness)
             sent = True
 
+    if _SERVICE_RGB2_COLOR in data:
+        red, green, blue = _byte_tuple(
+            data[_SERVICE_RGB2_COLOR],
+            3,
+            field=_SERVICE_RGB2_COLOR,
+        )
+        await session.set_rgb2_color(red, green, blue, channel=channel)
+        apply_rgb2_command_state(runtime, red, green, blue, channel=channel)
+        sent = True
+
     if _SERVICE_EFFECT_SPEED in data:
         value = _required_int(data[_SERVICE_EFFECT_SPEED], _SERVICE_EFFECT_SPEED)
         if output_scoped_command_allows(runtime, "effect_speed", channel=channel):
@@ -3234,6 +3435,21 @@ def apply_light_command_state(
     return state
 
 
+def apply_rgb2_command_state(
+    runtime: UniLEDRuntime,
+    red: int,
+    green: int,
+    blue: int,
+    *,
+    channel: int = 0,
+) -> ChannelState:
+    """Apply an optimistic secondary/matrix RGB command state."""
+    state = channel_state(runtime, channel)
+    state.extra["rgb2"] = (red, green, blue)
+    runtime.state.available = runtime.session_ready
+    return state
+
+
 def _apply_light_state_fields(
     runtime: UniLEDRuntime,
     state: ChannelState,
@@ -3340,7 +3556,32 @@ def light_supported_color_modes(
         modes.append("white")
     elif has_white:
         modes.append("brightness")
-    return tuple(modes) or ("rgb",)
+    return _normalize_supported_color_modes(tuple(modes) or ("rgb",))
+
+
+def _normalize_supported_color_modes(modes: tuple[str, ...]) -> tuple[str, ...]:
+    """Return HA-valid supported color modes while preserving useful order."""
+    supported = tuple(
+        dict.fromkeys(
+            mode
+            for mode in modes
+            if mode
+            in {
+                "brightness",
+                "color_temp",
+                "onoff",
+                "rgb",
+                "rgbw",
+                "rgbww",
+                "white",
+            }
+        )
+    )
+    if len(supported) > 1:
+        supported = tuple(
+            mode for mode in supported if mode not in {"brightness", "onoff"}
+        )
+    return supported or ("onoff",)
 
 
 def light_color_mode(
@@ -3559,7 +3800,12 @@ async def async_ensure_sp6xx_white_mode(
     state.light_mode_number = mode
     state.light_mode = banlanx6xx_light_mode_name(mode)
     state.effect_number = effect
-    state.effect = _sp6xx_effect_label(light_type, mode, effect)
+    state.effect = _sp6xx_effect_label(
+        light_type,
+        mode,
+        effect,
+        model_name=runtime.model.name,
+    )
     state.effect_type = _effect_type_for_value(
         runtime.model.family,
         effect,
@@ -3598,6 +3844,7 @@ def _sp6xx_white_mode_command(
             light_type,
             mode=target_mode,
             effect=state.effect_number,
+            model_name=runtime.model.name,
         )
     except (KeyError, ValueError):
         return None
@@ -3619,6 +3866,20 @@ def apply_sp6xx_sound_brightness_ignored(
     return state
 
 
+def _channel_or_diagnostic_int(
+    runtime: UniLEDRuntime,
+    state: ChannelState,
+    key: str,
+) -> int | None:
+    value = state.extra.get(key)
+    if isinstance(value, int):
+        return value
+    value = runtime.state.diagnostics.get(key)
+    if isinstance(value, int):
+        return value
+    return None
+
+
 def control_value(
     runtime: UniLEDRuntime,
     key: str,
@@ -3638,6 +3899,8 @@ def control_value(
         return state.sensitivity
     if key == "onoff_pixels":
         return runtime.state.diagnostics.get("onoff_pixels")
+    if key in {"segment_count", "segment_pixels"}:
+        return _channel_or_diagnostic_int(runtime, state, key)
     if key == "effect":
         if state.effect is not None:
             return state.effect
@@ -3677,6 +3940,13 @@ def control_value(
         if option_map is None:
             return None
         return option_map.option_for_value(state.chip_order)
+    if key == "chip_type":
+        option_map = runtime_select_option_map(runtime, key, channel=channel)
+        if option_map is None:
+            return None
+        return option_map.option_for_value(
+            _channel_or_diagnostic_int(runtime, state, key)
+        )
     if key in {"onoff_effect", "onoff_speed", "on_power"}:
         return _diagnostic_option_value(runtime, key)
     if key == "effect_direction":
@@ -3713,6 +3983,9 @@ def apply_number_command_state(
         state.sensitivity = value
     elif key == "onoff_pixels":
         runtime.state.diagnostics["onoff_pixels"] = value
+    elif key in {"segment_count", "segment_pixels"}:
+        state.extra[key] = value
+        runtime.state.diagnostics[key] = value
     runtime.state.available = (
         runtime.mesh_session_paired
         if runtime.model.family is ProtocolFamily.ZENGGE_MESH
@@ -3776,6 +4049,7 @@ def light_type_command_values(
         light_type,
         mode=state.light_mode_number,
         effect=state.effect_number,
+        model_name=runtime.model.name,
     )
     return LightTypeCommandValues(
         light_type=light_type,
@@ -3809,6 +4083,7 @@ def light_mode_command_values(
         light_type,
         mode=mode,
         effect=state.effect_number,
+        model_name=runtime.model.name,
     )
     return mode, effect
 
@@ -3860,7 +4135,10 @@ def runtime_select_option_map(
         return option_map
     if key == "effect" and banlanx6xx_style_family(runtime.model.family):
         light_type = runtime.state.diagnostics.get("light_type")
-        values = banlanx6xx_effect_values_for_light_type(light_type)
+        values = banlanx6xx_effect_values_for_light_type(
+            light_type,
+            model_name=runtime.model.name,
+        )
         if values is not None:
             return SelectOptionMap(key, values)
     if key == "light_mode" and banlanx6xx_style_family(runtime.model.family):
@@ -3870,7 +4148,10 @@ def runtime_select_option_map(
         ):
             return None
         light_type = _current_light_type(runtime)
-        values = banlanx6xx_light_mode_values_for_light_type(light_type)
+        values = banlanx6xx_light_mode_values_for_light_type(
+            light_type,
+            model_name=runtime.model.name,
+        )
         if values is not None:
             return SelectOptionMap(key, values)
     if key == "chip_order" and banlanx6xx_style_family(runtime.model.family):
@@ -3889,13 +4170,13 @@ def _zengge_mesh_supported_color_modes(
     if state is not None:
         modes = state.extra.get("supported_color_modes")
         if isinstance(modes, (tuple, list, set)):
-            supported = tuple(
+            raw_supported = tuple(
                 mode
                 for mode in modes
                 if mode in {"brightness", "rgb", "color_temp", "white"}
             )
-            if supported:
-                return supported
+            if raw_supported:
+                return _normalize_supported_color_modes(raw_supported)
 
     context = None
     if runtime.mesh_session is not None:
@@ -3959,7 +4240,12 @@ def apply_select_command_state(
             state.effect = (
                 None
                 if light_type is None
-                else _sp6xx_effect_label(light_type, mode, effect)
+                else _sp6xx_effect_label(
+                    light_type,
+                    mode,
+                    effect,
+                    model_name=runtime.model.name,
+                )
             )
             state.effect_type = _effect_type_for_value(
                 runtime.model.family,
@@ -3980,7 +4266,12 @@ def apply_select_command_state(
         state.light_mode_number = command.mode
         state.light_mode = banlanx6xx_light_mode_name(command.mode)
         state.effect_number = command.effect
-        state.effect = _sp6xx_effect_label(raw_value, command.mode, command.effect)
+        state.effect = _sp6xx_effect_label(
+            raw_value,
+            command.mode,
+            command.effect,
+            model_name=runtime.model.name,
+        )
         state.effect_type = _effect_type_for_value(
             runtime.model.family,
             command.effect,
@@ -3997,6 +4288,9 @@ def apply_select_command_state(
             state.power = False
     elif key == "chip_order":
         state.chip_order = raw_value
+    elif key == "chip_type":
+        state.extra["chip_type"] = raw_value
+        runtime.state.diagnostics["chip_type"] = raw_value
     elif key in {"onoff_effect", "onoff_speed", "on_power"}:
         runtime.state.diagnostics[key] = raw_value
     runtime.state.available = runtime.session_ready
@@ -4014,7 +4308,12 @@ def _apply_sp6xx_effect_parameter_state(
     """Clear stale SP6xx effect parameters unsupported by the selected effect."""
     if not banlanx6xx_style_family(runtime.model.family):
         return
-    attributes = banlanx6xx_effect_attributes_for_state(light_type, mode, effect)
+    attributes = banlanx6xx_effect_attributes_for_state(
+        light_type,
+        mode,
+        effect,
+        model_name=runtime.model.name,
+    )
     if attributes is None or not attributes.speedable:
         state.effect_speed = None
     if attributes is None or not attributes.sizeable:
@@ -4201,8 +4500,17 @@ def _chip_order_for_light_type(
     return 0
 
 
-def _sp6xx_effect_label(light_type: int, mode: int, effect: int) -> str | None:
-    values = banlanx6xx_effect_values_for_light_type(light_type)
+def _sp6xx_effect_label(
+    light_type: int,
+    mode: int,
+    effect: int,
+    *,
+    model_name: str | None = None,
+) -> str | None:
+    values = banlanx6xx_effect_values_for_light_type(
+        light_type,
+        model_name=model_name,
+    )
     if values is None:
         return None
     return values.get(mode_effect_value(mode, effect))
@@ -4342,6 +4650,9 @@ def _car_light_profile_dict(
         "setup_requirements": list(profile.setup_requirements),
         "setup_flow_hints": list(profile.setup_flow_hints),
         "setup_key_hints": list(profile.setup_key_hints),
+        "app_command_id_hints": _apk_command_id_hint_dicts(
+            profile.app_command_id_hints
+        ),
         "model_role": _car_light_model_role_dict(profile.model_role),
         "model_role_hints": list(profile.model_role_hints),
         "model_setup_dependency": _car_light_setup_dependency_dict(
@@ -4431,6 +4742,9 @@ def _fish_tank_profile_dict(
         "timer_actions": list(profile.timer_actions),
         "catalog_hints": list(profile.catalog_hints),
         "app_method_hints": list(profile.app_method_hints),
+        "app_command_id_hints": _apk_command_id_hint_dicts(
+            profile.app_command_id_hints
+        ),
         "data_model_hints": list(profile.data_model_hints),
         "favorite_service_hints": list(profile.favorite_service_hints),
         "favorite_storage_hints": list(profile.favorite_storage_hints),
@@ -4471,6 +4785,9 @@ def _scene_profile_dict(
         "mode_effects": list(profile.mode_effects),
         "mode_icon_samples": list(profile.mode_icon_samples),
         "app_method_hints": list(profile.app_method_hints),
+        "app_command_id_hints": _apk_command_id_hint_dicts(
+            profile.app_command_id_hints
+        ),
         "storage_hints": list(profile.storage_hints),
         "recent_actions": list(profile.recent_actions),
         "favorite_actions": list(profile.favorite_actions),
@@ -4518,6 +4835,7 @@ def _scene_profile_dict(
             {
                 "name": name,
                 "value": value,
+                "value_hex": f"0x{value:08x}",
                 "size": size,
                 "sha256": sha256,
                 "first16": first16,
@@ -4556,8 +4874,14 @@ def _sp630e_profile_dict(
         "remote_hints": list(profile.remote_hints),
         "motor_hints": list(profile.motor_hints),
         "app_method_hints": list(profile.app_method_hints),
+        "app_command_id_hints": _apk_command_id_hint_dicts(
+            profile.app_command_id_hints
+        ),
         "data_model_hints": list(profile.data_model_hints),
         "native_lfx_hints": list(profile.native_lfx_hints),
+        "native_export_detail_anchors": _native_export_anchor_dicts(
+            profile.native_export_detail_anchors
+        ),
         "catalog_hints": list(profile.catalog_hints),
         "protocol_gap_hints": list(profile.protocol_gap_hints),
         "command_protocol_known": profile.command_protocol_known,
@@ -4590,6 +4914,9 @@ def _network_profile_dict(
         "lfx_gif_count": profile.lfx_gif_count,
         "lfx_gif_assets": list(profile.lfx_gif_assets),
         "app_method_hints": list(profile.app_method_hints),
+        "app_command_id_hints": _apk_command_id_hint_dicts(
+            profile.app_command_id_hints
+        ),
         "workflow_hints": list(profile.workflow_hints),
         "raw_string_hints": list(profile.raw_string_hints),
         "import_constraints": list(profile.import_constraints),
@@ -4606,11 +4933,43 @@ def _network_profile_dict(
         "native_matrix_mode_hints": list(profile.native_matrix_mode_hints),
         "native_pixel_helper_hints": list(profile.native_pixel_helper_hints),
         "native_export_hints": list(profile.native_export_hints),
+        "native_export_detail_anchors": _native_export_anchor_dicts(
+            profile.native_export_detail_anchors
+        ),
         "command_protocol_known": profile.command_protocol_known,
         "package_asset_count": profile.package_asset_count,
         "apk_asset_evidence": list(profile.apk_asset_evidence),
         "apk_string_evidence": list(profile.apk_string_evidence),
     }
+
+
+def _apk_command_id_hint_dicts(
+    hints: tuple[ApkCommandIdHint, ...],
+) -> list[dict[str, Any]]:
+    return [
+        {
+            "name": hint.name,
+            "ordinal": hint.ordinal,
+            "command_id": hint.command_id,
+            "command_id_hex": hint.command_id_hex,
+            "source": hint.source,
+        }
+        for hint in hints
+    ]
+
+
+def _native_export_anchor_dicts(
+    anchors: tuple[tuple[str, int, int], ...],
+) -> list[dict[str, Any]]:
+    return [
+        {
+            "name": name,
+            "address": address,
+            "address_hex": f"0x{address:08x}",
+            "size": size,
+        }
+        for name, address, size in anchors
+    ]
 
 
 def _lan_profile_dict(profile: LANProfile | None) -> dict[str, Any] | None:
@@ -4635,6 +4994,13 @@ def _lan_profile_dict(profile: LANProfile | None) -> dict[str, Any] | None:
         "bonsoir_methods": list(profile.bonsoir_methods),
         "bonsoir_arguments": list(profile.bonsoir_arguments),
         "bonsoir_nsd_methods": list(profile.bonsoir_nsd_methods),
+        "bonsoir_discovery_events": list(profile.bonsoir_discovery_events),
+        "bonsoir_service_event_fields": list(
+            profile.bonsoir_service_event_fields
+        ),
+        "bonsoir_service_normalization_hints": list(
+            profile.bonsoir_service_normalization_hints
+        ),
         "bonsoir_service_type_flow_hints": list(
             profile.bonsoir_service_type_flow_hints
         ),
@@ -4674,6 +5040,54 @@ def _lan_profile_dict(profile: LANProfile | None) -> dict[str, Any] | None:
         data["sptech_candidate_evidence"] = list(
             profile.sptech_candidate_evidence
         )
+    if profile.sptech_legacy_model_codes:
+        data["sptech_legacy_model_codes"] = [
+            {
+                "code": candidate.code,
+                "code_hex": candidate.code_hex,
+                "model_name": candidate.model_name,
+                "source": candidate.source,
+            }
+            for candidate in profile.sptech_legacy_model_codes
+        ]
+        data["sptech_legacy_model_code_evidence"] = list(
+            profile.sptech_legacy_model_code_evidence
+        )
+    if profile.sptech_legacy_configuration_codes:
+        data["sptech_legacy_configuration_codes"] = [
+            {
+                "code": candidate.code,
+                "code_hex": candidate.code_hex,
+                "label": candidate.label,
+                "model_names": list(candidate.model_names),
+                "source": candidate.source,
+            }
+            for candidate in profile.sptech_legacy_configuration_codes
+        ]
+    if profile.sptech_legacy_command_ids:
+        data["sptech_legacy_command_ids"] = [
+            {
+                "name": candidate.name,
+                "command_id": candidate.command_id,
+                "command_id_hex": candidate.command_id_hex,
+                "category": candidate.category,
+                "source": candidate.source,
+            }
+            for candidate in profile.sptech_legacy_command_ids
+        ]
+    if profile.sptech_legacy_status_chunks:
+        data["sptech_legacy_status_chunks"] = [
+            {
+                "chunk_type": candidate.chunk_type,
+                "chunk_type_hex": candidate.chunk_type_hex,
+                "label": candidate.label,
+                "source": candidate.source,
+            }
+            for candidate in profile.sptech_legacy_status_chunks
+        ]
+        data["sptech_legacy_protocol_evidence"] = list(
+            profile.sptech_legacy_protocol_evidence
+        )
     return data
 
 
@@ -4711,6 +5125,26 @@ def _ble_evidence_profile_dict(
         "plugin_methods": list(profile.plugin_methods),
         "plugin_arguments": list(profile.plugin_arguments),
         "plugin_result_fields": list(profile.plugin_result_fields),
+        "scan_result_fields": list(profile.scan_result_fields),
+        "service_result_fields": list(profile.service_result_fields),
+        "characteristic_result_fields": list(profile.characteristic_result_fields),
+        "rssi_result_fields": list(profile.rssi_result_fields),
+        "mtu_result_fields": list(profile.mtu_result_fields),
+        "adapter_state_result_fields": list(profile.adapter_state_result_fields),
+        "notification_event_fields": list(profile.notification_event_fields),
+        "connection_event_fields": list(profile.connection_event_fields),
+        "device_found_event_fields": list(profile.device_found_event_fields),
+        "descriptor_uuids": list(profile.descriptor_uuids),
+        "boolean_event_channels": list(profile.boolean_event_channels),
+        "plugin_event_hints": [
+            {
+                "channel": hint.channel,
+                "fields": list(hint.fields),
+                "behavior": hint.behavior,
+                "evidence": hint.evidence,
+            }
+            for hint in profile.plugin_event_hints
+        ],
         "plugin_contract_hints": [
             {
                 "method": hint.method,
@@ -4722,7 +5156,34 @@ def _ble_evidence_profile_dict(
             }
             for hint in profile.plugin_contract_hints
         ],
+        "plugin_error_hints": [
+            {
+                "code": hint.code,
+                "meaning": hint.meaning,
+                "trigger": hint.trigger,
+                "evidence": hint.evidence,
+            }
+            for hint in profile.plugin_error_hints
+        ],
         "protocol_gap_hints": list(profile.protocol_gap_hints),
+        "issue_advertisements": [
+            {
+                "issue": advertisement.issue,
+                "model_name": advertisement.model_name,
+                **(
+                    {"model_id": advertisement.model_id}
+                    if advertisement.model_id is not None
+                    else {}
+                ),
+                "manufacturer_id": advertisement.manufacturer_id,
+                "manufacturer_payload_hex": (
+                    advertisement.manufacturer_payload_hex
+                ),
+                "service_uuid": advertisement.service_uuid,
+                "evidence": advertisement.evidence,
+            }
+            for advertisement in profile.issue_advertisements
+        ],
     }
 
 
@@ -4749,6 +5210,9 @@ def _mesh_profile_dict(profile: BLEMeshProfile | None) -> dict[str, Any] | None:
         "command_names": list(profile.command_names),
         "effect_command_fields": list(profile.effect_command_fields),
         "sig_mesh_uuid_hints": list(profile.sig_mesh_uuid_hints),
+        "app_command_id_hints": _apk_command_id_hint_dicts(
+            profile.app_command_id_hints
+        ),
         "control_gap_hints": list(profile.control_gap_hints),
         "control_blockers": list(profile.control_blockers),
         "route_hints": list(profile.route_hints),

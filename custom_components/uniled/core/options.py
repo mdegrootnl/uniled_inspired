@@ -89,6 +89,37 @@ _LED_CHORD_LIGHT_MODES = MappingProxyType(
         0x03: "Cycle Matrix FX's",
     }
 )
+_LEGACY_LED_CHIP_TYPES = MappingProxyType(
+    {
+        0x00: "SM16703",
+        0x01: "TM1804",
+        0x02: "UCS1903",
+        0x03: "WS2811",
+        0x04: "WS2801",
+        0x05: "SK6812",
+        0x06: "LPD6803",
+        0x07: "LPD8806",
+        0x08: "APA102",
+        0x09: "APA105",
+        0x0A: "DMX512",
+        0x0B: "TM1914",
+        0x0C: "TM1913",
+        0x0D: "P9813",
+        0x0E: "INK1003",
+        0x0F: "P943S",
+        0x10: "P9411",
+        0x11: "P9413",
+        0x12: "TX1812",
+        0x13: "TX1813",
+        0x14: "GS8206",
+        0x15: "GS8208",
+        0x16: "SK9822",
+        0x17: "TM1814",
+        0x18: "SK6812_RGBW",
+        0x19: "P9414",
+        0x1A: "P9412",
+    }
+)
 _BANLANX_601_EFFECTS = MappingProxyType(
     {
         0x19: "Solid",
@@ -393,6 +424,7 @@ _BANLANX6XX_MODE_DYNAMIC_WHITE = 0x04
 _BANLANX6XX_MODE_SOUND_COLOR = 0x05
 _BANLANX6XX_MODE_SOUND_WHITE = 0x06
 _BANLANX6XX_MODE_CUSTOM_COLOR = 0x07
+_BANLANX6XX_MODE_CUSTOM_GRADIENT = 0x08
 _BANLANX6XX_LIGHT_MODES = MappingProxyType(
     {
         _BANLANX6XX_MODE_STATIC_COLOR: "Static Color",
@@ -401,7 +433,8 @@ _BANLANX6XX_LIGHT_MODES = MappingProxyType(
         _BANLANX6XX_MODE_DYNAMIC_WHITE: "Dynamic White",
         _BANLANX6XX_MODE_SOUND_COLOR: "Sound - Color",
         _BANLANX6XX_MODE_SOUND_WHITE: "Sound - White",
-        _BANLANX6XX_MODE_CUSTOM_COLOR: "Custom",
+        _BANLANX6XX_MODE_CUSTOM_COLOR: "Custom Solid",
+        _BANLANX6XX_MODE_CUSTOM_GRADIENT: "Custom Gradient",
     }
 )
 _BANLANX6XX_ONOFF_EFFECTS = MappingProxyType(
@@ -551,6 +584,27 @@ _BANLANX6XX_SPI_EFFECTS_CUSTOM_COLOR = MappingProxyType(
         0x12: "Full Strobe",
     }
 )
+_BANLANX6XX_SPI_EFFECTS_CUSTOM_COLOR_FIREWORK = MappingProxyType(
+    {
+        **_BANLANX6XX_SPI_EFFECTS_CUSTOM_COLOR,
+        0x13: "Firework",
+    }
+)
+_BANLANX6XX_SPI_EFFECTS_CUSTOM_GRADIENT = MappingProxyType(
+    {
+        0x01: "Static",
+        0x02: "Chase Forward",
+        0x03: "Chase Backward",
+        0x04: "Spin",
+        0x05: "Sine Chase Forward",
+        0x06: "Sine Chase Backward",
+        0x07: "Fire Forward",
+        0x08: "Fire Backward",
+        0x09: "Juggle",
+        0x0A: "Meteor Forward",
+        0x0B: "Meteor Backward",
+    }
+)
 _BANLANX6XX_ATTR_NONE = BanlanX6xxEffectAttributes()
 _BANLANX6XX_ATTR_SPEED = BanlanX6xxEffectAttributes(speedable=True)
 _BANLANX6XX_ATTR_SIZE = BanlanX6xxEffectAttributes(sizeable=True)
@@ -617,12 +671,40 @@ _BANLANX6XX_CFG_SPI_COLOR = MappingProxyType(
         _BANLANX6XX_MODE_CUSTOM_COLOR: _BANLANX6XX_SPI_EFFECTS_CUSTOM_COLOR,
     }
 )
+_BANLANX6XX_CFG_SPI_COLOR_GRADIENT = MappingProxyType(
+    {
+        **_BANLANX6XX_CFG_SPI_COLOR,
+        _BANLANX6XX_MODE_CUSTOM_GRADIENT: _BANLANX6XX_SPI_EFFECTS_CUSTOM_GRADIENT,
+    }
+)
+_BANLANX6XX_CFG_SPI_COLOR_SPTECH_NET = MappingProxyType(
+    {
+        **_BANLANX6XX_CFG_SPI_COLOR_GRADIENT,
+        _BANLANX6XX_MODE_CUSTOM_COLOR: (
+            _BANLANX6XX_SPI_EFFECTS_CUSTOM_COLOR_FIREWORK
+        ),
+    }
+)
 _BANLANX6XX_CFG_SPI_COLOR_WHITE = MappingProxyType(
     {
         **_BANLANX6XX_CFG_SPI_COLOR,
         _BANLANX6XX_MODE_STATIC_WHITE: _BANLANX6XX_EFFECTS_STATIC_WHITE,
         _BANLANX6XX_MODE_DYNAMIC_WHITE: _BANLANX6XX_SPI_EFFECTS_DYNAMIC_WHITE,
         _BANLANX6XX_MODE_SOUND_WHITE: _BANLANX6XX_SPI_EFFECTS_SOUND_WHITE,
+    }
+)
+_BANLANX6XX_CFG_SPI_COLOR_WHITE_GRADIENT = MappingProxyType(
+    {
+        **_BANLANX6XX_CFG_SPI_COLOR_WHITE,
+        _BANLANX6XX_MODE_CUSTOM_GRADIENT: _BANLANX6XX_SPI_EFFECTS_CUSTOM_GRADIENT,
+    }
+)
+_BANLANX6XX_CFG_SPI_COLOR_WHITE_SPTECH_NET = MappingProxyType(
+    {
+        **_BANLANX6XX_CFG_SPI_COLOR_WHITE_GRADIENT,
+        _BANLANX6XX_MODE_CUSTOM_COLOR: (
+            _BANLANX6XX_SPI_EFFECTS_CUSTOM_COLOR_FIREWORK
+        ),
     }
 )
 _BANLANX6XX_CFG_SPI_COLOR_PWM_WHITE = MappingProxyType(
@@ -634,6 +716,10 @@ _BANLANX6XX_CFG_SPI_COLOR_PWM_WHITE = MappingProxyType(
     }
 )
 _BANLANX6XX_MODEL_CONFIGS = {
+    "SP538E": _BANLANX6XX_CFG_SPI_COLOR_SPTECH_NET,
+    "SP548E": _BANLANX6XX_CFG_SPI_COLOR_SPTECH_NET,
+    "SP539E": _BANLANX6XX_CFG_SPI_COLOR_WHITE_SPTECH_NET,
+    "SP549E": _BANLANX6XX_CFG_SPI_COLOR_WHITE_SPTECH_NET,
     "SP631E": _BANLANX6XX_CFG_PWM_WHITE,
     "SP641E": _BANLANX6XX_CFG_PWM_WHITE,
     "SP651E": _BANLANX6XX_CFG_PWM_WHITE,
@@ -712,8 +798,15 @@ _BANLANX_CUSTOM_5XX_MODEL_NAMES = (
     "SP54CE",
 )
 _BANLANX_CUSTOM_5XX_MODEL_NAME_SET = frozenset(_BANLANX_CUSTOM_5XX_MODEL_NAMES)
+_BANLANX_CUSTOM_5XX_SPTECH_NET_RGB_MODELS = frozenset({"SP538E", "SP548E"})
+_BANLANX_CUSTOM_5XX_SPTECH_NET_RGBW_MODELS = frozenset({"SP539E", "SP549E"})
 _BANLANX6XX_DYNAMIC_LIGHT_TYPE_MODELS = (
-    frozenset({"360PhotoB", "SP630E"}) | _BANLANX_CUSTOM_5XX_MODEL_NAME_SET
+    frozenset({"360PhotoB", "SP630E"})
+    | (
+        _BANLANX_CUSTOM_5XX_MODEL_NAME_SET
+        - _BANLANX_CUSTOM_5XX_SPTECH_NET_RGB_MODELS
+        - _BANLANX_CUSTOM_5XX_SPTECH_NET_RGBW_MODELS
+    )
 )
 _BANLANX6XX_COEXISTENCE_MODELS = frozenset(
     {
@@ -839,6 +932,10 @@ _BANLANX6XX_MODEL_LIGHT_TYPES = {
         name: _BANLANX6XX_SP630E_LIGHT_TYPES
         for name in _BANLANX_CUSTOM_5XX_MODEL_NAMES
     },
+    "SP538E": (0x06,),
+    "SP548E": (0x06,),
+    "SP539E": (0x08,),
+    "SP549E": (0x08,),
     "SP631E": (0x01,),
     "SP641E": (0x01,),
     "SP651E": (0x01,),
@@ -959,13 +1056,33 @@ _BANLANX6XX_LIGHT_TYPE_CONFIGS = {
     0x82: _BANLANX6XX_CFG_SPI_WHITE,
     0x84: _BANLANX6XX_CFG_SPI_WHITE,
     0x8D: _BANLANX6XX_CFG_SPI_WHITE,
-    0x86: _BANLANX6XX_CFG_SPI_COLOR,
-    0x88: _BANLANX6XX_CFG_SPI_COLOR_WHITE,
+    0x86: _BANLANX6XX_CFG_SPI_COLOR_GRADIENT,
+    0x88: _BANLANX6XX_CFG_SPI_COLOR_WHITE_GRADIENT,
     0x8B: _BANLANX6XX_CFG_SPI_COLOR_WHITE,
     0x8E: _BANLANX6XX_CFG_SPI_COLOR_WHITE,
     0x89: _BANLANX6XX_CFG_SPI_COLOR_PWM_WHITE,
     0x8C: _BANLANX6XX_CFG_SPI_COLOR_PWM_WHITE,
 }
+
+
+def _banlanx6xx_light_type_config(
+    light_type: int | None,
+    *,
+    model_name: str | None = None,
+) -> Mapping[int, Mapping[int, str]] | None:
+    if light_type is None:
+        return None
+    raw = int(light_type)
+    if model_name == "SP530E":
+        if raw == 0x86:
+            return _BANLANX6XX_CFG_SPI_COLOR_SPTECH_NET
+        if raw == 0x88:
+            return _BANLANX6XX_CFG_SPI_COLOR_WHITE_SPTECH_NET
+    if model_name in _BANLANX_CUSTOM_5XX_SPTECH_NET_RGB_MODELS and raw == 0x06:
+        return _BANLANX6XX_CFG_SPI_COLOR_SPTECH_NET
+    if model_name in _BANLANX_CUSTOM_5XX_SPTECH_NET_RGBW_MODELS and raw == 0x08:
+        return _BANLANX6XX_CFG_SPI_COLOR_WHITE_SPTECH_NET
+    return _BANLANX6XX_LIGHT_TYPE_CONFIGS.get(raw)
 
 _SELECT_OPTIONS = {
     (ProtocolFamily.BANLANX_601, "effect"): SelectOptionMap(
@@ -1081,6 +1198,11 @@ def select_option_map(
         values = banlanx6xx_chip_order_values_for_model(model_name)
         if values is not None:
             return SelectOptionMap(key, values)
+    if key == "chip_type" and family in {
+        ProtocolFamily.LEGACY_LED_CHORD,
+        ProtocolFamily.LEGACY_LED_HUE,
+    }:
+        return SelectOptionMap(key, _LEGACY_LED_CHIP_TYPES)
     if key == "chip_order":
         values = _legacy_chip_order_values_for_model(
             family,
@@ -1188,11 +1310,16 @@ def banlanx6xx_effect_name_for_state(
     light_type: int | None,
     mode: int | None,
     effect: int | None,
+    *,
+    model_name: str | None = None,
 ) -> str | None:
     """Return the BanlanX6xx combined effect label for parsed status bytes."""
     if mode is None or effect is None:
         return None
-    values = banlanx6xx_effect_values_for_light_type(light_type)
+    values = banlanx6xx_effect_values_for_light_type(
+        light_type,
+        model_name=model_name,
+    )
     if values is None:
         return None
     return values.get(mode_effect_value(mode, effect))
@@ -1200,11 +1327,14 @@ def banlanx6xx_effect_name_for_state(
 
 def banlanx6xx_effect_values_for_light_type(
     light_type: int | None,
+    *,
+    model_name: str | None = None,
 ) -> Mapping[int, str] | None:
     """Return combined mode/effect values for an SP6xx light-type byte."""
-    if light_type is None:
-        return None
-    config = _BANLANX6XX_LIGHT_TYPE_CONFIGS.get(int(light_type))
+    config = _banlanx6xx_light_type_config(
+        light_type,
+        model_name=model_name,
+    )
     if config is None:
         return None
     return _flatten_banlanx6xx_mode_effects(config)
@@ -1212,11 +1342,14 @@ def banlanx6xx_effect_values_for_light_type(
 
 def banlanx6xx_light_mode_values_for_light_type(
     light_type: int | None,
+    *,
+    model_name: str | None = None,
 ) -> Mapping[int, str] | None:
     """Return mode choices for an SP6xx light-type byte."""
-    if light_type is None:
-        return None
-    config = _BANLANX6XX_LIGHT_TYPE_CONFIGS.get(int(light_type))
+    config = _banlanx6xx_light_type_config(
+        light_type,
+        model_name=model_name,
+    )
     if config is None:
         return None
     return _light_mode_values_for_config(config)
@@ -1236,11 +1369,16 @@ def banlanx6xx_effect_attributes_for_state(
     light_type: int | None,
     mode: int | None,
     effect: int | None,
+    *,
+    model_name: str | None = None,
 ) -> BanlanX6xxEffectAttributes | None:
     """Return old-UniLED control flags for an SP6xx effect state."""
     if light_type is None or mode is None or effect is None:
         return None
-    config = _BANLANX6XX_LIGHT_TYPE_CONFIGS.get(int(light_type))
+    config = _banlanx6xx_light_type_config(
+        light_type,
+        model_name=model_name,
+    )
     if config is None:
         return None
     effect_map = config.get(int(mode))
@@ -1265,6 +1403,7 @@ def banlanx6xx_effect_type_for_mode(mode: int | None) -> str | None:
         _BANLANX6XX_MODE_DYNAMIC_COLOR,
         _BANLANX6XX_MODE_DYNAMIC_WHITE,
         _BANLANX6XX_MODE_CUSTOM_COLOR,
+        _BANLANX6XX_MODE_CUSTOM_GRADIENT,
     }:
         return "Dynamic"
     return None
@@ -1402,12 +1541,18 @@ def banlanx6xx_default_mode_effect_for_light_type(
     *,
     mode: int | None = None,
     effect: int | None = None,
+    model_name: str | None = None,
 ) -> tuple[int, int, bool]:
     """Return a valid mode/effect pair for a light type.
 
     The boolean is true when the current pair had to be changed.
     """
-    config = _BANLANX6XX_LIGHT_TYPE_CONFIGS[int(light_type)]
+    config = _banlanx6xx_light_type_config(
+        light_type,
+        model_name=model_name,
+    )
+    if config is None:
+        raise KeyError(light_type)
     changed = False
     if mode not in config:
         mode = next(iter(config))
@@ -1531,7 +1676,11 @@ def _banlanx6xx_effect_attributes(
         if effect in {5, 6, 9, 10, 11, 12, 13, 14}:
             return _BANLANX6XX_ATTR_SIZE
         return _BANLANX6XX_ATTR_NONE
-    if effect_map is _BANLANX6XX_SPI_EFFECTS_CUSTOM_COLOR:
+    if (
+        effect_map is _BANLANX6XX_SPI_EFFECTS_CUSTOM_COLOR
+        or effect_map is _BANLANX6XX_SPI_EFFECTS_CUSTOM_COLOR_FIREWORK
+        or effect_map is _BANLANX6XX_SPI_EFFECTS_CUSTOM_GRADIENT
+    ):
         return _BANLANX6XX_ATTR_NONE if effect == 1 else _BANLANX6XX_ATTR_SPEED
     return _BANLANX6XX_ATTR_NONE
 
