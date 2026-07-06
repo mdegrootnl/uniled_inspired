@@ -2424,21 +2424,36 @@ install guide and release notes, and `python scripts\build_package.py` writes
 `dist/uniled-next.zip` with 53 validated Home Assistant custom-component files
 and no bundled image/logo assets.
 
-Live HA API smoke on 2026-07-05 progressed without deploying the latest local
-candidate: using `http://192.168.0.157:8123` and refreshed dashboard
-credentials, `light.raam_strip`, `light.muur_strip`, and `light.midden_strip`
-were captured as `off`, turned on at brightness `77`, observed as `on:77`, and
-restored to `off`. This proves the currently deployed SP541E service path is
-healthy, but it is not the final 0.1 candidate smoke because deployment/restart
-and log review are still blocked by access. `core_ssh` and `a0d7b954_ssh` can
-be started through HA services, but available local SSH keys are denied and
-`hassio.addon_stdin` returns HTTP 500 for both add-ons; Samba is present but
-anonymous listing is denied.
+Final live HA smoke on 2026-07-06 deployed the current `dist/uniled-next.zip`
+candidate to Home Assistant `2026.7.0` through `root@192.168.0.157`, after
+authorizing the local deployment public key in the HA terminal. This Windows
+OpenSSH client needs an explicit ETM MAC, for example
+`hmac-sha2-256-etm@openssh.com`, when connecting to the HA SSH server. The
+pre-deploy local gate passed with `453` tests, audits, and package checks.
 
-Remaining 0.1 blockers are one final SP541E live Home Assistant smoke test and
-the post-smoke `manifest.json` version bump to `0.1.0`. The current P0 estimate
-is 0.35-0.75 engineering weeks, with another 2.0-4.0 engineering weeks of P1
-tester polish before a wider tester group.
+The first restart exposed a deployment-process hazard rather than an integration
+code fault: backup directories named `uniled.backup.*` under
+`/config/custom_components` caused Home Assistant to try importing
+`custom_components.uniled.backup`. Those backups were moved to
+`/config/uniled_backups`, HA was restarted, and all three UniLED config entries
+loaded cleanly. The live boundary gate passed for `uniled.set_state`,
+`light.turn_on`, and the three known SP541E light entities. Runtime diagnostics
+reported `last_refresh_result=ok`, `runtime_transport_state=command_session`,
+`ble_plugin_contract_hint_count=9`, and `ble_plugin_result_field_count=13` for
+all three entries, proving the restarted HA instance is running the current
+candidate rather than the older deployed build.
+
+The reversible physical smoke captured `light.raam_strip`,
+`light.muur_strip`, and `light.midden_strip` as `off`, turned all three on at
+brightness `77`, observed all three report `on:77`, and restored all three to
+`off`. Post-restart log review found no UniLED setup error, SPNet discovery
+traceback, or catalog blocking-call warning after the clean restart; only the
+normal Home Assistant custom-integration loader warning remained.
+
+Remaining 0.1 P0 work is the post-smoke `manifest.json` version bump to `0.1.0`
+and final package metadata check. The current P0 estimate is 0.1-0.25
+engineering weeks, with another 2.0-4.0 engineering weeks of P1 tester polish
+before a wider tester group.
 
 ## Next Build Targets
 

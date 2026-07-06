@@ -114,13 +114,13 @@ environment and the three SP541E strips remain available for live validation.
 | Thin HA integration test layer | Done for 0.1 via optional live gate | 0 weeks |
 | Startup blocking-I/O removal | Done; live log check rolls into smoke | 0 weeks |
 | Runtime command serialization | Done | 0 weeks |
-| Final SP541E live smoke test | Partially pre-smoked; deploy/restart/log check open | 0.25-0.5 weeks |
+| Final SP541E live smoke test | Done against HA 2026.7.0 | 0 weeks |
 | Publication metadata/docs/package polish | Mostly done; version bump waits for RC | 0.1-0.25 weeks |
 
-P0 total remaining estimate: 0.35-0.75 engineering weeks. P1 tester polish
-adds roughly 2.0-4.0 engineering weeks before a wider tester group. P2
-fuller hardware/capture-driven family work is intentionally not bounded for
-0.1.
+P0 total remaining estimate: 0.1-0.25 engineering weeks, centered on the
+post-smoke version bump and final package metadata check. P1 tester polish adds
+roughly 2.0-4.0 engineering weeks before a wider tester group. P2 fuller
+hardware/capture-driven family work is intentionally not bounded for 0.1.
 
 ### 1. Honor Planner Entity Defaults
 
@@ -252,9 +252,8 @@ Acceptance criteria met:
 
 ### 5. Final SP541E Live Smoke Test
 
-Status: partially pre-smoked against the currently deployed integration. The
-final release-candidate deployment, restart, and log review remain open because
-the available SSH keys are denied and Samba requires credentials.
+Status: completed on 2026-07-06 against Home Assistant 2026.7.0 with the
+current release-candidate package deployed to `/config/custom_components/uniled`.
 
 Implementation:
 
@@ -277,13 +276,30 @@ Current live evidence:
 - Home Assistant API access works reliably through `http://192.168.0.157:8123`.
   The `homeassistant.local` mDNS URL is intermittently slow for token refreshes
   from this Windows host.
-- `core_ssh` and `a0d7b954_ssh` can be started through HA services, but
-  `hassio.addon_stdin` returns HTTP 500 for both, and SSH public-key auth is
-  denied for the available local keys.
-- The currently deployed integration passed a reversible API smoke: captured
+- SSH access via `root@192.168.0.157` works with the local deployment key after
+  the public key is authorized in the HA terminal. The SSH server requires an
+  explicit ETM MAC such as `hmac-sha2-256-etm@openssh.com` from this Windows
+  OpenSSH client.
+- `core_ssh` and `a0d7b954_ssh` still reject `hassio.addon_stdin`; use direct
+  SSH/SCP for deployment and log review.
+- `python scripts\quality_gate.py` passed locally before deployment, including
+  the package file-list audit and `453` tests.
+- `dist/uniled-next.zip` deployed successfully. Do not leave backup directories
+  under `/config/custom_components`; the first live restart showed HA can try to
+  import dotted backup names such as `custom_components.uniled.backup`. Backups
+  from this smoke were moved to `/config/uniled_backups`.
+- After the clean restart, all three UniLED config entries loaded, the live
+  boundary gate passed for `uniled.set_state`, `light.turn_on`, and the three
+  known SP541E lights, and diagnostics reported
+  `ble_plugin_contract_hint_count=9`, `ble_plugin_result_field_count=13`,
+  `runtime_transport_state=command_session`, and `last_refresh_result=ok`.
+- The release-candidate integration passed a reversible API smoke: captured
   `light.raam_strip`, `light.muur_strip`, and `light.midden_strip` as `off`,
   turned all three on at brightness `77`, observed all three report
   `on:77`, then restored all three to `off`.
+- Post-restart log review found no UniLED setup error, SPNet discovery
+  traceback, or catalog blocking-call warning after the clean restart; only the
+  normal Home Assistant custom-integration loader warning remained.
 
 ## P1 Before Wider Tester Group
 
