@@ -159,10 +159,13 @@ Current state:
   parser, and brightness-only Home Assistant light surface for mono strips.
   Setup data and Home Assistant discovery can now create a verified SP541E LAN
   entry from that SPNet response plus the source host, using the MAC as the
-  legacy-compatible bare config-entry unique ID when present. Direct read-only
-  probes are expected to fail with a zero-byte response when another controller
-  already owns the strip's TCP session; stop HA/the app before using the
-  standalone probe.
+  legacy-compatible bare config-entry unique ID when present. UniLED scans at
+  startup and once a minute. When a controller reports a new IPv4 address,
+  UniLED matches its MAC and model, updates the existing entry, and reloads it.
+  The controller must be reachable by SPNet discovery from Home Assistant.
+  Direct read-only probes are expected to fail with a zero-byte response when
+  another controller already owns the strip's TCP session; stop HA/the app
+  before using the standalone probe.
   Targeted APK searches found Bonsoir argument keys and generic datagram socket
   plumbing for other LAN families, but no concrete DNS-SD service type,
   model-specific discovery response, or local LAN command frame for SP80x/FT001.

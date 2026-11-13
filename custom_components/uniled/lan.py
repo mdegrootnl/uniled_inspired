@@ -6,13 +6,24 @@ import asyncio
 import contextlib
 import ipaddress
 import logging
+import re
 import socket
+from collections import defaultdict
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
-from .const import CONF_DISCOVERY_RESPONSE_HEX, CONF_HOST, DOMAIN
-from .core import TransportError
+from .const import (
+    CONF_DEVICE_ID,
+    CONF_DISCOVERY_RESPONSE_HEX,
+    CONF_HOST,
+    CONF_MODEL,
+    CONF_MODEL_ID,
+    CONF_TRANSPORT,
+    DOMAIN,
+    TRANSPORT_LAN,
+)
+from .core import ModelCatalog, TransportError, default_catalog
 from .core.protocols import SPTECH_MAGIC, SPTECH_RESPONSE_HEADER_BYTES
 from .core.transports import (
     LANProfile,
@@ -20,6 +31,11 @@ from .core.transports import (
     parse_spnet_discovery_response,
 )
 from .core.transports.lan import SPNET_DISCOVERY_PORT
+from .setup_data import (
+    SetupDataError,
+    lan_setup_entry_data_from_spnet_response,
+    migrate_legacy_entry_data,
+)
 
 _LOGGER = logging.getLogger(__name__)
 _DEFAULT_TIMEOUT = 5.0
@@ -27,8 +43,13 @@ _ERROR_BACKOFF = 0.3
 _SPNET_DISCOVERY_TASK = "spnet_discovery_task"
 _SPNET_DISCOVERY_TIMEOUT = 2.0
 _SPNET_BROADCAST_ADDRESSES = ("255.255.255.255",)
+_RELOADABLE_DISCOVERY_STATES = {"loaded", "setup_retry", "setup_in_progress"}
+_MAC_PATTERN = re.compile(
+    r"(?:[0-9a-f]{12}|[0-9a-f]{2}([:-])(?:[0-9a-f]{2}\1){4}[0-9a-f]{2})"
+)
 
 if TYPE_CHECKING:
+    from homeassistant.config_entries import ConfigEntry
     from homeassistant.core import HomeAssistant
 else:
     HomeAssistant = Any
@@ -187,6 +208,7 @@ def async_start_spnet_discovery(
     hass: HomeAssistant,
     *,
     discovery_func: DiscoveryFunction | None = None,
+    discover_new: bool = True,
 ) -> asyncio.Task[Any]:
     """Start one background SPNet LAN discovery pass."""
     data = hass.data.setdefault(DOMAIN, {})
@@ -201,7 +223,9 @@ def async_start_spnet_discovery(
 
         discovery_func = default_discovery_func
 
-    task = hass.async_create_task(_async_handle_spnet_discovery(hass, discovery_func))
+    task = hass.async_create_task(
+        _async_handle_spnet_discovery(hass, discovery_func, discover_new=discover_new)
+    )
     data[_SPNET_DISCOVERY_TASK] = task
     task.add_done_callback(lambda done: _spnet_discovery_done(hass, done))
     return task
@@ -218,14 +242,18 @@ async def async_discover_spnet_devices(
     results: list[SpNetLANDiscovery] = []
     seen: set[tuple[str, bytes]] = set()
     protocol = _SPNetDiscoveryProtocol(results, seen)
-    try:
-        transport, _ = await loop.create_datagram_endpoint(
-            lambda: protocol,
-            local_addr=("0.0.0.0", 0),
-            allow_broadcast=True,
-        )
-    except OSError as ex:
-        _LOGGER.debug("SPNet LAN discovery socket could not start: %s", ex)
+    # Some controllers send replies to the fixed SPNet port.
+    for source_port in (SPNET_DISCOVERY_PORT, 0):
+        try:
+            transport, _ = await loop.create_datagram_endpoint(
+                lambda: protocol,
+                local_addr=("0.0.0.0", source_port),
+                allow_broadcast=True,
+            )
+            break
+        except OSError as ex:
+            _LOGGER.debug("SPNet discovery could not bind port %s: %s", source_port, ex)
+    else:
         return ()
 
     try:
@@ -283,8 +311,77 @@ def spnet_broadcast_addresses(
 async def _async_handle_spnet_discovery(
     hass: HomeAssistant,
     discovery_func: DiscoveryFunction,
+    *,
+    discover_new: bool = True,
 ) -> None:
+    # Collect the entire scan before trusting an address, in case two replies disagree.
+    observations: list[tuple[SpNetLANDiscovery, str | None]] = []
+    devices_by_mac: dict[str, set[tuple[str, int | None]]] = defaultdict(set)
+    macs_by_host: dict[str, set[str]] = defaultdict(set)
     for discovery in await discovery_func():
+        parsed = parse_spnet_discovery_response(
+            discovery.response, source=discovery.host
+        )
+        if parsed is None:
+            continue
+        mac = _lan_mac(parsed.mac_address)
+        observations.append((discovery, mac))
+        if mac is not None:
+            devices_by_mac[mac].add((discovery.host, parsed.model_id))
+            macs_by_host[discovery.host].add(mac)
+
+    if not observations:
+        return
+
+    catalog = await hass.async_add_executor_job(default_catalog)
+    entries_by_mac: dict[str, list[tuple[ConfigEntry, set[str]]]] = defaultdict(list)
+    for entry in hass.config_entries.async_entries(DOMAIN):
+        if (
+            entry.data.get(CONF_TRANSPORT) not in {TRANSPORT_LAN, "net"}
+            and entry.source != "ignore"
+        ):
+            continue
+        identities = {
+            mac
+            for value in (entry.unique_id, entry.data.get(CONF_DEVICE_ID))
+            if (mac := _lan_mac(value)) is not None
+        }
+        for mac in identities:
+            entries_by_mac[mac].append((entry, identities))
+
+    new_devices: list[SpNetLANDiscovery] = []
+    seen: set[tuple[str, str | None]] = set()
+    for discovery, mac in observations:
+        host = discovery.host
+        if (host, mac) in seen:
+            continue
+        seen.add((host, mac))
+        if mac is None:
+            if discover_new and host not in macs_by_host:
+                new_devices.append(discovery)
+            continue
+        if len(devices_by_mac[mac]) != 1 or len(macs_by_host[host]) != 1:
+            _LOGGER.debug("Skipping ambiguous SPNet discovery for %s at %s", mac, host)
+            continue
+
+        matching_entries = entries_by_mac.get(mac, [])
+        if not matching_entries:
+            if discover_new:
+                new_devices.append(discovery)
+            continue
+        if len(matching_entries) != 1:
+            continue
+        entry, identities = matching_entries[0]
+        if (
+            len(identities) != 1
+            or entry.disabled_by is not None
+            or entry.source == "ignore"
+        ):
+            continue
+
+        _async_update_discovered_host(hass, catalog, entry, discovery)
+
+    for discovery in new_devices:
         try:
             await hass.config_entries.flow.async_init(
                 DOMAIN,
@@ -296,6 +393,53 @@ async def _async_handle_spnet_discovery(
                 "SPNet LAN discovery flow handoff failed for %s",
                 discovery.host,
             )
+
+
+def _async_update_discovered_host(
+    hass: HomeAssistant,
+    catalog: ModelCatalog,
+    entry: ConfigEntry,
+    discovery: SpNetLANDiscovery,
+) -> None:
+    host = discovery.host
+    try:
+        configured = migrate_legacy_entry_data(catalog, entry.data)
+        old_host = configured[CONF_HOST]
+        if host == old_host:
+            return
+        # Keep manually configured DNS names and update numeric IPv4 hosts.
+        ipaddress.IPv4Address(old_host)
+        ipaddress.IPv4Address(host)
+        setup = lan_setup_entry_data_from_spnet_response(
+            catalog, discovery.response, source=host
+        )
+    except (ipaddress.AddressValueError, SetupDataError):
+        return
+    if (
+        configured[CONF_MODEL] != setup.data[CONF_MODEL]
+        or configured[CONF_MODEL_ID] != setup.data[CONF_MODEL_ID]
+    ):
+        return
+    if not hass.config_entries.async_update_entry(
+        entry, data={**entry.data, CONF_HOST: host}
+    ):
+        return
+    _LOGGER.info("Updated %s LAN address from %s to %s", entry.title, old_host, host)
+    if entry.state.value in _RELOADABLE_DISCOVERY_STATES:
+        hass.config_entries.async_schedule_reload(entry.entry_id)
+
+
+def _lan_mac(value: object) -> str | None:
+    """Normalize a LAN controller MAC from SPNet or a stored entry ID."""
+    if not isinstance(value, str):
+        return None
+    value = value.strip().lower().removeprefix("lan:")
+    if not _MAC_PATTERN.fullmatch(value):
+        return None
+    mac = value.replace(":", "").replace("-", "")
+    if mac == "000000000000" or int(mac[:2], 16) & 1:
+        return None
+    return mac
 
 
 def _spnet_discovery_done(

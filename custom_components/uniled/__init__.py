@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable
+from datetime import datetime, timedelta
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
@@ -27,6 +28,7 @@ from .setup_data import SetupDataError, migrate_legacy_entry_data
 _ISSUE_MIGRATION_FAILED = "migration_failed"
 _ISSUE_SETUP_INVALID = "setup_invalid"
 SERVICE_SET_STATE = "set_state"
+_LAN_DISCOVERY_INTERVAL = timedelta(minutes=1)
 
 PLATFORMS: list[str] = [
     "sensor",
@@ -49,8 +51,11 @@ async def async_setup(hass: HomeAssistant, config: dict[str, Any]) -> bool:
     """Set up integration-wide UniLED services."""
     import voluptuous as vol
     from homeassistant.components.light import DOMAIN as LIGHT_DOMAIN
+    from homeassistant.const import EVENT_HOMEASSISTANT_STOP
+    from homeassistant.core import callback
     from homeassistant.helpers import config_validation as cv
     from homeassistant.helpers import service
+    from homeassistant.helpers.event import async_track_time_interval
 
     from .lan import async_start_spnet_discovery
 
@@ -64,6 +69,20 @@ async def async_setup(hass: HomeAssistant, config: dict[str, Any]) -> bool:
     )
     await hass.async_add_executor_job(default_catalog)
     async_start_spnet_discovery(hass)
+
+    @callback
+    def async_rediscover_lan(_now: datetime) -> None:
+        async_start_spnet_discovery(hass, discover_new=False)
+
+    cancel_rediscovery = async_track_time_interval(
+        hass, async_rediscover_lan, _LAN_DISCOVERY_INTERVAL, cancel_on_shutdown=True
+    )
+
+    @callback
+    def async_stop_rediscovery(_event: Any) -> None:
+        cancel_rediscovery()
+
+    hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STOP, async_stop_rediscovery)
     return True
 
 
